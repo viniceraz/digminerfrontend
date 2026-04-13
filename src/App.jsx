@@ -449,6 +449,28 @@ export default function DigMinerApp(){
     finally{setLoading(false);}
   };
 
+  // Auto-reconnect on page refresh: if MetaMask already has permission + session token exists,
+  // restore the session silently without asking the user to sign again
+  useEffect(()=>{
+    if(!window.ethereum) return;
+    window.ethereum.request({method:"eth_accounts"}).then(async(accounts)=>{
+      if(!accounts.length) return; // MetaMask not connected
+      const token=localStorage.getItem(AUTH_KEY);
+      if(!token) return; // no session token — user must connect manually
+      const address=accounts[0];
+      try{
+        setWallet(address);
+        await loadPlayer(address);
+        // Load transactions with token directly (avoid stale closure issue)
+        const histRes=await fetch(`/api/history/${address}?limit=30`,{headers:{Authorization:`Bearer ${token}`}});
+        if(histRes.ok){const d=await histRes.json();setTransactions(d.transactions||[]);}
+        // Check admin status
+        const adminRes=await fetch("/api/admin/status",{headers:{Authorization:`Bearer ${token}`}});
+        if(adminRes.ok){const d=await adminRes.json();setIsAdmin(true);setMaintenance(d.maintenance);}
+      }catch(_){}
+    }).catch(()=>{});
+  },[loadPlayer]);
+
   // Listen for account/chain changes
   useEffect(()=>{
     if(!window.ethereum) return;
