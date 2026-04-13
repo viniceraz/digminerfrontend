@@ -707,6 +707,7 @@ export default function DigMinerApp(){
       <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:38,objectFit:"contain"}}/>
       <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
         {TABS.map(n=><button key={n} onClick={()=>setTab(tabMap[n])} style={{padding:"6px 12px",background:tab===tabMap[n]?"#FFD600":"rgba(255,255,255,.15)",border:"1px solid #8D6E63",borderRadius:6,color:tab===tabMap[n]?"#333":"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}}>{n}</button>)}
+        <button onClick={()=>notify("Marketplace coming soon! Stay tuned.",true)} style={{padding:"6px 12px",background:"rgba(255,255,255,.07)",border:"1px dashed #8D6E63",borderRadius:6,color:"rgba(255,255,255,.45)",fontSize:10,fontWeight:600,cursor:"pointer"}}>🏪 Marketplace <span style={{fontSize:8,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 4px",marginLeft:3,fontWeight:700,verticalAlign:"middle"}}>SOON</span></button>
         {wallet
           ?<div style={{padding:"6px 12px",background:"rgba(0,0,0,.3)",borderRadius:6,color:"#FFD600",fontSize:10,fontWeight:600,border:"1px solid #5D4037"}}>{wallet.slice(0,6)}...{wallet.slice(-4)}</div>
           :<button disabled={loading} onClick={connectWallet} style={{padding:"6px 14px",background:"#FFD600",border:"none",borderRadius:6,color:"#333",fontSize:11,fontWeight:700,cursor:"pointer"}}>{loading?"Connecting...":"Connect"}</button>}
