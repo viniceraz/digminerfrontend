@@ -290,7 +290,9 @@ function HowItWorks(){
 
 // ══════════ MAIN APP ══════════
 export default function DigMinerApp(){
+  const AUTH_KEY="digminer_token";
   const[wallet,setWallet]=useState(null);
+  const[authToken,setAuthToken]=useState(()=>localStorage.getItem(AUTH_KEY)||null);
   const[tab,setTab]=useState("account");
   const[digcoin,setDigcoin]=useState(0);
   const[pathUSDBalance,setPathUSDBalance]=useState("0.0000");
@@ -375,6 +377,36 @@ export default function DigMinerApp(){
     }
   };
 
+  // Sign-in with Ethereum: get nonce → sign → get session token (valid 24h)
+  const signIn=async(address)=>{
+    const w=address.toLowerCase();
+    const{message}=await fetch(`/api/nonce/${w}`).then(r=>r.json());
+    notify("Sign the message in MetaMask to authenticate (no gas needed)...");
+    const signature=await window.ethereum.request({method:"personal_sign",params:[message,address]});
+    const res=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({wallet:address,signature})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||"Auth failed");
+    localStorage.setItem(AUTH_KEY,data.token);
+    setAuthToken(data.token);
+    return data.token;
+  };
+
+  // Fetch wrapper that adds the auth token; auto re-auths on 401
+  const authFetch=async(url,opts={})=>{
+    const token=localStorage.getItem(AUTH_KEY);
+    const headers={"Content-Type":"application/json",...(opts.headers||{})};
+    if(token) headers["Authorization"]=`Bearer ${token}`;
+    let res=await fetch(url,{...opts,headers});
+    if(res.status===401&&wallet){
+      try{
+        const newToken=await signIn(wallet);
+        headers["Authorization"]=`Bearer ${newToken}`;
+        res=await fetch(url,{...opts,headers});
+      }catch(_){}
+    }
+    return res;
+  };
+
   const connectWallet=async()=>{
     if(!window.ethereum) return notify("MetaMask not found! Install it first.",false);
     try{
@@ -382,6 +414,8 @@ export default function DigMinerApp(){
       const accounts=await window.ethereum.request({method:"eth_requestAccounts"});
       const address=accounts[0];
       await ensureTempoNetwork();
+      // Authenticate with wallet signature (proves ownership)
+      await signIn(address);
       // Register / load player
       await fetch("/api/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({wallet:address,referrer:new URLSearchParams(window.location.search).get("ref")})});
       setWallet(address);
@@ -395,7 +429,7 @@ export default function DigMinerApp(){
   // Listen for account/chain changes
   useEffect(()=>{
     if(!window.ethereum) return;
-    const onAccounts=(accs)=>{if(accs.length===0){setWallet(null);setMiners([]);setDigcoin(0);}};
+    const onAccounts=(accs)=>{if(accs.length===0){setWallet(null);setMiners([]);setDigcoin(0);localStorage.removeItem(AUTH_KEY);setAuthToken(null);}};
     window.ethereum.on("accountsChanged",onAccounts);
     return()=>window.ethereum.removeListener("accountsChanged",onAccounts);
   },[]);
@@ -422,8 +456,7 @@ export default function DigMinerApp(){
       const receipt=await depositTx.wait();
 
       // Notify backend — tx_hash prevents double-credit if event poller also picks it up
-      await fetch("/api/deposit",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet,amountPathUSD:amount,txHash:receipt.hash})});
+      await authFetch("/api/deposit",{method:"POST",body:JSON.stringify({wallet,amountPathUSD:amount,txHash:receipt.hash})});
 
       setDepositAmt("");
       await loadPlayer(wallet);
@@ -441,8 +474,7 @@ export default function DigMinerApp(){
     try{
       setTxLoading("withdraw");
       notify("Getting signature from backend...");
-      const res=await fetch("/api/withdraw",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet,amountDigcoin:amount})});
+      const res=await authFetch("/api/withdraw",{method:"POST",body:JSON.stringify({wallet,amountDigcoin:amount})});
       const data=await res.json();
       if(!res.ok){
         if(data.cooldownMs) setWithdrawCooldown(data.cooldownMs);
@@ -471,8 +503,7 @@ export default function DigMinerApp(){
     if(digcoin<cost) return notify(`Need ${cost} DIGCOIN. Deposit pathUSD first!`,false);
     try{
       setTxLoading("box");
-      const res=await fetch("/api/box/buy",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet,quantity:qty})});
+      const res=await authFetch("/api/box/buy",{method:"POST",body:JSON.stringify({wallet,quantity:qty})});
       const data=await res.json();
       if(!res.ok) return notify(data.error,false);
       if(qty===1){
@@ -494,8 +525,7 @@ export default function DigMinerApp(){
   const startMiner=async(id)=>{
     try{
       setTxLoading(`mine_${id}`);
-      const res=await fetch(`/api/play/${id}`,{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet})});
+      const res=await authFetch(`/api/play/${id}`,{method:"POST",body:JSON.stringify({wallet})});
       const data=await res.json();
       if(!res.ok) return notify(data.error,false);
       notify("⛏️ Mining started! Come back in 24h to claim.");
@@ -507,8 +537,7 @@ export default function DigMinerApp(){
   const claimMiner=async(id)=>{
     try{
       setTxLoading(`claim_${id}`);
-      const res=await fetch(`/api/claim/${id}`,{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet})});
+      const res=await authFetch(`/api/claim/${id}`,{method:"POST",body:JSON.stringify({wallet})});
       const data=await res.json();
       if(!res.ok) return notify(data.error,false);
       notify(`💎 +${data.reward} DIGCOIN claimed!`);
@@ -521,8 +550,7 @@ export default function DigMinerApp(){
   const playAll=async()=>{
     try{
       setTxLoading("playall");
-      const res=await fetch("/api/play-all",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet})});
+      const res=await authFetch("/api/play-all",{method:"POST",body:JSON.stringify({wallet})});
       const data=await res.json();
       if(!res.ok) return notify(data.error,false);
       notify(`⛏️ ${data.started} miners started! Fee: ${data.fee} DC. Claim in 24h.`);
@@ -535,8 +563,7 @@ export default function DigMinerApp(){
   const claimAll=async()=>{
     try{
       setTxLoading("claimall");
-      const res=await fetch("/api/claim-all",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet})});
+      const res=await authFetch("/api/claim-all",{method:"POST",body:JSON.stringify({wallet})});
       const data=await res.json();
       if(!res.ok) return notify(data.error,false);
       notify(`💎 Claimed! +${data.netReward} DC net | ${data.claimed} miners | fee: ${data.claimAllFee} DC`);
@@ -549,8 +576,7 @@ export default function DigMinerApp(){
   const repairMiner=async(id)=>{
     try{
       setTxLoading(`repair_${id}`);
-      const res=await fetch(`/api/repair/${id}`,{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({wallet})});
+      const res=await authFetch(`/api/repair/${id}`,{method:"POST",body:JSON.stringify({wallet})});
       const data=await res.json();
       if(!res.ok) return notify(data.error,false);
       notify(`Repaired! -${data.costDigcoin} DIGCOIN`);
