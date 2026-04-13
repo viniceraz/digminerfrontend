@@ -930,7 +930,8 @@ export default function DigMinerApp(){
       {/* FOOTER */}
       <div style={{textAlign:"center",padding:"36px 0 16px",color:"rgba(255,255,255,.5)",fontSize:9}}>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:8,flexWrap:"wrap"}}>
-          {["Roadmap","Telegram"].map(l=><span key={l} style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>{l}</span>)}
+          <span style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>Roadmap</span>
+          <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer",color:"rgba(255,255,255,.5)",textDecoration:"none"}}>Telegram</a>
         </div>
         DigMiner © 2026 • Powered by Tempo Blockchain
       </div>
