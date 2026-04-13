@@ -237,55 +237,271 @@ function FarmCalculator({miners}){
   </div>);
 }
 
+function GBCallout({type,children}){
+  const S={info:{bg:"#e8f4fd",border:"#2196F3",icon:"ℹ️"},tip:{bg:"#e8f8e8",border:"#4CAF50",icon:"💡"},warning:{bg:"#fff8e1",border:"#FF9800",icon:"⚠️"},danger:{bg:"#fde8e8",border:"#f44336",icon:"🚨"}};
+  const s=S[type]||S.info;
+  return(<div style={{background:s.bg,borderLeft:`4px solid ${s.border}`,borderRadius:"0 8px 8px 0",padding:"12px 16px",marginBottom:18,display:"flex",gap:10,alignItems:"flex-start"}}>
+    <span style={{fontSize:15,flexShrink:0,marginTop:1}}>{s.icon}</span>
+    <div style={{fontSize:13,color:"#333",lineHeight:1.7}}>{children}</div>
+  </div>);
+}
+function GBSection({id,emoji,title}){
+  return(<div style={{display:"flex",alignItems:"center",gap:10,borderBottom:"2px solid #f0f0f0",paddingBottom:12,marginBottom:22,marginTop:8}} id={"gb-"+id}>
+    <span style={{fontSize:20}}>{emoji}</span>
+    <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:20,fontWeight:800,color:"#1a1a2e",margin:0}}>{title}</h2>
+  </div>);
+}
 function HowItWorks(){
-  const steps=[
-    {icon:"💰",title:"1. Deposit",desc:"Deposit pathUSD into the game. It converts automatically to DIGCOIN at a rate of 100 DIGCOIN = 1 pathUSD. All deposits go to the reward pool."},
-    {icon:"📦",title:"2. Buy Boxes",desc:"Use your DIGCOIN to buy Mystery Boxes (300 DIGCOIN each, or 10 for 2850 with 5% discount). Each box contains one random miner with different rarities."},
-    {icon:"🎲",title:"3. Get Your Miner",desc:"When you open a box, a random miner is revealed. Rarities range from Common (30% chance) to Mythic (2% chance). Rarer miners have longer lifespans and higher total returns."},
-    {icon:"⛏️",title:"4. Start Mining",desc:"Press '⛏️ Mine' on each idle miner to start the 24-hour mining cycle. Or use 'Mine All' to start all idle miners at once (costs 10 DIGCOIN per miner as convenience fee)."},
-    {icon:"💎",title:"5. Claim Rewards",desc:"After 24 hours, press '💎 Claim' to collect your DIGCOIN reward. Or use 'Claim All' to collect from all ready miners (costs 10 DIGCOIN per miner). After claiming, miners go back to idle and must be started again."},
-    {icon:"⏳",title:"6. Lifespan & Repair",desc:"Each miner has a limited lifespan (45-70 days). When it reaches 0, the miner dies. You can repair it for a small DIGCOIN fee to reset its lifespan."},
-    {icon:"🏧",title:"7. Withdraw",desc:"Convert your DIGCOIN back to pathUSD and withdraw to your wallet anytime. A 10% fee applies to all withdrawals."},
-    {icon:"🤝",title:"7. Referrals",desc:"Share your referral link with friends. When they deposit, you earn 4% of their deposit amount in DIGCOIN automatically."},
+  const[active,setActive]=useState("intro");
+  const NAV=[
+    {id:"intro",   emoji:"📖", label:"Introduction"},
+    {id:"start",   emoji:"🚀", label:"Quick Start"},
+    {id:"boxes",   emoji:"📦", label:"Mystery Boxes"},
+    {id:"rarities",emoji:"💎", label:"Rarities"},
+    {id:"mining",  emoji:"⛏️",  label:"Mining Cycle"},
+    {id:"lifespan",emoji:"⏳", label:"Lifespan & Repair"},
+    {id:"withdraw",emoji:"🏧", label:"Withdrawals"},
+    {id:"referral",emoji:"🤝", label:"Referrals"},
+    {id:"roi",     emoji:"📊", label:"ROI Table"},
+    {id:"faq",     emoji:"❓", label:"FAQ"},
   ];
-  return(<div style={{animation:"fadeIn .3s ease"}}>
-    <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:32,border:"1px solid #ddd",marginBottom:20}}>
-      <h2 style={{fontSize:22,fontWeight:800,color:"#333",marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>⛏️ How It Works</h2>
-      <p style={{color:"#888",fontSize:13,marginBottom:24}}>DigMiner is a Click-to-Earn game on the Tempo Mainnet. Buy miners, collect daily rewards, and withdraw real pathUSD.</p>
-      <div style={{display:"flex",flexDirection:"column",gap:16}}>
-        {steps.map((s,i)=>(<div key={i} style={{display:"flex",gap:16,padding:16,background:i%2===0?"#fafafa":"#fff",borderRadius:12,border:"1px solid #f0f0f0"}}>
-          <div style={{fontSize:32,minWidth:48,textAlign:"center"}}>{s.icon}</div>
-          <div><h3 style={{fontSize:15,fontWeight:700,color:"#333",marginBottom:4}}>{s.title}</h3><p style={{fontSize:12,color:"#666",lineHeight:1.6}}>{s.desc}</p></div>
-        </div>))}
+  const go=(id)=>{setActive(id);document.getElementById("gb-"+id)?.scrollIntoView({behavior:"smooth",block:"start"});};
+  return(
+  <div style={{animation:"fadeIn .3s ease",display:"flex",gap:0,background:"#fff",borderRadius:16,border:"1px solid #e0e0e0",overflow:"visible",minHeight:640,alignItems:"flex-start"}}>
+    <div style={{width:210,minWidth:210,background:"#1a1a2e",borderRadius:"16px 0 0 16px",flexShrink:0,position:"sticky",top:8,alignSelf:"flex-start"}}>
+      <div style={{padding:"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+        <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:30,objectFit:"contain",marginBottom:6,display:"block"}}/>
+        <div style={{color:"rgba(255,255,255,.35)",fontSize:9,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase"}}>Documentation</div>
+      </div>
+      <nav style={{padding:"10px 0"}}>
+        {NAV.map(n=>(
+          <button key={n.id} onClick={()=>go(n.id)} style={{width:"100%",textAlign:"left",background:active===n.id?"rgba(255,152,0,.12)":"transparent",border:"none",borderLeft:`3px solid ${active===n.id?"#FF9800":"transparent"}`,color:active===n.id?"#FF9800":"rgba(255,255,255,.55)",padding:"9px 14px",fontSize:12.5,cursor:"pointer",display:"flex",gap:8,alignItems:"center",fontFamily:"'Outfit',sans-serif",fontWeight:active===n.id?700:400,transition:"all .15s"}}>
+            <span style={{fontSize:13,minWidth:18}}>{n.emoji}</span>{n.label}
+          </button>
+        ))}
+      </nav>
+      <div style={{padding:"16px",borderTop:"1px solid rgba(255,255,255,.08)",marginTop:4,display:"flex",flexDirection:"column",gap:8}}>
+        <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer" style={{display:"block",padding:"8px",background:"#0088cc",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,textDecoration:"none",textAlign:"center"}}>📢 Telegram</a>
+        <a href="https://x.com/digminertempo" target="_blank" rel="noopener noreferrer" style={{display:"block",padding:"8px",background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,color:"rgba(255,255,255,.65)",fontSize:11,fontWeight:700,textDecoration:"none",textAlign:"center"}}>𝕏 Twitter</a>
       </div>
     </div>
-    <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:24,border:"1px solid #ddd",marginBottom:20}}>
-      <h3 style={{fontSize:16,fontWeight:800,marginBottom:16,color:"#333"}}>📊 Miner Stats & ROI</h3>
-      <div style={{overflowX:"auto"}}>
+    <div style={{flex:1,padding:"32px 36px 40px",minWidth:0}}>
+
+      <GBSection id="intro" emoji="📖" title="What is DigMiner?"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:14}}>DigMiner is a <strong>Click-to-Earn game</strong> running on the <strong>Tempo Mainnet</strong> blockchain. You deposit real pathUSD, buy NFT miners, run 24-hour mining cycles, and withdraw your earnings.</p>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:16}}>The core loop: <strong>Deposit → Buy Boxes → Mine → Claim → Withdraw</strong>. The rarer your miner, the more it earns and the longer it lasts.</p>
+      <GBCallout type="tip">You don’t pay gas fees to mine or claim. Only deposits and withdrawals touch the blockchain — everything else is instant and free.</GBCallout>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10,marginBottom:28}}>
+        {[["Exchange Rate","100 DC = 1 pathUSD","#FF9800"],["Box Price","300 DC (single)","#2196F3"],["Bulk (10x)","2850 DC — 5% off","#4CAF50"],["Withdraw Fee","10%","#E91E63"],["Referral Bonus","4% of deposit","#9C27B0"],["Batch Fee","10 DC / miner","#FF9800"]].map(([l,v,c])=>(
+          <div key={l} style={{background:"#f8f9fa",borderRadius:10,padding:"12px 14px",border:`1px solid ${c}22`}}>
+            <div style={{fontSize:10,color:"#999",fontWeight:600,marginBottom:4,textTransform:"uppercase",letterSpacing:.4}}>{l}</div>
+            <div style={{fontSize:14,fontWeight:800,color:c}}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      <GBSection id="start" emoji="🚀" title="Quick Start Guide"/>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:28}}>
+        {[
+          ["Connect your wallet","Click Connect Wallet and approve in MetaMask or Rabby. No gas needed."],
+          ["Switch to Tempo Mainnet","The app will prompt you to add and switch to the Tempo network automatically."],
+          ["Sign the auth message","Sign a free off-chain message to prove wallet ownership. Valid for 24 hours."],
+          ["Deposit pathUSD","My Account → Deposit. Approve the token and confirm. DIGCOIN appears instantly."],
+          ["Buy a Mystery Box","Shop → Buy Box. 300 DC for 1, or 2850 DC for 10 (5% discount)."],
+          ["Start Mining","In My NFT tab, click ⛏️ Mine on your miner. Return in 24 hours."],
+          ["Claim & Withdraw","Click 💎 Claim after 24h. When ready, withdraw from My Account → Withdraw."],
+        ].map(([t,d],i)=>(
+          <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"14px 16px",background:"#f8f9fa",borderRadius:10,border:"1px solid #eee"}}>
+            <div style={{background:"#1a1a2e",color:"#FF9800",borderRadius:"50%",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0,fontFamily:"'Outfit',sans-serif"}}>{i+1}</div>
+            <div><div style={{fontSize:13,fontWeight:700,color:"#222",marginBottom:3}}>{t}</div><div style={{fontSize:12,color:"#666",lineHeight:1.7}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+
+      <GBSection id="boxes" emoji="📦" title="Mystery Boxes"/>
+      <div style={{display:"flex",gap:20,alignItems:"center",marginBottom:20,flexWrap:"wrap"}}>
+        <img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:96,height:96,objectFit:"contain",filter:"drop-shadow(0 4px 16px #FFD60055)",flexShrink:0}}/>
+        <div>
+          <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:10}}>Each Mystery Box contains <strong>1 random NFT miner</strong>. Rarity is determined at opening — you cannot choose which one you get.</p>
+          <p style={{fontSize:14,color:"#444",lineHeight:1.9,margin:0}}>After purchase, an animation reveals your miner. It appears immediately in the NFT tab, ready to mine.</p>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px 20px",border:"1px solid #eee"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#666",marginBottom:6}}>📦 SINGLE BOX</div>
+          <div style={{fontSize:28,fontWeight:900,color:"#FF9800"}}>300 DC</div>
+          <div style={{fontSize:11,color:"#aaa",marginTop:4}}>= 3 pathUSD</div>
+        </div>
+        <div style={{background:"#1a1a2e",borderRadius:12,padding:"18px 20px",border:"2px solid #FF9800",position:"relative"}}>
+          <div style={{position:"absolute",top:-11,right:14,background:"#FF9800",color:"#fff",fontSize:9,fontWeight:800,padding:"3px 10px",borderRadius:10}}>BEST VALUE</div>
+          <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.5)",marginBottom:6}}>📦 x10 BOXES</div>
+          <div style={{fontSize:28,fontWeight:900,color:"#FF9800"}}>2850 DC</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginTop:4}}>5% discount — saves 150 DC</div>
+        </div>
+      </div>
+      <GBCallout type="info">Each box roll is independent. Buying 10 boxes does not guarantee any specific rarity — you get 10 separate random outcomes.</GBCallout>
+
+      <GBSection id="rarities" emoji="💎" title="Miner Rarities"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>There are <strong>6 rarity tiers</strong>. Rarer miners earn more DIGCOIN per day and have longer lifespans, but lower drop chances.</p>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(128px,1fr))",gap:12,marginBottom:22}}>
+        {RARITIES.map(r=>(
+          <div key={r.id} style={{borderRadius:14,overflow:"hidden",border:`2px solid ${r.color}`,background:"#0d0d1a",textAlign:"center"}}>
+            <div style={{padding:"14px 8px 4px",background:`linear-gradient(180deg,${r.bg} 0%,#0d0d1a 100%)`}}>
+              <img src={NFT_IMGS[r.id]} alt={r.name} style={{width:66,height:66,objectFit:"contain",filter:`drop-shadow(0 0 8px ${r.color}88)`}}/>
+            </div>
+            <div style={{padding:"8px 8px 14px"}}>
+              <div style={{color:r.color,fontWeight:800,fontSize:11,marginBottom:3}}>{r.name}</div>
+              <div style={{color:"rgba(255,255,255,.4)",fontSize:10,marginBottom:7}}>{r.chance} chance</div>
+              <div style={{color:"#FFD600",fontWeight:700,fontSize:13}}>{r.dailyMin}–{r.dailyMax}<span style={{color:"rgba(255,255,255,.35)",fontWeight:400,fontSize:10}}> DC/day</span></div>
+              <div style={{color:"rgba(255,255,255,.35)",fontSize:10,marginTop:2}}>{r.nftAge} day lifespan</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <GBCallout type="warning">A Mythic miner yields roughly <strong>3x more total DIGCOIN</strong> than a Common over its full lifespan. Rarity matters for long-term returns, not just daily rate.</GBCallout>
+
+      <GBSection id="mining" emoji="⛏️" title="The Mining Cycle"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Every miner moves through a simple 3-state cycle. Mastering this loop is the key to maximizing daily earnings.</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:0,marginBottom:22,borderRadius:12,overflow:"hidden",border:"1px solid #e8e8e8"}}>
+        {[["💤","Idle","Miner is waiting. Click ⛏️ Mine to start the 24-hour cycle.","#888"],["⛏️","Mining","Countdown running. Come back when the timer hits 0.","#4CAF50"],["✅","Ready to Claim","Mining complete! Click 💎 Claim to collect your reward.","#FF9800"]].map(([em,st,desc,c],i)=>(
+          <div key={i} style={{padding:"18px 14px",background:i===1?"#f0f9f1":i===2?"#fff9f0":"#fafafa",textAlign:"center",borderRight:i<2?"1px solid #e8e8e8":"none"}}>
+            <div style={{fontSize:28,marginBottom:8}}>{em}</div>
+            <div style={{fontSize:12,fontWeight:800,color:c,marginBottom:8}}>{st}</div>
+            <div style={{fontSize:11,color:"#666",lineHeight:1.6}}>{desc}</div>
+          </div>
+        ))}
+      </div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:10,marginTop:24}}>⚡ Mine All & Claim All</h3>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:12}}>Manage all your miners at once with the batch buttons on the My NFT tab.</p>
+      <GBCallout type="info"><strong>Convenience fee: 10 DIGCOIN per miner</strong> for batch actions. With 5 miners, Mine All or Claim All costs 50 DC. Fee is deducted before processing.</GBCallout>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:24}}>After claiming, each miner returns to <strong>Idle</strong>. You must click Mine again to start the next cycle — earnings don’t accumulate passively.</p>
+
+      <GBSection id="lifespan" emoji="⏳" title="Lifespan & Repair"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Each miner has a finite lifespan in <strong>mining cycles</strong>. Every successful claim decreases the lifespan counter by 1.</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px",border:"1px solid #eee"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:12}}>📉 When lifespan hits 0</div>
+          <div style={{fontSize:12,color:"#666",lineHeight:2}}>• The miner stops mining<br/>• A ⚠️ icon appears on the card<br/>• Repair it to restore full lifespan<br/>• Or let it retire permanently</div>
+        </div>
+        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px",border:"1px solid #eee"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:12}}>🔧 Repair Cost by Rarity</div>
+          {RARITIES.map(r=>(
+            <div key={r.id} style={{display:"flex",justifyContent:"space-between",fontSize:11,padding:"4px 0",borderBottom:"1px solid #f0f0f0"}}>
+              <span style={{color:r.color,fontWeight:700}}>{r.name}</span>
+              <span style={{color:"#555"}}>{r.repair} pathUSD ({r.repair*DIG_RATE} DC)</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <GBCallout type="tip">Repair resets to the <strong>original full lifespan</strong>. You can repair unlimited times — a miner never permanently dies unless you choose not to repair it.</GBCallout>
+
+      <GBSection id="withdraw" emoji="🏧" title="Withdrawals"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Convert your DIGCOIN to pathUSD and withdraw to your wallet. Withdrawals are signed by the server and executed on-chain via the MinerPool smart contract.</p>
+      <div style={{background:"#f8f9fa",borderRadius:12,padding:"20px",marginBottom:20,border:"1px solid #eee"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:14}}>💸 Example — Withdrawing 1000 DIGCOIN</div>
+        {[["You request","1000 DIGCOIN",false],["Converted to","10 pathUSD",false],["10% protocol fee","−1 pathUSD",false],["You receive","9 pathUSD",true]].map(([l,v,bold])=>(
+          <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:13,padding:"8px 0",borderBottom:"1px solid #e8e8e8"}}>
+            <span style={{color:"#888"}}>{l}</span>
+            <span style={{fontWeight:bold?900:600,color:bold?"#4CAF50":"#333",fontSize:bold?15:13}}>{v}</span>
+          </div>
+        ))}
+      </div>
+      <GBCallout type="warning"><strong>Rules:</strong> 24h cooldown between withdrawals • Minimum 100 DIGCOIN (1 pathUSD) • 10% fee on every withdrawal. Fee stays in the reward pool.</GBCallout>
+
+      <GBSection id="referral" emoji="🤝" title="Referral Program"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Share your unique referral link and earn <strong>4% of every deposit</strong> your referred friends make — instantly credited to your DIGCOIN balance.</p>
+      <div style={{background:"#1a1a2e",borderRadius:12,padding:"20px",marginBottom:20}}>
+        <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginBottom:8,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase"}}>Your Referral Link</div>
+        <div style={{background:"rgba(255,255,255,.06)",borderRadius:8,padding:"10px 14px",fontFamily:"monospace",fontSize:12,color:"#FFD600",wordBreak:"break-all"}}>https://digminer.xyz?ref=0xYourWallet</div>
+        <div style={{marginTop:12,fontSize:12,color:"rgba(255,255,255,.5)",lineHeight:1.7}}>Find your personalized link in the <span style={{color:"#FF9800",fontWeight:700}}>My Account</span> tab after connecting.</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
+        {[["1","Share your link","Post on social media, groups, or send to friends directly"],["2","Friend deposits","They connect and deposit pathUSD into the game"],["3","You earn 4%","Auto-credited to your DIGCOIN balance instantly"]].map(([n,t,d])=>(
+          <div key={n} style={{background:"#f8f9fa",borderRadius:10,padding:"14px",textAlign:"center",border:"1px solid #eee"}}>
+            <div style={{fontSize:22,fontWeight:900,color:"#FF9800",marginBottom:6,fontFamily:"'Outfit',sans-serif"}}>{n}</div>
+            <div style={{fontSize:12,fontWeight:700,color:"#333",marginBottom:5}}>{t}</div>
+            <div style={{fontSize:11,color:"#888",lineHeight:1.5}}>{d}</div>
+          </div>
+        ))}
+      </div>
+      <GBCallout type="tip">No cap on referrals. Every deposit your referrals make earns you 4% — indefinitely, with no extra effort required.</GBCallout>
+
+      <GBSection id="roi" emoji="📊" title="ROI & Full Statistics"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Complete breakdown of all 6 miner types — earnings, returns, and ROI based on a single box price of 300 DC.</p>
+      <div style={{overflowX:"auto",marginBottom:22}}>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-          <thead><tr style={{background:"#f5f5f5"}}>{["Rarity","Chance","Daily DIGCOIN","ROI","Lifespan","Total Return","Repair Cost"].map(h=>(<th key={h} style={{padding:"10px 8px",borderBottom:"2px solid #ddd",textAlign:"left",fontWeight:700,color:"#555"}}>{h}</th>))}</tr></thead>
-          <tbody>{RARITIES.map(r=>{const avg=(r.dailyMin+r.dailyMax)/2;return(<tr key={r.id} style={{borderBottom:"1px solid #f0f0f0"}}>
-            <td style={{padding:"10px 8px",fontWeight:700,color:r.color}}>{r.name}</td>
-            <td style={{padding:"10px 8px"}}>{r.chance}</td>
-            <td style={{padding:"10px 8px"}}>{r.dailyMin} - {r.dailyMax}</td>
-            <td style={{padding:"10px 8px",fontWeight:600,color:"#4CAF50"}}>{Math.ceil(BOX_PRICE/avg)} days</td>
-            <td style={{padding:"10px 8px"}}>{r.nftAge} days</td>
-            <td style={{padding:"10px 8px",fontWeight:600,color:"#FF9800"}}>{(avg*r.nftAge).toFixed(0)} DC</td>
-            <td style={{padding:"10px 8px"}}>{r.repair} pathUSD ({(r.repair*DIG_RATE).toFixed(0)} DC)</td>
-          </tr>);})}</tbody>
+          <thead>
+            <tr style={{background:"#1a1a2e"}}>
+              {["Miner","Chance","Daily Range","Avg/Day","ROI","Lifespan","Total Return","Repair"].map(h=>(
+                <th key={h} style={{padding:"11px 12px",color:"rgba(255,255,255,.65)",fontWeight:600,textAlign:"left",whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {RARITIES.map((r,i)=>{
+              const avg=(r.dailyMin+r.dailyMax)/2;
+              return(
+                <tr key={r.id} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
+                  <td style={{padding:"12px 12px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <img src={NFT_IMGS[r.id]} alt={r.name} style={{width:30,height:30,objectFit:"contain",flexShrink:0}}/>
+                      <span style={{fontWeight:700,color:r.color}}>{r.name}</span>
+                    </div>
+                  </td>
+                  <td style={{padding:"12px 12px",color:"#666"}}>{r.chance}</td>
+                  <td style={{padding:"12px 12px",color:"#555"}}>{r.dailyMin}–{r.dailyMax} DC</td>
+                  <td style={{padding:"12px 12px",fontWeight:600,color:"#333"}}>{avg} DC</td>
+                  <td style={{padding:"12px 12px",fontWeight:700,color:"#4CAF50"}}>~{Math.ceil(BOX_PRICE/avg)}d</td>
+                  <td style={{padding:"12px 12px",color:"#555"}}>{r.nftAge}d</td>
+                  <td style={{padding:"12px 12px",fontWeight:700,color:"#FF9800"}}>{(avg*r.nftAge).toFixed(0)} DC</td>
+                  <td style={{padding:"12px 12px",color:"#555"}}>{r.repair} USD</td>
+                </tr>
+              );
+            })}
+          </tbody>
         </table>
       </div>
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-      {[["💎 DIGCOIN Rate","100 DIGCOIN = 1 pathUSD","Internal game currency"],["📦 Box Price","300 DC (1) / 2850 DC (10)","5% discount on bulk"],["💸 Withdraw Fee","10% on all withdrawals","Fee stays in the pool"],["🤝 Referral","4% of friend's deposit","Paid in DIGCOIN"],["⛏️ Mine All / Claim All","10 DC per miner","Convenience fee for batch actions"],["🔧 Repair","Resets lifespan to full","Cost varies by rarity"]].map(([t,v,d],i)=>(
-        <div key={i} style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,border:"1px solid #eee",textAlign:"center"}}>
-          <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:4}}>{t}</div>
-          <div style={{fontSize:15,fontWeight:800,color:"#FF9800"}}>{v}</div>
-          <div style={{fontSize:10,color:"#999",marginTop:4}}>{d}</div>
+      <GBCallout type="info">ROI is calculated from the box price (300 DC). After ROI, all further earnings are pure profit until the miner retires.</GBCallout>
+      <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px 20px",marginBottom:28,border:"1px solid #eee"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:12}}>📈 Example 10-Box Portfolio</div>
+        <div style={{fontSize:12,color:"#666",lineHeight:2.1}}>
+          Avg luck: 3 Common, 3 UnCommon, 2 Rare, 1 Super Rare, 1 Legendary<br/>
+          <strong style={{color:"#333"}}>Daily income:</strong> ~255 DC/day ≈ 2.55 pathUSD<br/>
+          <strong style={{color:"#333"}}>Investment:</strong> 2850 DC (bulk)<br/>
+          <strong style={{color:"#333"}}>Estimated ROI:</strong> ~12 days<br/>
+          <strong style={{color:"#4CAF50"}}>Profit over full lifespan:</strong> ~9000–12000 DC
         </div>
-      ))}
+      </div>
+
+      <GBSection id="faq" emoji="❓" title="Frequently Asked Questions"/>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:36}}>
+        {[
+          ["Do I pay gas to mine or claim?","No. Mining and claiming are off-chain. Gas only applies to deposits and withdrawals on Tempo."],
+          ["What if I forget to claim for more than 24h?","Nothing happens. Rewards stay pending indefinitely. The miner only loses 1 lifespan day per successful claim, not per day elapsed."],
+          ["Can I own multiple miners of the same rarity?","Yes. Own as many as you want — all mine independently and simultaneously."],
+          ["Is there a limit to how many boxes I can buy?","No limit. Buy as many as your DIGCOIN balance allows."],
+          ["What is pathUSD?","pathUSD is a USD-pegged stablecoin on the Tempo blockchain. 1 pathUSD ≈ $1 USD."],
+          ["Can I use Rabby Wallet?","Yes. Rabby is fully compatible — it uses the same window.ethereum interface as MetaMask."],
+          ["What happens if I switch accounts in MetaMask?","The game logs you out automatically for security. Connect and sign again with the new wallet."],
+          ["Is the 10% withdraw fee negotiable?","No. The fee is fixed and goes back into the reward pool to sustain the game economy."],
+          ["Can I repair a miner more than once?","Yes, unlimited times. Repair always resets to the original full lifespan."],
+          ["Why do I need to sign a message on login?","The signature proves you own the wallet without spending gas. Only you can modify your account."],
+        ].map(([q,a],i)=>(
+          <details key={i} style={{background:"#f8f9fa",borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+            <summary style={{padding:"13px 16px",fontSize:13,fontWeight:600,color:"#222",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",listStyle:"none"}}>
+              <span>{q}</span><span style={{color:"#ccc",fontSize:16,flexShrink:0,marginLeft:8}}>›</span>
+            </summary>
+            <div style={{padding:"0 16px 14px",fontSize:12,color:"#666",lineHeight:1.75,borderTop:"1px solid #eee"}}>{a}</div>
+          </details>
+        ))}
+      </div>
+      <div style={{textAlign:"center",paddingTop:24,borderTop:"1px solid #f0f0f0"}}>
+        <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:36,objectFit:"contain",opacity:.5,marginBottom:10,display:"block",margin:"0 auto 10px"}}/>
+        <div style={{fontSize:11,color:"#ccc"}}>DigMiner © 2026 • Powered by Tempo Blockchain</div>
+      </div>
     </div>
-  </div>);
+  </div>
+  );
 }
 
 // ══════════ MAIN APP ══════════
