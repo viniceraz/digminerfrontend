@@ -16,7 +16,7 @@ const TEMPO_CHAIN = {
   chainId: "0x1079", // 4217
   chainName: "Tempo Mainnet",
   nativeCurrency: { name: "TEMPO", symbol: "TEMPO", decimals: 18 },
-  rpcUrls: ["https://tempo-mainnet.drpc.org"],
+  rpcUrls: ["https://rpc.tempo.xyz"],
   blockExplorerUrls: ["https://tempo.drpc.org"],
 };
 
