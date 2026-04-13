@@ -308,6 +308,15 @@ export default function DigMinerApp(){
   const[transactions,setTransactions]=useState([]);
   const[stats,setStats]=useState({totalPlayers:0,totalMiners:0,aliveMiners:0,total_deposited:0,total_withdrawn:0});
   const[referralLink,setReferralLink]=useState("");
+  // Admin
+  const[isAdmin,setIsAdmin]=useState(false);
+  const[maintenance,setMaintenance]=useState(false);
+  const[adminTo,setAdminTo]=useState("");
+  const[adminAmt,setAdminAmt]=useState("");
+  const[adminReason,setAdminReason]=useState("");
+  const[adminLog,setAdminLog]=useState([]);
+  const[adminPlayers,setAdminPlayers]=useState([]);
+  const[adminLoading,setAdminLoading]=useState("");
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
 
@@ -407,6 +416,14 @@ export default function DigMinerApp(){
     return res;
   };
 
+  const checkAdminStatus=async()=>{
+    try{
+      const res=await authFetch("/api/admin/status");
+      if(res.ok){const d=await res.json();setIsAdmin(true);setMaintenance(d.maintenance);}
+      else setIsAdmin(false);
+    }catch(_){setIsAdmin(false);}
+  };
+
   const connectWallet=async()=>{
     if(!window.ethereum) return notify("MetaMask not found! Install it first.",false);
     try{
@@ -421,6 +438,7 @@ export default function DigMinerApp(){
       setWallet(address);
       await loadPlayer(address);
       await loadTransactions(address);
+      await checkAdminStatus();
       notify("Wallet connected!");
     }catch(e){notify(e.message.slice(0,80),false);}
     finally{setLoading(false);}
@@ -429,10 +447,44 @@ export default function DigMinerApp(){
   // Listen for account/chain changes
   useEffect(()=>{
     if(!window.ethereum) return;
-    const onAccounts=(accs)=>{if(accs.length===0){setWallet(null);setMiners([]);setDigcoin(0);localStorage.removeItem(AUTH_KEY);setAuthToken(null);}};
+    const onAccounts=(accs)=>{if(accs.length===0){setWallet(null);setMiners([]);setDigcoin(0);localStorage.removeItem(AUTH_KEY);setAuthToken(null);setIsAdmin(false);}};
     window.ethereum.on("accountsChanged",onAccounts);
     return()=>window.ethereum.removeListener("accountsChanged",onAccounts);
   },[]);
+
+  const toggleMaintenance=async()=>{
+    try{
+      setAdminLoading("maint");
+      const res=await authFetch("/api/admin/maintenance",{method:"POST",body:JSON.stringify({enabled:!maintenance})});
+      const d=await res.json();
+      if(!res.ok) return notify(d.error,false);
+      setMaintenance(d.maintenance);
+      notify(d.maintenance?"🔴 Maintenance ON — game blocked for all players":"🟢 Maintenance OFF — game is live");
+    }catch(e){notify(e.message,false);}
+    finally{setAdminLoading("");}
+  };
+
+  const adminSendDigcoin=async()=>{
+    if(!adminTo||!adminAmt) return notify("Fill wallet and amount",false);
+    try{
+      setAdminLoading("send");
+      const res=await authFetch("/api/admin/send-digcoin",{method:"POST",body:JSON.stringify({toWallet:adminTo,amount:parseFloat(adminAmt),reason:adminReason})});
+      const d=await res.json();
+      if(!res.ok) return notify(d.error,false);
+      setAdminLog(l=>[{wallet:d.wallet,amount:d.amountSent,reason:d.reason,ts:new Date().toLocaleString()},...l.slice(0,19)]);
+      setAdminTo("");setAdminAmt("");setAdminReason("");
+      notify(`✅ Sent ${d.amountSent} DC to ${d.wallet.slice(0,10)}...`);
+    }catch(e){notify(e.message,false);}
+    finally{setAdminLoading("");}
+  };
+
+  const loadAdminPlayers=async()=>{
+    try{
+      const res=await authFetch("/api/admin/players");
+      const d=await res.json();
+      if(res.ok) setAdminPlayers(d.players||[]);
+    }catch(_){}
+  };
 
   const doDeposit=async()=>{
     const amount=parseFloat(depositAmt);
@@ -595,8 +647,8 @@ export default function DigMinerApp(){
   const playableCount=readyMiners.length;
   const filtered=filter==="All"?miners:miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=["My Account","My NFT","Shop","Calculator","How It Works"];
-  const tabMap={"My Account":"account","My NFT":"nft","Shop":"shop","Calculator":"calc","How It Works":"how"};
+  const TABS=["My Account","My NFT","Shop","Calculator","How It Works",...(isAdmin?["⚙️ Admin"]:[])];
+  const tabMap={"My Account":"account","My NFT":"nft","Shop":"shop","Calculator":"calc","How It Works":"how","⚙️ Admin":"admin"};
 
   return(<div style={{minHeight:"100vh",backgroundImage:"linear-gradient(to bottom,#87CEEB 0%,#E8D5A3 40%,#C4A265 100%)",backgroundAttachment:"fixed",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
     <style>{`
@@ -789,6 +841,90 @@ export default function DigMinerApp(){
 
         {/* HOW IT WORKS */}
         {tab==="how"&&<HowItWorks/>}
+
+        {/* ADMIN PANEL */}
+        {tab==="admin"&&isAdmin&&<div style={{animation:"fadeIn .3s ease",display:"flex",flexDirection:"column",gap:16}}>
+
+          {/* Maintenance */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:`3px solid ${maintenance?"#EF5350":"#4CAF50"}`}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+              <div>
+                <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>🔧 Maintenance Mode</h2>
+                <p style={{fontSize:12,color:"#888"}}>When enabled, all game actions are blocked for every player.</p>
+              </div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:13,fontWeight:700,marginBottom:8,color:maintenance?"#EF5350":"#4CAF50"}}>
+                  {maintenance?"⚠️ GAME IS DOWN":"✅ Game is Live"}
+                </div>
+                <button disabled={adminLoading==="maint"} onClick={toggleMaintenance} style={{padding:"10px 32px",background:maintenance?"#4CAF50":"#EF5350",border:"none",borderRadius:10,color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",minWidth:200}}>
+                  {adminLoading==="maint"?"Updating...":(maintenance?"🟢 Bring Game Back Online":"🔴 Put Game in Maintenance")}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Send DIGCOIN */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>💸 Send DIGCOIN</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:16}}>Send DIGCOIN directly to any wallet — for giveaways, influencers, or payments.</p>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr auto",gap:10,alignItems:"end",flexWrap:"wrap"}}>
+              <div>
+                <div style={{fontSize:10,color:"#888",marginBottom:4}}>Wallet Address</div>
+                <input value={adminTo} onChange={e=>setAdminTo(e.target.value)} placeholder="0x..." style={{width:"100%",padding:"9px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:12,fontFamily:"monospace"}}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,color:"#888",marginBottom:4}}>Amount (DIGCOIN)</div>
+                <input type="number" min="1" value={adminAmt} onChange={e=>setAdminAmt(e.target.value)} placeholder="e.g. 1000" style={{width:"100%",padding:"9px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:12}}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,color:"#888",marginBottom:4}}>Reason (optional)</div>
+                <input value={adminReason} onChange={e=>setAdminReason(e.target.value)} placeholder="giveaway, influencer..." style={{width:"100%",padding:"9px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:12}}/>
+              </div>
+              <button disabled={adminLoading==="send"} onClick={adminSendDigcoin} style={{padding:"9px 24px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"none",borderRadius:8,color:"#333",fontSize:13,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}>
+                {adminLoading==="send"?"Sending...":"Send 💸"}
+              </button>
+            </div>
+            {adminLog.length>0&&<div style={{marginTop:16}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:8}}>Recent Sends</div>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                <thead><tr style={{background:"#f9f9f9"}}>{["Wallet","Amount","Reason","Time"].map(h=><th key={h} style={{padding:"6px 10px",borderBottom:"1px solid #eee",textAlign:"left",color:"#888"}}>{h}</th>)}</tr></thead>
+                <tbody>{adminLog.map((l,i)=>(
+                  <tr key={i} style={{borderBottom:"1px solid #f5f5f5"}}>
+                    <td style={{padding:"6px 10px",fontFamily:"monospace",fontSize:10}}>{l.wallet.slice(0,10)}...{l.wallet.slice(-6)}</td>
+                    <td style={{padding:"6px 10px",fontWeight:700,color:"#FF9800"}}>{l.amount} DC</td>
+                    <td style={{padding:"6px 10px",color:"#666"}}>{l.reason}</td>
+                    <td style={{padding:"6px 10px",color:"#aaa"}}>{l.ts}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>}
+          </div>
+
+          {/* Players list */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div><h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>👥 All Players</h2><p style={{fontSize:12,color:"#888"}}>Top 100 by DIGCOIN balance</p></div>
+              <button onClick={loadAdminPlayers} style={{padding:"7px 16px",background:"#2196F3",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Load Players</button>
+            </div>
+            {adminPlayers.length>0&&<div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                <thead><tr style={{background:"#f5f5f5"}}>{["Wallet","Balance (DC)","Deposited ($)","Earned (DC)","Boxes","Joined"].map(h=><th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",color:"#555"}}>{h}</th>)}</tr></thead>
+                <tbody>{adminPlayers.map((p,i)=>(
+                  <tr key={i} style={{borderBottom:"1px solid #f0f0f0",background:i%2===0?"#fff":"#fafafa"}}>
+                    <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:10}}>{p.wallet.slice(0,8)}...{p.wallet.slice(-6)}</td>
+                    <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{(p.digcoin_balance||0).toFixed(0)}</td>
+                    <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(p.total_deposited_pathusd||0).toFixed(2)}</td>
+                    <td style={{padding:"8px 10px"}}>{(p.total_earned_digcoin||0).toFixed(0)}</td>
+                    <td style={{padding:"8px 10px"}}>{p.boxes_bought||0}</td>
+                    <td style={{padding:"8px 10px",color:"#aaa",fontSize:10}}>{new Date(p.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>}
+            {adminPlayers.length===0&&<div style={{textAlign:"center",padding:20,color:"#bbb",fontSize:12}}>Click "Load Players" to view</div>}
+          </div>
+
+        </div>}
       </>}
 
       {/* FOOTER */}
