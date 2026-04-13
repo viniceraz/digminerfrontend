@@ -359,7 +359,7 @@ export default function DigMinerApp(){
 
   const loadTransactions=async(address)=>{
     try{
-      const res=await fetch(`/api/history/${address}?limit=30`);
+      const res=await authFetch(`/api/history/${address}?limit=30`);
       const data=await res.json();
       setTransactions(data.transactions||[]);
     }catch(e){console.error("tx history error:",e.message);}
