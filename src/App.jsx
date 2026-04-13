@@ -44,7 +44,7 @@ function BoxReveal({miner,onClose}){
   const r=RARITIES[miner.rarityId];
   useEffect(()=>{const t1=setTimeout(()=>setPhase(1),1200);const t2=setTimeout(()=>setPhase(2),2200);return()=>{clearTimeout(t1);clearTimeout(t2)};},[]);
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.92)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
-    {phase===0&&<div style={{fontSize:100,animation:"shake .6s infinite"}}>📦</div>}
+    {phase===0&&<div style={{animation:"shake .6s infinite"}}><img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/></div>}
     {phase===1&&<div style={{fontSize:120,animation:"explode .8s forwards"}}>✨</div>}
     {phase===2&&<div style={{textAlign:"center",animation:"popIn .5s ease"}}>
       <div style={{filter:`drop-shadow(0 0 20px ${r.color})`,animation:"float 2s ease-in-out infinite"}}><MinerSprite rarityId={miner.rarityId} size={150}/></div>
@@ -590,7 +590,7 @@ export default function DigMinerApp(){
 
     {/* HEADER */}
     <header style={{background:"rgba(0,0,0,.4)",backdropFilter:"blur(10px)",borderBottom:"2px solid #5D4037",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,flexWrap:"wrap",gap:8}}>
-      <div style={{fontFamily:"'Press Start 2P',monospace",color:"#FFD600",fontSize:14,textShadow:"2px 2px 0 #5D4037"}}>DIGMINER</div>
+      <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:38,objectFit:"contain"}}/>
       <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
         {TABS.map(n=><button key={n} onClick={()=>setTab(tabMap[n])} style={{padding:"6px 12px",background:tab===tabMap[n]?"#FFD600":"rgba(255,255,255,.15)",border:"1px solid #8D6E63",borderRadius:6,color:tab===tabMap[n]?"#333":"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}}>{n}</button>)}
         {wallet
@@ -615,8 +615,7 @@ export default function DigMinerApp(){
 
       {!wallet?(
         <div style={{textAlign:"center",padding:"80px 20px"}}>
-          <div style={{fontSize:100,marginBottom:20}}>⛏️</div>
-          <h1 style={{fontFamily:"'Press Start 2P',monospace",color:"#FFD600",fontSize:26,textShadow:"3px 3px 0 #5D4037",marginBottom:16}}>DIGMINER</h1>
+          <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:140,objectFit:"contain",marginBottom:16,filter:"drop-shadow(0 4px 24px rgba(0,0,0,.4))"}}/>
           <p style={{color:"#fff",fontSize:15,textShadow:"1px 1px 2px rgba(0,0,0,.5)",marginBottom:24}}>Mine. Earn. Withdraw. Powered by Tempo.</p>
           <button disabled={loading} onClick={connectWallet} style={{padding:"14px 48px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"3px solid #5D4037",borderRadius:12,color:"#333",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"'Press Start 2P',monospace"}}>
             {loading?"CONNECTING...":"CONNECT WALLET"}
@@ -721,7 +720,7 @@ export default function DigMinerApp(){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>
             {filtered.length===0
-              ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:"#888",fontSize:13}}><div style={{fontSize:44,marginBottom:12}}>📦</div>No miners yet. Buy a Box in the Shop!</div>
+              ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:"#888",fontSize:13}}><img src="/nftimgs/mistery box.png" alt="box" style={{width:60,height:60,objectFit:"contain",marginBottom:12,opacity:.5}}/><br/>No miners yet. Buy a Box in the Shop!</div>
               :filtered.map(m=><MinerCard key={m.id} miner={m} onMine={startMiner} onClaim={claimMiner} onRepair={repairMiner} loading={!!txLoading}/>)}
           </div>
         </div>}
@@ -729,7 +728,7 @@ export default function DigMinerApp(){
         {/* SHOP */}
         {tab==="shop"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,animation:"fadeIn .3s ease"}}>
           <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
-            <div style={{fontSize:60,marginBottom:10}}>🎁</div>
+            <img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #FFD60088)"}}/>
             <h3 style={{fontSize:15,fontWeight:800,marginBottom:10}}>Buy Mystery Box</h3>
             <div style={{textAlign:"left",padding:"0 16px",marginBottom:14,fontSize:11,color:"#555",lineHeight:1.8}}>
               {RARITIES.map(r=><div key={r.id}>• <span style={{color:r.color,fontWeight:700}}>{r.name}:</span> {r.chance}</div>)}
