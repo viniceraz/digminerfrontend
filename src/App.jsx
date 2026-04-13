@@ -308,6 +308,8 @@ export default function DigMinerApp(){
   const[transactions,setTransactions]=useState([]);
   const[stats,setStats]=useState({totalPlayers:0,totalMiners:0,aliveMiners:0,total_deposited:0,total_withdrawn:0});
   const[referralLink,setReferralLink]=useState("");
+  // Maintenance (public — affects all users)
+  const[maintenanceMode,setMaintenanceMode]=useState(false);
   // Admin
   const[isAdmin,setIsAdmin]=useState(false);
   const[maintenance,setMaintenance]=useState(false);
@@ -319,6 +321,14 @@ export default function DigMinerApp(){
   const[adminLoading,setAdminLoading]=useState("");
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
+
+  // Check maintenance status on mount and every 30s
+  useEffect(()=>{
+    const check=()=>fetch("/api/maintenance").then(r=>r.json()).then(d=>setMaintenanceMode(!!d.maintenance)).catch(()=>{});
+    check();
+    const interval=setInterval(check,30000);
+    return()=>clearInterval(interval);
+  },[]);
 
   // Load global stats on mount
   useEffect(()=>{
@@ -405,12 +415,13 @@ export default function DigMinerApp(){
     return data.token;
   };
 
-  // Fetch wrapper that adds the auth token; auto re-auths on 401
+  // Fetch wrapper that adds the auth token; auto re-auths on 401; detects 503 maintenance
   const authFetch=async(url,opts={})=>{
     const token=localStorage.getItem(AUTH_KEY);
     const headers={"Content-Type":"application/json",...(opts.headers||{})};
     if(token) headers["Authorization"]=`Bearer ${token}`;
     let res=await fetch(url,{...opts,headers});
+    if(res.status===503){setMaintenanceMode(true);return res;}
     if(res.status===401&&wallet){
       try{
         const newToken=await signIn(wallet);
@@ -495,6 +506,7 @@ export default function DigMinerApp(){
       const d=await res.json();
       if(!res.ok) return notify(d.error,false);
       setMaintenance(d.maintenance);
+      setMaintenanceMode(d.maintenance);
       notify(d.maintenance?"🔴 Maintenance ON — game blocked for all players":"🟢 Maintenance OFF — game is live");
     }catch(e){notify(e.message,false);}
     finally{setAdminLoading("");}
@@ -698,6 +710,24 @@ export default function DigMinerApp(){
       @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       body{overflow-x:hidden} input:focus{outline:2px solid #FF9800} button:hover:not(:disabled){filter:brightness(1.1)} button:active:not(:disabled){transform:scale(.97)} button:disabled{opacity:.6;cursor:not-allowed}
     `}</style>
+
+    {/* MAINTENANCE OVERLAY — blocks everything for non-admins */}
+    {maintenanceMode&&!isAdmin&&(
+      <div style={{position:"fixed",inset:0,zIndex:99999,background:"linear-gradient(135deg,#0d0d1a 0%,#1a1a2e 50%,#0d0d1a 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",padding:24}}>
+        <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:90,objectFit:"contain",marginBottom:24,filter:"drop-shadow(0 0 24px #FF9800)"}}/>
+        <div style={{fontSize:56,marginBottom:16}}>🔧</div>
+        <h1 style={{color:"#FFD600",fontFamily:"'Press Start 2P',monospace",fontSize:16,marginBottom:20,lineHeight:1.8}}>Under Maintenance</h1>
+        <p style={{color:"rgba(255,255,255,.75)",fontSize:14,maxWidth:420,lineHeight:1.9,marginBottom:8}}>
+          We're upgrading the game to bring you something even better.
+        </p>
+        <p style={{color:"rgba(255,255,255,.45)",fontSize:12,marginBottom:32}}>Come back soon — it won't take long!</p>
+        <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer"
+          style={{padding:"12px 32px",background:"#0088cc",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 4px 20px rgba(0,136,204,.4)"}}>
+          📢 Follow on Telegram for updates
+        </a>
+        <p style={{color:"rgba(255,255,255,.2)",fontSize:10,marginTop:40}}>DigMiner © 2026 • Tempo Blockchain</p>
+      </div>
+    )}
 
     {notif&&<div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:10000,padding:"10px 24px",borderRadius:10,background:notif.ok?"#2E7D32":"#C62828",color:"#fff",fontSize:13,fontWeight:600,animation:"slideDown .3s ease",boxShadow:"0 4px 20px rgba(0,0,0,.3)",whiteSpace:"nowrap",maxWidth:"90vw",textAlign:"center"}}>{notif.msg}</div>}
     {revealing&&<BoxReveal miner={revealing} onClose={closeReveal}/>}
