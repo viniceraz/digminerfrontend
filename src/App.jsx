@@ -184,7 +184,7 @@ function FarmCalculator({miners}){
     {/* SIMULATOR */}
     <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
       <h2 style={{fontSize:16,fontWeight:800,color:"#333",marginBottom:4}}>🧮 Farm Simulator</h2>
-      <p style={{fontSize:11,color:"#888",marginBottom:20}}>Simula quanto você ganharia com qualquer combinação de mineradores.</p>
+      <p style={{fontSize:11,color:"#888",marginBottom:20}}>Simulate how much you would earn with any combination of miners.</p>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12,marginBottom:20}}>
         {RARITIES.map(r=>{
           const avg=(r.dailyMin+r.dailyMax)/2;
@@ -232,7 +232,7 @@ function FarmCalculator({miners}){
           </div>
         </div>
       )}
-      {simDaily===0&&<div style={{textAlign:"center",padding:16,color:"#aaa",fontSize:12}}>Adicione mineradores acima para ver a simulação</div>}
+      {simDaily===0&&<div style={{textAlign:"center",padding:16,color:"#aaa",fontSize:12}}>Add miners above to see the simulation</div>}
     </div>
   </div>);
 }
@@ -768,7 +768,7 @@ export default function DigMinerApp(){
       {/* FOOTER */}
       <div style={{textAlign:"center",padding:"36px 0 16px",color:"rgba(255,255,255,.5)",fontSize:9}}>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:8,flexWrap:"wrap"}}>
-          {["NFT Portfolio","Road Map","Team","Whitepaper","Telegram"].map(l=><span key={l} style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>{l}</span>)}
+          {["Roadmap","Telegram"].map(l=><span key={l} style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>{l}</span>)}
         </div>
         DigMiner © 2026 • Powered by Tempo Blockchain
       </div>
