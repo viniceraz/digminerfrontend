@@ -20,27 +20,23 @@ const TEMPO_CHAIN = {
   blockExplorerUrls: ["https://tempo.drpc.org"],
 };
 
+const NFT_IMGS = [
+  "/nftimgs/minerador lvl 1.png",
+  "/nftimgs/minerador lvl 2.png",
+  "/nftimgs/minerador lvl 3.png",
+  "/nftimgs/minerador lvl 4.png",
+  "/nftimgs/minerador lvl 5.png",
+  "/nftimgs/minerador lvl 6.png",
+];
+
 function MinerSprite({rarityId,size=90}){
   const r=RARITIES[rarityId];
-  const h=["#8D6E63","#66BB6A","#42A5F5","#EC407A","#FFA726","#AB47BC"];
-  const s=["#FFCC80","#FFCC80","#FFE0B2","#FFE0B2","#FFD54F","#CE93D8"];
-  return(<svg viewBox="0 0 64 64" width={size} height={size}>
-    <defs><radialGradient id={`g${rarityId}${size}`}><stop offset="0%" stopColor={r.color} stopOpacity=".25"/><stop offset="100%" stopColor={r.color} stopOpacity="0"/></radialGradient></defs>
-    <circle cx="32" cy="32" r="30" fill={`url(#g${rarityId}${size})`}/>
-    <rect x="20" y="30" width="24" height="22" rx="4" fill={h[rarityId]}/>
-    <circle cx="32" cy="22" r="12" fill={s[rarityId]} stroke={r.color} strokeWidth="1.5"/>
-    <path d={`M20,22 Q32,6 44,22`} fill={h[rarityId]}/>
-    <rect x="28" y="9" width="8" height="5" rx="2" fill="#FFD600"/>
-    <circle cx="32" cy="11" r="2" fill="#FFF9C4"/>
-    <circle cx="28" cy="23" r="2" fill="#333"/><circle cx="36" cy="23" r="2" fill="#333"/>
-    <circle cx="28.5" cy="22.5" r=".8" fill="#fff"/><circle cx="36.5" cy="22.5" r=".8" fill="#fff"/>
-    <line x1="44" y1="26" x2="56" y2="14" stroke="#6D4C41" strokeWidth="2.5" strokeLinecap="round"/>
-    <polygon points="54,11 60,8 58,16" fill="#B0BEC5"/>
-    <rect x="23" y="52" width="7" height="8" rx="2" fill={h[rarityId]}/>
-    <rect x="34" y="52" width="7" height="8" rx="2" fill={h[rarityId]}/>
-    <rect x="22" y="57" width="9" height="4" rx="2" fill="#5D4037"/>
-    <rect x="33" y="57" width="9" height="4" rx="2" fill="#5D4037"/>
-  </svg>);
+  return(
+    <div style={{width:size,height:size,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+      <div style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle,${r.color}33 0%,transparent 70%)`}}/>
+      <img src={NFT_IMGS[rarityId]} alt={r.name} style={{width:size,height:size,objectFit:"contain",imageRendering:"auto",filter:`drop-shadow(0 0 6px ${r.color}88)`}}/>
+    </div>
+  );
 }
 
 function BoxReveal({miner,onClose}){
@@ -93,6 +89,150 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading}){
             :miner.isMining
               ?<div style={{flex:1,textAlign:"center",color:"#4CAF50",fontSize:10,padding:7}}>⛏️ Mining… <Timer ms={miner.cooldownRemaining}/></div>
               :<button disabled={loading} onClick={()=>onMine(miner.id)} style={{flex:1,padding:"7px",background:`linear-gradient(135deg,${r.color},${r.color}dd)`,border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>⛏️ Mine</button>}
+    </div>
+  </div>);
+}
+
+function FarmCalculator({miners}){
+  const[simQty,setSimQty]=useState({0:0,1:0,2:0,3:0,4:0,5:0});
+  const alive=miners.filter(m=>m.isAlive&&!m.needsRepair);
+  const dailyTotal=alive.reduce((s,m)=>s+m.dailyDigcoin,0);
+  const weeklyTotal=dailyTotal*7;
+  const monthlyTotal=dailyTotal*30;
+
+  // Simulator totals
+  const simDaily=RARITIES.reduce((s,r)=>{
+    const qty=simQty[r.id]||0;
+    const avg=(r.dailyMin+r.dailyMax)/2;
+    return s+avg*qty;
+  },0);
+  const simWeekly=simDaily*7;
+  const simMonthly=simDaily*30;
+
+  const Card=({label,dc,usd})=>(
+    <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,textAlign:"center",border:"1px solid #eee",flex:1,minWidth:120}}>
+      <div style={{fontSize:10,color:"#888",marginBottom:4}}>{label}</div>
+      <div style={{fontSize:18,fontWeight:800,color:"#FF9800"}}>{dc.toFixed(1)} DC</div>
+      <div style={{fontSize:11,color:"#4CAF50",fontWeight:600}}>${usd.toFixed(2)} USD</div>
+    </div>
+  );
+
+  return(<div style={{animation:"fadeIn .3s ease",display:"flex",flexDirection:"column",gap:16}}>
+
+    {/* YOUR MINERS STATS */}
+    <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+      <h2 style={{fontSize:16,fontWeight:800,color:"#333",marginBottom:4}}>📊 Your Farm Stats</h2>
+      <p style={{fontSize:11,color:"#888",marginBottom:20}}>{alive.length} active miners · 100 DC = 1 pathUSD</p>
+      {alive.length===0
+        ?<div style={{textAlign:"center",padding:24,color:"#aaa",fontSize:12}}>No active miners yet. Buy boxes in the Shop!</div>
+        :<>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:20}}>
+            <Card label="Daily Income" dc={dailyTotal} usd={dailyTotal/DIG_RATE}/>
+            <Card label="Weekly Income" dc={weeklyTotal} usd={weeklyTotal/DIG_RATE}/>
+            <Card label="Monthly Income" dc={monthlyTotal} usd={monthlyTotal/DIG_RATE}/>
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+              <thead><tr style={{background:"#f5f5f5"}}>
+                {["Miner","Rarity","Daily DC","Daily USD","Monthly DC","Monthly USD","Lifespan Left","Total Remaining"].map(h=>(
+                  <th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",fontWeight:700,color:"#555",whiteSpace:"nowrap"}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>{alive.map(m=>{
+                const r=RARITIES[m.rarityId];
+                const monthDC=m.dailyDigcoin*30;
+                const remaining=m.dailyDigcoin*m.nftAgeRemaining;
+                return(<tr key={m.id} style={{borderBottom:"1px solid #f0f0f0"}}>
+                  <td style={{padding:"8px 10px"}}><img src={NFT_IMGS[m.rarityId]} alt={r.name} style={{width:28,height:28,objectFit:"contain",verticalAlign:"middle",marginRight:6}}/><span style={{fontWeight:600,fontSize:10}}>#{m.id}</span></td>
+                  <td style={{padding:"8px 10px",fontWeight:700,color:r.color}}>{r.name}</td>
+                  <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{m.dailyDigcoin.toFixed(2)}</td>
+                  <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(m.dailyDigcoin/DIG_RATE).toFixed(4)}</td>
+                  <td style={{padding:"8px 10px"}}>{monthDC.toFixed(1)}</td>
+                  <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(monthDC/DIG_RATE).toFixed(3)}</td>
+                  <td style={{padding:"8px 10px"}}>{m.nftAgeRemaining} days</td>
+                  <td style={{padding:"8px 10px",fontWeight:600,color:"#2196F3"}}>{remaining.toFixed(0)} DC</td>
+                </tr>);
+              })}</tbody>
+              <tfoot><tr style={{background:"#FFF8E1",fontWeight:800}}>
+                <td colSpan={2} style={{padding:"10px",fontSize:12}}>TOTAL</td>
+                <td style={{padding:"10px",color:"#FF9800"}}>{dailyTotal.toFixed(2)}</td>
+                <td style={{padding:"10px",color:"#4CAF50"}}>${(dailyTotal/DIG_RATE).toFixed(4)}</td>
+                <td style={{padding:"10px"}}>{monthlyTotal.toFixed(1)}</td>
+                <td style={{padding:"10px",color:"#4CAF50"}}>${(monthlyTotal/DIG_RATE).toFixed(3)}</td>
+                <td colSpan={2} style={{padding:"10px",color:"#888",fontSize:10}}>across {alive.length} miners</td>
+              </tfoot>
+            </table>
+          </div>
+          {/* Breakdown by rarity */}
+          <div style={{marginTop:16,display:"flex",gap:8,flexWrap:"wrap"}}>
+            {RARITIES.map(r=>{
+              const group=alive.filter(m=>m.rarityId===r.id);
+              if(!group.length) return null;
+              const dc=group.reduce((s,m)=>s+m.dailyDigcoin,0);
+              return(<div key={r.id} style={{background:r.bg||"#f5f5f5",borderRadius:10,padding:"8px 14px",border:`1px solid ${r.color}`,display:"flex",gap:10,alignItems:"center"}}>
+                <img src={NFT_IMGS[r.id]} alt={r.name} style={{width:24,height:24,objectFit:"contain"}}/>
+                <div>
+                  <div style={{fontSize:10,color:r.color,fontWeight:700}}>{r.name} ×{group.length}</div>
+                  <div style={{fontSize:11,fontWeight:800,color:"#333"}}>{dc.toFixed(1)} DC/day</div>
+                </div>
+              </div>);
+            })}
+          </div>
+        </>}
+    </div>
+
+    {/* SIMULATOR */}
+    <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+      <h2 style={{fontSize:16,fontWeight:800,color:"#333",marginBottom:4}}>🧮 Farm Simulator</h2>
+      <p style={{fontSize:11,color:"#888",marginBottom:20}}>Simula quanto você ganharia com qualquer combinação de mineradores.</p>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12,marginBottom:20}}>
+        {RARITIES.map(r=>{
+          const avg=(r.dailyMin+r.dailyMax)/2;
+          return(<div key={r.id} style={{background:"#fafafa",borderRadius:10,padding:12,border:`1px solid ${r.color}44`}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <img src={NFT_IMGS[r.id]} alt={r.name} style={{width:36,height:36,objectFit:"contain"}}/>
+              <div>
+                <div style={{fontWeight:700,color:r.color,fontSize:11}}>{r.name}</div>
+                <div style={{fontSize:9,color:"#999"}}>{r.dailyMin}–{r.dailyMax} DC/day avg</div>
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <button onClick={()=>setSimQty(q=>({...q,[r.id]:Math.max(0,(q[r.id]||0)-1)}))} style={{width:26,height:26,borderRadius:6,border:"1px solid #ddd",background:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",lineHeight:1}}>−</button>
+              <input type="number" min={0} value={simQty[r.id]||0}
+                onChange={e=>setSimQty(q=>({...q,[r.id]:Math.max(0,parseInt(e.target.value)||0)}))}
+                style={{flex:1,textAlign:"center",padding:"4px",border:"1px solid #ddd",borderRadius:6,fontSize:13,fontWeight:700}}/>
+              <button onClick={()=>setSimQty(q=>({...q,[r.id]:(q[r.id]||0)+1}))} style={{width:26,height:26,borderRadius:6,border:"1px solid #ddd",background:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",lineHeight:1}}>+</button>
+            </div>
+            <div style={{marginTop:6,fontSize:10,color:"#888",textAlign:"center"}}>= {((simQty[r.id]||0)*avg).toFixed(1)} DC/day</div>
+          </div>);
+        })}
+      </div>
+      {simDaily>0&&(
+        <div style={{background:"linear-gradient(135deg,#1a1a2e,#2a1a3e)",borderRadius:12,padding:20,color:"#fff"}}>
+          <div style={{fontSize:12,color:"#aaa",marginBottom:12,textAlign:"center"}}>Simulation Result</div>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center"}}>
+            {[["Daily",simDaily,simDaily/DIG_RATE],["Weekly",simWeekly,simWeekly/DIG_RATE],["Monthly",simMonthly,simMonthly/DIG_RATE]].map(([l,dc,usd])=>(
+              <div key={l} style={{textAlign:"center",flex:1,minWidth:100}}>
+                <div style={{fontSize:10,color:"#888"}}>{l}</div>
+                <div style={{fontSize:20,fontWeight:800,color:"#FFD600"}}>{dc.toFixed(1)} DC</div>
+                <div style={{fontSize:12,color:"#4CAF50",fontWeight:600}}>${usd.toFixed(3)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:14,borderTop:"1px solid #333",paddingTop:12,display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
+            {[["Box Cost",`${Object.entries(simQty).reduce((s,[id,q])=>s+q*BOX_PRICE,0)} DC`],
+              ["ROI",`~${simDaily>0?Math.ceil(Object.entries(simQty).reduce((s,[id,q])=>s+q*BOX_PRICE,0)/simDaily):0} days`],
+              ["Total Return",`${Object.entries(simQty).reduce((s,[id,q])=>s+q*(RARITIES[id].dailyMin+RARITIES[id].dailyMax)/2*RARITIES[id].nftAge,0).toFixed(0)} DC`],
+            ].map(([l,v])=>(
+              <div key={l} style={{textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#888"}}>{l}</div>
+                <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {simDaily===0&&<div style={{textAlign:"center",padding:16,color:"#aaa",fontSize:12}}>Adicione mineradores acima para ver a simulação</div>}
     </div>
   </div>);
 }
@@ -429,8 +569,8 @@ export default function DigMinerApp(){
   const playableCount=readyMiners.length;
   const filtered=filter==="All"?miners:miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=["My Account","My NFT","Shop","How It Works"];
-  const tabMap={"My Account":"account","My NFT":"nft","Shop":"shop","How It Works":"how"};
+  const TABS=["My Account","My NFT","Shop","Calculator","How It Works"];
+  const tabMap={"My Account":"account","My NFT":"nft","Shop":"shop","Calculator":"calc","How It Works":"how"};
 
   return(<div style={{minHeight:"100vh",backgroundImage:"linear-gradient(to bottom,#87CEEB 0%,#E8D5A3 40%,#C4A265 100%)",backgroundAttachment:"fixed",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
     <style>{`
@@ -618,6 +758,9 @@ export default function DigMinerApp(){
             </table>
           </div>
         </div>}
+
+        {/* CALCULATOR */}
+        {tab==="calc"&&<FarmCalculator miners={miners}/>}
 
         {/* HOW IT WORKS */}
         {tab==="how"&&<HowItWorks/>}
