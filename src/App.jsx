@@ -349,6 +349,7 @@ export default function DigMinerApp(){
   const loadPlayer=useCallback(async(address)=>{
     try{
       const res=await fetch(`/api/player/${address}`);
+      if(!res.ok) return; // player not registered yet or invalid address — silently skip
       const data=await res.json();
       setDigcoin(data.player.digcoinBalance);
       setMiners(data.miners);
@@ -450,7 +451,7 @@ export default function DigMinerApp(){
       // Authenticate with wallet signature (proves ownership)
       await signIn(address);
       // Register / load player
-      await fetch("/api/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({wallet:address,referrer:new URLSearchParams(window.location.search).get("ref")})});
+      await authFetch("/api/register",{method:"POST",body:JSON.stringify({wallet:address,referrer:new URLSearchParams(window.location.search).get("ref")})});
       setWallet(address);
       await loadPlayer(address);
       await loadTransactions(address);
@@ -721,10 +722,16 @@ export default function DigMinerApp(){
           We're upgrading the game to bring you something even better.
         </p>
         <p style={{color:"rgba(255,255,255,.45)",fontSize:12,marginBottom:32}}>Come back soon — it won't take long!</p>
-        <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer"
-          style={{padding:"12px 32px",background:"#0088cc",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 4px 20px rgba(0,136,204,.4)"}}>
-          📢 Follow on Telegram for updates
-        </a>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center"}}>
+          <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer"
+            style={{padding:"12px 28px",background:"#0088cc",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 4px 20px rgba(0,136,204,.4)"}}>
+            📢 Telegram
+          </a>
+          <a href="https://x.com/digminertempo" target="_blank" rel="noopener noreferrer"
+            style={{padding:"12px 28px",background:"#000",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 4px 20px rgba(255,255,255,.15)",border:"1px solid #333"}}>
+            𝕏 Twitter
+          </a>
+        </div>
         <p style={{color:"rgba(255,255,255,.2)",fontSize:10,marginTop:40}}>DigMiner © 2026 • Tempo Blockchain</p>
       </div>
     )}
@@ -1002,6 +1009,7 @@ export default function DigMinerApp(){
         <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:8,flexWrap:"wrap"}}>
           <span style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>Roadmap</span>
           <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer",color:"rgba(255,255,255,.5)",textDecoration:"none"}}>Telegram</a>
+          <a href="https://x.com/digminertempo" target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer",color:"rgba(255,255,255,.5)",textDecoration:"none"}}>Twitter</a>
         </div>
         DigMiner © 2026 • Powered by Tempo Blockchain
       </div>
