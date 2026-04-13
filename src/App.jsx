@@ -111,7 +111,7 @@ function HowItWorks(){
   return(<div style={{animation:"fadeIn .3s ease"}}>
     <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:32,border:"1px solid #ddd",marginBottom:20}}>
       <h2 style={{fontSize:22,fontWeight:800,color:"#333",marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>⛏️ How It Works</h2>
-      <p style={{color:"#888",fontSize:13,marginBottom:24}}>DigMiner is a Click-to-Earn game on the Tempo blockchain. Buy miners, collect daily rewards, and withdraw real pathUSD.</p>
+      <p style={{color:"#888",fontSize:13,marginBottom:24}}>DigMiner is a Click-to-Earn game on the Tempo Mainnet. Buy miners, collect daily rewards, and withdraw real pathUSD.</p>
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
         {steps.map((s,i)=>(<div key={i} style={{display:"flex",gap:16,padding:16,background:i%2===0?"#fafafa":"#fff",borderRadius:12,border:"1px solid #f0f0f0"}}>
           <div style={{fontSize:32,minWidth:48,textAlign:"center"}}>{s.icon}</div>
@@ -214,18 +214,6 @@ export default function DigMinerApp(){
     }catch(e){console.error("tx history error:",e.message);}
   };
 
-  const getFaucet=async(address)=>{
-    try{
-      setTxLoading("faucet");
-      notify("Requesting testnet tokens...");
-      const res=await fetch("/api/faucet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({wallet:address||wallet})});
-      const data=await res.json();
-      if(!res.ok) return notify(data.error,false);
-      notify("Testnet tokens sent! Wait ~10s then refresh balance.");
-      setTimeout(()=>address?null:loadPlayer(wallet),12000);
-    }catch(e){notify(e.message,false);}
-    finally{setTxLoading("");}
-  };
 
   const ensureTempoNetwork=async()=>{
     try{
@@ -479,7 +467,7 @@ export default function DigMinerApp(){
           [`${stats.totalMiners||0} NFT`],
           [`${stats.totalPlayers||0} Players`],
           [`${(stats.total_withdrawn||0).toFixed(2)} Withdrawn`],
-          [`Tempo Testnet`],
+          [`Tempo Mainnet`],
         ].map(([v],i)=>(
           <div key={i} style={{flex:1,minWidth:130,padding:"10px 14px",borderRight:i<4?"1px solid #eee":"none",fontSize:11,fontWeight:600,color:"#333",textAlign:"center"}}>{v}</div>
         ))}
@@ -493,11 +481,7 @@ export default function DigMinerApp(){
           <button disabled={loading} onClick={connectWallet} style={{padding:"14px 48px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"3px solid #5D4037",borderRadius:12,color:"#333",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"'Press Start 2P',monospace"}}>
             {loading?"CONNECTING...":"CONNECT WALLET"}
           </button>
-          <p style={{color:"rgba(255,255,255,.7)",fontSize:11,marginTop:16}}>Requires MetaMask + Tempo Moderato Testnet</p>
-          <div style={{marginTop:20,padding:"12px 24px",background:"rgba(0,0,0,.3)",borderRadius:10,display:"inline-block"}}>
-            <p style={{color:"#FFD600",fontSize:11,marginBottom:8,fontWeight:600}}>Testnet — need pathUSD?</p>
-            <p style={{color:"rgba(255,255,255,.7)",fontSize:10,marginBottom:10}}>Connect your wallet first, then click below to get free test tokens</p>
-          </div>
+          <p style={{color:"rgba(255,255,255,.7)",fontSize:11,marginTop:16}}>Requires MetaMask + Tempo Mainnet</p>
         </div>
       ):<>
         {/* WALLET BAR */}
@@ -515,9 +499,6 @@ export default function DigMinerApp(){
           {canClaimAny&&<button disabled={!!txLoading} onClick={claimAll} style={{padding:"6px 14px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"2px solid #E65100",borderRadius:8,color:"#333",fontSize:11,fontWeight:800,cursor:"pointer"}}>
             {txLoading==="claimall"?"Claiming...":"💎 Claim All ("+readyMiners.length+")"}
           </button>}
-          <button disabled={!!txLoading} onClick={()=>getFaucet()} style={{padding:"6px 14px",background:"linear-gradient(135deg,#7B1FA2,#E91E63)",border:"none",borderRadius:8,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>
-            {txLoading==="faucet"?"Requesting...":"🚰 Get Test Tokens"}
-          </button>
         </div>
 
         {/* MY ACCOUNT */}
