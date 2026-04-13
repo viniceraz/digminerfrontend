@@ -160,7 +160,7 @@ function FarmCalculator({miners}){
                 <td style={{padding:"10px"}}>{monthlyTotal.toFixed(1)}</td>
                 <td style={{padding:"10px",color:"#4CAF50"}}>${(monthlyTotal/DIG_RATE).toFixed(3)}</td>
                 <td colSpan={2} style={{padding:"10px",color:"#888",fontSize:10}}>across {alive.length} miners</td>
-              </tfoot>
+              </tr></tfoot>
             </table>
           </div>
           {/* Breakdown by rarity */}
