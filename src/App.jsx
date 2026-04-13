@@ -344,14 +344,19 @@ export default function DigMinerApp(){
       setMiners(data.miners);
       setReferralLink(`${window.location.origin}?ref=${address}`);
       await loadPathUSDBalance(address);
-      // Check withdraw cooldown
+      // Check withdraw cooldown — use stored token directly (history endpoint requires auth)
       try{
-        const hist=await fetch(`/api/history/${address}?limit=1`).then(r=>r.json());
+        const token=localStorage.getItem("digminer_token");
+        const hist=await fetch(`/api/history/${address}?limit=5`,{
+          headers:token?{Authorization:`Bearer ${token}`}:{},
+        }).then(r=>r.ok?r.json():{transactions:[]});
         const lastW=hist.transactions?.find(t=>t.type==="withdraw");
         if(lastW){
           const elapsed=Date.now()-new Date(lastW.date).getTime();
           const rem=24*60*60*1000-elapsed;
           setWithdrawCooldown(rem>0?rem:0);
+        }else{
+          setWithdrawCooldown(0);
         }
       }catch(_){}
     }catch(e){console.error("loadPlayer error:",e.message);}
@@ -447,7 +452,16 @@ export default function DigMinerApp(){
   // Listen for account/chain changes
   useEffect(()=>{
     if(!window.ethereum) return;
-    const onAccounts=(accs)=>{if(accs.length===0){setWallet(null);setMiners([]);setDigcoin(0);localStorage.removeItem(AUTH_KEY);setAuthToken(null);setIsAdmin(false);}};
+    const onAccounts=(accs)=>{
+      // Always clear session on any account change (disconnect or switch)
+      setWallet(null);setMiners([]);setDigcoin(0);setTransactions([]);
+      setWithdrawCooldown(0);setIsAdmin(false);setPathUSDBalance("0.0000");
+      localStorage.removeItem(AUTH_KEY);setAuthToken(null);
+      if(accs.length>0){
+        // User switched to a different account — notify them to reconnect
+        notify("Wallet changed — please connect again",false);
+      }
+    };
     window.ethereum.on("accountsChanged",onAccounts);
     return()=>window.ethereum.removeListener("accountsChanged",onAccounts);
   },[]);
