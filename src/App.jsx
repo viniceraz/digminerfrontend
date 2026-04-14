@@ -589,6 +589,105 @@ function HowItWorks(){
   );
 }
 
+// ══════════ ROADMAP MODAL ══════════
+function RoadmapModal({onClose}){
+  const PHASES=[
+    {
+      phase:"Phase 1",label:"Foundation",status:"done",color:"#4CAF50",
+      items:[
+        {done:true, text:"Core game loop — Deposit, Mine, Claim, Withdraw"},
+        {done:true, text:"6 rarity tiers with balanced ROI"},
+        {done:true, text:"Mystery Boxes (single & 10x bulk)"},
+        {done:true, text:"Repair system — unlimited lifespan extensions"},
+        {done:true, text:"Referral program — 4% per deposit"},
+        {done:true, text:"Mine All & Claim All batch actions"},
+        {done:true, text:"Full documentation (How It Works)"},
+        {done:true, text:"Fusion — combine 2 miners into a rarer one"},
+      ]
+    },
+    {
+      phase:"Phase 2",label:"Expansion",status:"active",color:"#FF9800",
+      items:[
+        {done:false, text:"New Miner designs & exclusive seasonal rarities"},
+        {done:false, text:"Marketplace — trade miners between players"},
+        {done:false, text:"Miner staking — lock miners for bonus DIGCOIN"},
+        {done:false, text:"Leaderboard — top earners & top fusers"},
+      ]
+    },
+    {
+      phase:"Phase 3",label:"Game World",status:"soon",color:"#2196F3",
+      items:[
+        {done:false, text:"Dungeons — send miners on timed expeditions for rare loot"},
+        {done:false, text:"PVP — pit miners against each other for stakes"},
+        {done:false, text:"Guild system — pool miners and share rewards"},
+        {done:false, text:"Daily quests & achievement rewards"},
+      ]
+    },
+    {
+      phase:"Phase 4",label:"Ecosystem",status:"future",color:"#9C27B0",
+      items:[
+        {done:false, text:"DIGCOIN on-chain token launch"},
+        {done:false, text:"DAO governance — vote on game parameters"},
+        {done:false, text:"Cross-chain bridge support"},
+        {done:false, text:"Mobile app (iOS & Android)"},
+      ]
+    },
+  ];
+  const statusBadge={
+    done:{label:"✅ Live",bg:"#1b3a1b",color:"#4CAF50"},
+    active:{label:"🔨 In Progress",bg:"#3a2a10",color:"#FF9800"},
+    soon:{label:"🗓️ Coming Soon",bg:"#1a2940",color:"#2196F3"},
+    future:{label:"🔮 Future",bg:"#2a1a3a",color:"#9C27B0"},
+  };
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={onClose}>
+      <div style={{background:"#0d0d1a",borderRadius:20,border:"1px solid rgba(255,255,255,.1)",width:"100%",maxWidth:680,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+        {/* Header */}
+        <div style={{padding:"24px 28px 20px",borderBottom:"1px solid rgba(255,255,255,.08)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+          <div>
+            <div style={{fontSize:20,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>🗺️ DigMiner Roadmap</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginTop:4}}>What we've built — and what's coming next.</div>
+          </div>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,.07)",border:"none",color:"rgba(255,255,255,.5)",fontSize:18,width:34,height:34,borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        </div>
+        {/* Body */}
+        <div style={{overflowY:"auto",padding:"24px 28px 28px",display:"flex",flexDirection:"column",gap:24}}>
+          {PHASES.map(p=>{
+            const badge=statusBadge[p.status];
+            return(
+              <div key={p.phase}>
+                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                  <div style={{width:3,height:36,background:p.color,borderRadius:2,flexShrink:0}}/>
+                  <div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,.35)",fontWeight:700,letterSpacing:1.5,textTransform:"uppercase"}}>{p.phase}</div>
+                    <div style={{fontSize:16,fontWeight:800,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{p.label}</div>
+                  </div>
+                  <span style={{marginLeft:"auto",padding:"4px 12px",background:badge.bg,color:badge.color,borderRadius:20,fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{badge.label}</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:7,paddingLeft:15}}>
+                  {p.items.map((item,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 14px",background:"rgba(255,255,255,.03)",borderRadius:8,border:"1px solid rgba(255,255,255,.05)"}}>
+                      <span style={{fontSize:13,flexShrink:0,marginTop:1}}>{item.done?"✅":"⬜"}</span>
+                      <span style={{fontSize:12,color:item.done?"rgba(255,255,255,.55)":"rgba(255,255,255,.8)",lineHeight:1.5,textDecoration:item.done?"line-through":"none"}}>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          <div style={{textAlign:"center",paddingTop:8,borderTop:"1px solid rgba(255,255,255,.06)"}}>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.25)"}}>Roadmap is subject to change. Follow us for updates.</div>
+            <div style={{display:"flex",gap:10,justifyContent:"center",marginTop:12}}>
+              <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer" style={{padding:"7px 18px",background:"#0088cc",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,textDecoration:"none"}}>📢 Telegram</a>
+              <a href="https://x.com/digminertempo" target="_blank" rel="noopener noreferrer" style={{padding:"7px 18px",background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,color:"rgba(255,255,255,.65)",fontSize:11,fontWeight:700,textDecoration:"none"}}>𝕏 Twitter</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ══════════ MAIN APP ══════════
 export default function DigMinerApp(){
   const AUTH_KEY="digminer_token";
@@ -623,6 +722,7 @@ export default function DigMinerApp(){
   const[fuseMode,setFuseMode]=useState(false);
   const[fuseSelected,setFuseSelected]=useState([]);
   const[fuseReveal,setFuseReveal]=useState(null);
+  const[showRoadmap,setShowRoadmap]=useState(false);
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
 
@@ -1076,6 +1176,7 @@ export default function DigMinerApp(){
     {notif&&<div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:10000,padding:"10px 24px",borderRadius:10,background:notif.ok?"#2E7D32":"#C62828",color:"#fff",fontSize:13,fontWeight:600,animation:"slideDown .3s ease",boxShadow:"0 4px 20px rgba(0,0,0,.3)",whiteSpace:"nowrap",maxWidth:"90vw",textAlign:"center"}}>{notif.msg}</div>}
     {revealing&&<BoxReveal miner={revealing} onClose={closeReveal}/>}
     {fuseReveal&&<BoxReveal miner={fuseReveal} onClose={closeFuseReveal} isFuse/>}
+    {showRoadmap&&<RoadmapModal onClose={()=>setShowRoadmap(false)}/>}
 
     {/* HEADER */}
     <header style={{background:"rgba(0,0,0,.4)",backdropFilter:"blur(10px)",borderBottom:"2px solid #5D4037",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,flexWrap:"wrap",gap:8}}>
@@ -1376,7 +1477,7 @@ export default function DigMinerApp(){
       {/* FOOTER */}
       <div style={{textAlign:"center",padding:"36px 0 16px",color:"rgba(255,255,255,.5)",fontSize:9}}>
         <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:8,flexWrap:"wrap"}}>
-          <span style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>Roadmap</span>
+          <span onClick={()=>setShowRoadmap(true)} style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer"}}>Roadmap</span>
           <a href="https://t.me/+RFYExBlVNwk0NmE0" target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer",color:"rgba(255,255,255,.5)",textDecoration:"none"}}>Telegram</a>
           <a href="https://x.com/digminertempo" target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",background:"rgba(0,0,0,.2)",borderRadius:4,cursor:"pointer",color:"rgba(255,255,255,.5)",textDecoration:"none"}}>Twitter</a>
         </div>
