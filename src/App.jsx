@@ -269,6 +269,7 @@ function HowItWorks(){
     {id:"lifespan",emoji:"⏳", label:"Lifespan & Repair"},
     {id:"withdraw",emoji:"🏧", label:"Withdrawals"},
     {id:"referral",emoji:"🤝", label:"Referrals"},
+    {id:"fusion",  emoji:"🔥", label:"Fusion"},
     {id:"roi",     emoji:"📊", label:"ROI Table"},
     {id:"faq",     emoji:"❓", label:"FAQ"},
   ];
@@ -432,6 +433,83 @@ function HowItWorks(){
         ))}
       </div>
       <GBCallout type="tip">No cap on referrals. Every deposit your referrals make earns you 4% — indefinitely, with no extra effort required.</GBCallout>
+
+      <GBSection id="fusion" emoji="🔥" title="Fusion"/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Fusion lets you <strong>sacrifice 2 miners</strong> to forge a brand-new one with a higher rarity. Both originals are permanently destroyed and replaced by a single, stronger miner.</p>
+      <GBCallout type="warning"><strong>Cost:</strong> {FUSE_COST} DIGCOIN per fusion · Both miners must be <strong>Idle</strong> (not mid-cycle) · Dead miners (0 lifespan) are allowed</GBCallout>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>⚗️ Rarity Outcome Rules</h3>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
+        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px",border:"1px solid #eee"}}>
+          <div style={{fontSize:12,fontWeight:800,color:"#9C27B0",marginBottom:10,textTransform:"uppercase",letterSpacing:.5}}>Same Rarity + Same Rarity</div>
+          <div style={{fontSize:12,color:"#555",lineHeight:2}}>
+            <span style={{fontWeight:700,color:"#4CAF50"}}>80%</span> → upgrades <strong>+1 tier</strong><br/>
+            <span style={{fontWeight:700,color:"#FF9800"}}>20%</span> → jumps <strong>+2 tiers</strong>
+          </div>
+          <div style={{fontSize:11,color:"#aaa",marginTop:8}}>Example: Common + Common → 80% UnCommon, 20% Rare</div>
+        </div>
+        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px",border:"1px solid #eee"}}>
+          <div style={{fontSize:12,fontWeight:800,color:"#E91E63",marginBottom:10,textTransform:"uppercase",letterSpacing:.5}}>Different Rarities</div>
+          <div style={{fontSize:12,color:"#555",lineHeight:2}}>
+            <span style={{fontWeight:700,color:"#4CAF50"}}>80%</span> → keeps the <strong>highest rarity</strong><br/>
+            <span style={{fontWeight:700,color:"#FF9800"}}>20%</span> → jumps <strong>highest +2 tiers</strong>
+          </div>
+          <div style={{fontSize:11,color:"#aaa",marginTop:8}}>Example: Common + Rare → 80% Rare, 20% Super Rare</div>
+        </div>
+      </div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12}}>📈 All Possible Outcomes</h3>
+      <div style={{overflowX:"auto",marginBottom:22}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"#1a1a2e"}}>
+              {["Miner A","Miner B","80% Result","20% Result"].map(h=>(
+                <th key={h} style={{padding:"10px 12px",color:"rgba(255,255,255,.65)",fontWeight:600,textAlign:"left",whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["Common","Common","UnCommon","Rare"],
+              ["UnCommon","UnCommon","Rare","Super Rare"],
+              ["Rare","Rare","Super Rare","Legendary"],
+              ["Super Rare","Super Rare","Legendary","Mythic"],
+              ["Legendary","Legendary","Mythic","Mythic"],
+              ["Mythic","Mythic","Mythic","Mythic"],
+              ["Common","Rare","Rare","Super Rare"],
+              ["UnCommon","Legendary","Legendary","Mythic"],
+              ["Common","Legendary","Legendary","Mythic"],
+            ].map(([a,b,r80,r20],i)=>{
+              const ca=RARITIES.find(r=>r.name===a);
+              const cb=RARITIES.find(r=>r.name===b);
+              const c80=RARITIES.find(r=>r.name===r80);
+              const c20=RARITIES.find(r=>r.name===r20);
+              return(
+                <tr key={i} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:ca?.color}}>{a}</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:cb?.color}}>{b}</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:c80?.color}}>{r80}</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:c20?.color}}>{r20}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:10}}>🔥 How to Fuse</h3>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:22}}>
+        {[
+          ["Go to My NFT tab","Make sure the 2 miners you want to fuse are both Idle (not mining)."],
+          ["Click 🔥 Fuse Miners","A purple banner appears. All miner cards become selectable."],
+          ["Select 2 miners","Click any 2 cards — they highlight with a purple border. Mining cards are locked out."],
+          ["Click 🔥 Fuse Now (150 DC)","150 DC is deducted, both miners are destroyed, and a new one is created."],
+          ["Watch the reveal animation","A special ⚗️ Fusion Result screen shows your new miner's rarity."],
+        ].map(([t,d],i)=>(
+          <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"13px 16px",background:"#f8f9fa",borderRadius:10,border:"1px solid #eee"}}>
+            <div style={{background:"#4a0060",color:"#E040FB",borderRadius:"50%",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0,fontFamily:"'Outfit',sans-serif"}}>{i+1}</div>
+            <div><div style={{fontSize:13,fontWeight:700,color:"#222",marginBottom:3}}>{t}</div><div style={{fontSize:12,color:"#666",lineHeight:1.7}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <GBCallout type="tip">Fusion is most powerful when you have <strong>duplicate low-tier miners</strong> sitting idle. Two Common miners have only 18–20 DC/day each — fusing them gives you a guaranteed UnCommon (or better) with no extra box purchase needed.</GBCallout>
 
       <GBSection id="roi" emoji="📊" title="ROI & Full Statistics"/>
       <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Complete breakdown of all 6 miner types — earnings, returns, and ROI based on a single box price of 300 DC.</p>
