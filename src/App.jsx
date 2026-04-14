@@ -3,12 +3,12 @@ import { ethers } from "ethers";
 import { MINERPOOL_ABI, PATHUSD_ABI, CONTRACTS } from "./contracts";
 
 const RARITIES = [
-  { id:0, name:"Common",    chance:"30%", dailyMin:18, dailyMax:20, nftAge:45, repair:0.24, color:"#9E9E9E", bg:"#3a3a3a" },
-  { id:1, name:"UnCommon",  chance:"30%", dailyMin:21, dailyMax:23, nftAge:48, repair:0.40, color:"#4CAF50", bg:"#1b3a1b" },
-  { id:2, name:"Rare",      chance:"18%", dailyMin:24, dailyMax:26, nftAge:52, repair:0.60, color:"#2196F3", bg:"#1a2940" },
-  { id:3, name:"Super Rare",chance:"8%",  dailyMin:27, dailyMax:30, nftAge:57, repair:0.80, color:"#E91E63", bg:"#3a1a2a" },
-  { id:4, name:"Legendary", chance:"4%",  dailyMin:31, dailyMax:35, nftAge:63, repair:1.00, color:"#FF9800", bg:"#3a2a10" },
-  { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:70, repair:1.50, color:"#9C27B0", bg:"#2a1a3a" },
+  { id:0, name:"Common",    chance:"30%", dailyMin:18, dailyMax:20, nftAge:19, repair:0.24, color:"#9E9E9E", bg:"#3a3a3a" },
+  { id:1, name:"UnCommon",  chance:"30%", dailyMin:21, dailyMax:23, nftAge:17, repair:0.40, color:"#4CAF50", bg:"#1b3a1b" },
+  { id:2, name:"Rare",      chance:"18%", dailyMin:24, dailyMax:26, nftAge:15, repair:0.60, color:"#2196F3", bg:"#1a2940" },
+  { id:3, name:"Super Rare",chance:"8%",  dailyMin:27, dailyMax:30, nftAge:14, repair:0.80, color:"#E91E63", bg:"#3a1a2a" },
+  { id:4, name:"Legendary", chance:"4%",  dailyMin:31, dailyMax:35, nftAge:13, repair:1.00, color:"#FF9800", bg:"#3a2a10" },
+  { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a" },
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=10;
 const SALE_BOX_PRICE=150; const SALE_BOX_MAX_TOTAL=2000; const SALE_BOX_MAX_PER_WALLET=50;
