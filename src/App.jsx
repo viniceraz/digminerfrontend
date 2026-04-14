@@ -610,7 +610,7 @@ function RoadmapModal({onClose}){
       items:[
         {done:false, text:"New Miner designs & exclusive seasonal rarities"},
         {done:false, text:"Marketplace — trade miners between players"},
-        {done:false, text:"Miner staking — lock miners for bonus DIGCOIN"},
+        {done:false, text:"Lands — own a plot to boost your daily DIGCOIN production"},
         {done:false, text:"Leaderboard — top earners & top fusers"},
       ]
     },
@@ -627,9 +627,7 @@ function RoadmapModal({onClose}){
       phase:"Phase 4",label:"Ecosystem",status:"future",color:"#9C27B0",
       items:[
         {done:false, text:"DIGCOIN on-chain token launch"},
-        {done:false, text:"DAO governance — vote on game parameters"},
         {done:false, text:"Cross-chain bridge support"},
-        {done:false, text:"Mobile app (iOS & Android)"},
       ]
     },
   ];
