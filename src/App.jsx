@@ -536,9 +536,24 @@ export default function DigMinerApp(){
   const[adminLog,setAdminLog]=useState([]);
   const[adminPlayers,setAdminPlayers]=useState([]);
   const[adminLoading,setAdminLoading]=useState("");
-  const[saleBoxInfo,setSaleBoxInfo]=useState({totalSold:0,walletBought:0,globalRemaining:SALE_BOX_MAX_TOTAL,walletRemaining:SALE_BOX_MAX_PER_WALLET});
+  const[saleBoxInfo,setSaleBoxInfo]=useState({totalSold:0,walletBought:0,globalRemaining:SALE_BOX_MAX_TOTAL,walletRemaining:SALE_BOX_MAX_PER_WALLET,endTime:null,isActive:true});
+  const[saleCountdown,setSaleCountdown]=useState(null);
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
+
+  // Sale box countdown ticker
+  useEffect(()=>{
+    if(!saleBoxInfo.endTime) return;
+    const tick=()=>{
+      const rem=saleBoxInfo.endTime - Date.now();
+      if(rem<=0){setSaleCountdown(null);setSaleBoxInfo(s=>({...s,isActive:false}));return;}
+      const m=Math.floor(rem/60000);const s=Math.floor((rem%60000)/1000);
+      setSaleCountdown(`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`);
+    };
+    tick();
+    const i=setInterval(tick,1000);
+    return()=>clearInterval(i);
+  },[saleBoxInfo.endTime]);
 
   // Check maintenance status on mount and every 30s
   useEffect(()=>{
@@ -848,6 +863,7 @@ export default function DigMinerApp(){
 
   const buySaleBox=async(qty)=>{
     const cost=SALE_BOX_PRICE*qty;
+    if(!saleBoxInfo.isActive) return notify("The sale has ended! Buy a regular box.",false);
     if(digcoin<cost) return notify(`Need ${cost} DIGCOIN. Deposit pathUSD first!`,false);
     if(saleBoxInfo.globalRemaining<=0) return notify("Sale boxes are sold out!",false);
     if(saleBoxInfo.walletRemaining<=0) return notify(`Wallet limit reached (max ${SALE_BOX_MAX_PER_WALLET})`,false);
@@ -1132,8 +1148,8 @@ export default function DigMinerApp(){
         {/* SHOP */}
         {tab==="shop"&&<div style={{display:"flex",flexDirection:"column",gap:16,animation:"fadeIn .3s ease"}}>
 
-          {/* ── SALE BOX (limited) ── */}
-          {saleBoxInfo.globalRemaining>0&&<div style={{background:"rgba(255,255,255,.97)",borderRadius:14,padding:24,border:"3px solid #E53935",boxShadow:"0 4px 24px rgba(229,57,53,.18)",position:"relative",overflow:"hidden"}}>
+          {/* ── SALE BOX (limited + timer) ── */}
+          {saleBoxInfo.isActive&&saleBoxInfo.globalRemaining>0&&<div style={{background:"rgba(255,255,255,.97)",borderRadius:14,padding:24,border:"3px solid #E53935",boxShadow:"0 4px 24px rgba(229,57,53,.18)",position:"relative",overflow:"hidden"}}>
             {/* ribbon */}
             <div style={{position:"absolute",top:14,right:-28,background:"#E53935",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 36px",transform:"rotate(40deg)",letterSpacing:1}}>LIMITED</div>
             <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap"}}>
@@ -1144,7 +1160,10 @@ export default function DigMinerApp(){
               </div>
               {/* info */}
               <div style={{flex:1,minWidth:200}}>
-                <h3 style={{fontSize:17,fontWeight:900,color:"#B71C1C",marginBottom:4}}>Sale Mystery Box</h3>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6,flexWrap:"wrap"}}>
+                  <h3 style={{fontSize:17,fontWeight:900,color:"#B71C1C",margin:0}}>Sale Mystery Box</h3>
+                  {saleCountdown&&<div style={{background:"#B71C1C",color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:12,fontWeight:800,fontFamily:"monospace",letterSpacing:1}}>⏱ {saleCountdown}</div>}
+                </div>
                 <p style={{fontSize:12,color:"#555",marginBottom:10,lineHeight:1.6}}>Same odds as the regular box — at half the price. Limited supply, first come first served.</p>
                 {/* supply bar */}
                 <div style={{marginBottom:10}}>
@@ -1171,11 +1190,11 @@ export default function DigMinerApp(){
             </div>
           </div>}
 
-          {/* sold out banner */}
-          {saleBoxInfo.globalRemaining<=0&&<div style={{background:"rgba(255,255,255,.95)",borderRadius:14,padding:20,border:"2px solid #ccc",textAlign:"center",color:"#aaa"}}>
+          {/* sale ended banner */}
+          {(!saleBoxInfo.isActive||saleBoxInfo.globalRemaining<=0)&&<div style={{background:"rgba(255,255,255,.95)",borderRadius:14,padding:20,border:"2px solid #ccc",textAlign:"center",color:"#aaa"}}>
             <div style={{fontSize:28,marginBottom:6}}>📦</div>
-            <div style={{fontSize:14,fontWeight:700}}>Sale Boxes — Sold Out</div>
-            <div style={{fontSize:12,marginTop:4}}>All 2,000 sale boxes have been claimed.</div>
+            <div style={{fontSize:14,fontWeight:700}}>{saleBoxInfo.globalRemaining<=0?"Sale Boxes — Sold Out":"Sale Ended"}</div>
+            <div style={{fontSize:12,marginTop:4}}>{saleBoxInfo.globalRemaining<=0?"All 2,000 sale boxes have been claimed.":"The 30-minute launch sale has ended. Regular boxes are still available below."}</div>
           </div>}
 
           {/* ── regular boxes + stats ── */}
