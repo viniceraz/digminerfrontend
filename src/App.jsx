@@ -11,7 +11,6 @@ const RARITIES = [
   { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a" },
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=10;
-const SALE_BOX_PRICE=150; const SALE_BOX_MAX_TOTAL=2000; const SALE_BOX_MAX_PER_WALLET=50;
 const FUSE_COST=150;
 
 const TEMPO_CHAIN = {
@@ -543,27 +542,12 @@ export default function DigMinerApp(){
   const[adminLog,setAdminLog]=useState([]);
   const[adminPlayers,setAdminPlayers]=useState([]);
   const[adminLoading,setAdminLoading]=useState("");
-  const[saleBoxInfo,setSaleBoxInfo]=useState({totalSold:0,walletBought:0,globalRemaining:SALE_BOX_MAX_TOTAL,walletRemaining:SALE_BOX_MAX_PER_WALLET,endTime:null,isActive:true});
-  const[saleCountdown,setSaleCountdown]=useState(null);
   const[fuseMode,setFuseMode]=useState(false);
   const[fuseSelected,setFuseSelected]=useState([]);
   const[fuseReveal,setFuseReveal]=useState(null);
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
 
-  // Sale box countdown ticker
-  useEffect(()=>{
-    if(!saleBoxInfo.endTime) return;
-    const tick=()=>{
-      const rem=saleBoxInfo.endTime - Date.now();
-      if(rem<=0){setSaleCountdown(null);setSaleBoxInfo(s=>({...s,isActive:false}));return;}
-      const m=Math.floor(rem/60000);const s=Math.floor((rem%60000)/1000);
-      setSaleCountdown(`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`);
-    };
-    tick();
-    const i=setInterval(tick,1000);
-    return()=>clearInterval(i);
-  },[saleBoxInfo.endTime]);
 
   // Check maintenance status on mount and every 30s
   useEffect(()=>{
@@ -576,7 +560,6 @@ export default function DigMinerApp(){
   // Load global stats on mount
   useEffect(()=>{
     fetch("/api/stats").then(r=>r.json()).then(d=>setStats(d)).catch(()=>{});
-    loadSaleBoxInfo("");
   },[]);
 
   const getProvider=()=>new ethers.BrowserProvider(window.ethereum);
@@ -614,7 +597,6 @@ export default function DigMinerApp(){
           setWithdrawCooldown(0);
         }
       }catch(_){}
-      await loadSaleBoxInfo(address);
     }catch(e){console.error("loadPlayer error:",e.message);}
   },[]);
 
@@ -624,14 +606,6 @@ export default function DigMinerApp(){
       const data=await res.json();
       setTransactions(data.transactions||[]);
     }catch(e){console.error("tx history error:",e.message);}
-  };
-
-  const loadSaleBoxInfo=async(address)=>{
-    try{
-      const res=await fetch(`/api/box/sale-info?wallet=${address||""}`);
-      const data=await res.json();
-      setSaleBoxInfo(data);
-    }catch(e){console.error("sale box info error:",e.message);}
   };
 
 
@@ -871,27 +845,6 @@ export default function DigMinerApp(){
     finally{setTxLoading("");}
   };
 
-  const buySaleBox=async(qty)=>{
-    const cost=SALE_BOX_PRICE*qty;
-    if(!saleBoxInfo.isActive) return notify("The sale has ended! Buy a regular box.",false);
-    if(digcoin<cost) return notify(`Need ${cost} DIGCOIN. Deposit pathUSD first!`,false);
-    if(saleBoxInfo.globalRemaining<=0) return notify("Sale boxes are sold out!",false);
-    if(saleBoxInfo.walletRemaining<=0) return notify(`Wallet limit reached (max ${SALE_BOX_MAX_PER_WALLET})`,false);
-    try{
-      setTxLoading("sale-box");
-      const res=await authFetch("/api/box/buy-sale",{method:"POST",body:JSON.stringify({wallet,quantity:qty})});
-      const data=await res.json();
-      if(!res.ok) return notify(data.error,false);
-      if(qty===1){
-        setRevealing(data.miners[0]);
-      }else{
-        setMiners(p=>[...data.miners,...p]);
-        notify(`${qty} sale boxes opened! Check My NFT tab.`);
-      }
-      await loadPlayer(wallet);
-    }catch(e){notify(e.message,false);}
-    finally{setTxLoading("");}
-  };
 
   const closeReveal=async()=>{
     setRevealing(null);
@@ -1216,54 +1169,6 @@ export default function DigMinerApp(){
         {/* SHOP */}
         {tab==="shop"&&<div style={{display:"flex",flexDirection:"column",gap:16,animation:"fadeIn .3s ease"}}>
 
-          {/* ── SALE BOX (limited + timer) ── */}
-          {saleBoxInfo.isActive&&saleBoxInfo.globalRemaining>0&&<div style={{background:"rgba(255,255,255,.97)",borderRadius:14,padding:24,border:"3px solid #E53935",boxShadow:"0 4px 24px rgba(229,57,53,.18)",position:"relative",overflow:"hidden"}}>
-            {/* ribbon */}
-            <div style={{position:"absolute",top:14,right:-28,background:"#E53935",color:"#fff",fontSize:10,fontWeight:800,padding:"4px 36px",transform:"rotate(40deg)",letterSpacing:1}}>LIMITED</div>
-            <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap"}}>
-              {/* box image with badge */}
-              <div style={{position:"relative",flexShrink:0}}>
-                <img src="/nftimgs/mistery box.png" alt="Sale Box" style={{width:110,height:110,objectFit:"contain",filter:"drop-shadow(0 0 16px #E5393588)"}}/>
-                <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",background:"#E53935",color:"#fff",fontSize:11,fontWeight:900,borderRadius:6,padding:"3px 10px",whiteSpace:"nowrap",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>50% OFF</div>
-              </div>
-              {/* info */}
-              <div style={{flex:1,minWidth:200}}>
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6,flexWrap:"wrap"}}>
-                  <h3 style={{fontSize:17,fontWeight:900,color:"#B71C1C",margin:0}}>Sale Mystery Box</h3>
-                  {saleCountdown&&<div style={{background:"#B71C1C",color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:12,fontWeight:800,fontFamily:"monospace",letterSpacing:1}}>⏱ {saleCountdown}</div>}
-                </div>
-                <p style={{fontSize:12,color:"#555",marginBottom:10,lineHeight:1.6}}>Same odds as the regular box — at half the price. Limited supply, first come first served.</p>
-                {/* supply bar */}
-                <div style={{marginBottom:10}}>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:700,color:"#555",marginBottom:4}}>
-                    <span>Supply: {saleBoxInfo.globalRemaining} / {SALE_BOX_MAX_TOTAL} remaining</span>
-                    <span style={{color:"#E53935"}}>{Math.round((saleBoxInfo.totalSold/SALE_BOX_MAX_TOTAL)*100)}% sold</span>
-                  </div>
-                  <div style={{height:8,borderRadius:4,background:"#eee",overflow:"hidden"}}>
-                    <div style={{height:"100%",borderRadius:4,background:"linear-gradient(90deg,#E53935,#FF7043)",width:`${Math.round((saleBoxInfo.totalSold/SALE_BOX_MAX_TOTAL)*100)}%`,transition:"width .4s"}}/>
-                  </div>
-                </div>
-                <div style={{fontSize:11,color:"#888",marginBottom:12}}>Your wallet: {saleBoxInfo.walletBought} / {SALE_BOX_MAX_PER_WALLET} used&nbsp;·&nbsp;{saleBoxInfo.walletRemaining} left</div>
-                <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                  <div style={{fontSize:26,fontWeight:900,color:"#E53935"}}>{SALE_BOX_PRICE} DC</div>
-                  <div style={{fontSize:12,color:"#aaa",textDecoration:"line-through"}}>{BOX_PRICE} DC</div>
-                  <button
-                    disabled={!!txLoading||saleBoxInfo.walletRemaining<=0||saleBoxInfo.globalRemaining<=0}
-                    onClick={()=>buySaleBox(1)}
-                    style={{padding:"10px 22px",background:saleBoxInfo.walletRemaining<=0?"#ccc":"linear-gradient(135deg,#E53935,#FF7043)",border:"none",borderRadius:8,fontSize:13,fontWeight:800,cursor:saleBoxInfo.walletRemaining<=0?"not-allowed":"pointer",color:"#fff",boxShadow:"0 4px 14px rgba(229,57,53,.35)"}}>
-                    {txLoading==="sale-box"?"Opening...":saleBoxInfo.walletRemaining<=0?"Limit Reached":"Buy 1 Box"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>}
-
-          {/* sale ended banner */}
-          {saleBoxInfo.globalRemaining<=0&&<div style={{background:"rgba(255,255,255,.95)",borderRadius:14,padding:20,border:"2px solid #ccc",textAlign:"center",color:"#aaa"}}>
-            <div style={{fontSize:28,marginBottom:6}}>📦</div>
-            <div style={{fontSize:14,fontWeight:700}}>Sale Boxes — Sold Out</div>
-            <div style={{fontSize:12,marginTop:4}}>All 2,000 sale boxes have been claimed.</div>
-          </div>}
 
           {/* ── regular boxes + stats ── */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
