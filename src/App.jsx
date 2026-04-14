@@ -137,7 +137,7 @@ const T = {
     sendDigcoin:"💸 发送 DIGCOIN",sendDesc:"直接向任意钱包发送 DIGCOIN — 用于抽奖、推广或支付。",
     walletAddr:"钱包地址",amountDigcoin:"数量（DIGCOIN）",reasonOptional:"原因（可选）",sending:"发送中...",sendBtn:"发送 💸",
     recentSends:"最近发送",adminWallet:"钱包",adminAmount:"数量",adminReason:"原因",adminTime:"时间",
-    allPlayers:"👥 所有玩家",top100:"按 DIGCOIN 余额前100名",loadPlayers:"加载玩家",clickLoad:"点击"加载玩家"查看",
+    allPlayers:"👥 所有玩家",top100:"按 DIGCOIN 余额前100名",loadPlayers:"加载玩家",clickLoad:"点击「加载玩家」查看",
     colWallet:"钱包",colBalance:"余额(DC)",colDeposited:"充值($)",colEarned:"已赚(DC)",colBoxes:"盲盒",colJoined:"加入时间",
     roadmapTitle:"🗺️ DigMiner 路线图",roadmapSubtitle:"我们已完成的 — 以及接下来的计划。",roadmapDisclaimer:"路线图可能会有所调整，请关注我们获取最新动态。",
     howNavIntro:"游戏介绍",howNavStart:"快速开始",howNavBoxes:"神秘盒子",howNavRarities:"稀有等级",
