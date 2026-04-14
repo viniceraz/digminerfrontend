@@ -11,7 +11,7 @@ const RARITIES = [
   { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a" },
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=10;
-const FUSE_COST=150;
+const FUSE_COST=50;
 
 const TEMPO_CHAIN = {
   chainId: "0x1079", // 4217
@@ -366,7 +366,7 @@ function HowItWorks(){
           </div>
         ))}
       </div>
-      <GBCallout type="warning">A Mythic miner yields roughly <strong>3x more total DIGCOIN</strong> than a Common over its full lifespan. Rarity matters for long-term returns, not just daily rate.</GBCallout>
+      <GBCallout type="info">A Mythic miner earns ~<strong>39 DC/day</strong> but only lasts <strong>11 cycles</strong> (429 DC total). A Common earns ~<strong>19 DC/day</strong> over <strong>19 cycles</strong> (361 DC total). Mythic yields about <strong>19% more total DIGCOIN</strong> — the real advantage is the higher daily rate, which pays back the box cost much faster.</GBCallout>
 
       <GBSection id="mining" emoji="⛏️" title="The Mining Cycle"/>
       <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>Every miner moves through a simple 3-state cycle. Mastering this loop is the key to maximizing daily earnings.</p>
