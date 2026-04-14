@@ -12,6 +12,7 @@ const RARITIES = [
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=10;
 const SALE_BOX_PRICE=150; const SALE_BOX_MAX_TOTAL=2000; const SALE_BOX_MAX_PER_WALLET=50;
+const FUSE_COST=150;
 
 const TEMPO_CHAIN = {
   chainId: "0x1079", // 4217
@@ -40,14 +41,20 @@ function MinerSprite({rarityId,size=90}){
   );
 }
 
-function BoxReveal({miner,onClose}){
+function BoxReveal({miner,onClose,isFuse=false}){
   const[phase,setPhase]=useState(0);
   const r=RARITIES[miner.rarityId];
   useEffect(()=>{const t1=setTimeout(()=>setPhase(1),1200);const t2=setTimeout(()=>setPhase(2),2200);return()=>{clearTimeout(t1);clearTimeout(t2)};},[]);
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.92)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
-    {phase===0&&<div style={{animation:"shake .6s infinite"}}><img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/></div>}
-    {phase===1&&<div style={{fontSize:120,animation:"explode .8s forwards"}}>✨</div>}
+    {phase===0&&<div style={{animation:"shake .6s infinite",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
+      {isFuse
+        ?<div style={{fontSize:80,animation:"shake .6s infinite"}}>🔥</div>
+        :<img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/>}
+      {isFuse&&<div style={{color:"#E040FB",fontSize:14,fontWeight:800,letterSpacing:2}}>FUSING...</div>}
+    </div>}
+    {phase===1&&<div style={{fontSize:120,animation:"explode .8s forwards"}}>{isFuse?"💥":"✨"}</div>}
     {phase===2&&<div style={{textAlign:"center",animation:"popIn .5s ease"}}>
+      {isFuse&&<div style={{color:"#E040FB",fontSize:12,fontWeight:800,letterSpacing:2,marginBottom:8}}>⚗️ FUSION RESULT</div>}
       <div style={{filter:`drop-shadow(0 0 20px ${r.color})`,animation:"float 2s ease-in-out infinite"}}><MinerSprite rarityId={miner.rarityId} size={150}/></div>
       <div style={{color:r.color,fontSize:24,fontWeight:900,marginTop:12,textShadow:`0 0 30px ${r.color}`,fontFamily:"'Press Start 2P',monospace"}}>{r.name}!</div>
       <div style={{color:"#ccc",fontSize:13,marginTop:8}}>{miner.dailyDigcoin} DIGCOIN/day • {r.nftAge} days lifespan</div>
@@ -538,6 +545,9 @@ export default function DigMinerApp(){
   const[adminLoading,setAdminLoading]=useState("");
   const[saleBoxInfo,setSaleBoxInfo]=useState({totalSold:0,walletBought:0,globalRemaining:SALE_BOX_MAX_TOTAL,walletRemaining:SALE_BOX_MAX_PER_WALLET,endTime:null,isActive:true});
   const[saleCountdown,setSaleCountdown]=useState(null);
+  const[fuseMode,setFuseMode]=useState(false);
+  const[fuseSelected,setFuseSelected]=useState([]);
+  const[fuseReveal,setFuseReveal]=useState(null);
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
 
@@ -888,6 +898,37 @@ export default function DigMinerApp(){
     if(wallet) await loadPlayer(wallet);
   };
 
+  const toggleFuseSelect=(miner)=>{
+    if(!fuseMode) return;
+    // Can't select mining miners
+    if(miner.isMining) return notify("Can't fuse a miner that is currently mining. Claim first.",false);
+    setFuseSelected(prev=>{
+      if(prev.find(m=>m.id===miner.id)) return prev.filter(m=>m.id!==miner.id);
+      if(prev.length>=2) return [prev[1],miner];
+      return [...prev,miner];
+    });
+  };
+
+  const executeFuse=async()=>{
+    if(fuseSelected.length!==2) return notify("Select exactly 2 miners to fuse.",false);
+    if(digcoin<FUSE_COST) return notify(`Need ${FUSE_COST} DIGCOIN to fuse.`,false);
+    try{
+      setTxLoading("fuse");
+      const res=await authFetch("/api/miner/fuse",{method:"POST",body:JSON.stringify({wallet,minerId1:fuseSelected[0].id,minerId2:fuseSelected[1].id})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      setFuseSelected([]);
+      setFuseMode(false);
+      setFuseReveal(data.miner);
+    }catch(e){notify(e.message,false);}
+    finally{setTxLoading("");}
+  };
+
+  const closeFuseReveal=async()=>{
+    setFuseReveal(null);
+    if(wallet) await loadPlayer(wallet);
+  };
+
   const startMiner=async(id)=>{
     try{
       setTxLoading(`mine_${id}`);
@@ -1003,6 +1044,7 @@ export default function DigMinerApp(){
 
     {notif&&<div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:10000,padding:"10px 24px",borderRadius:10,background:notif.ok?"#2E7D32":"#C62828",color:"#fff",fontSize:13,fontWeight:600,animation:"slideDown .3s ease",boxShadow:"0 4px 20px rgba(0,0,0,.3)",whiteSpace:"nowrap",maxWidth:"90vw",textAlign:"center"}}>{notif.msg}</div>}
     {revealing&&<BoxReveal miner={revealing} onClose={closeReveal}/>}
+    {fuseReveal&&<BoxReveal miner={fuseReveal} onClose={closeFuseReveal} isFuse/>}
 
     {/* HEADER */}
     <header style={{background:"rgba(0,0,0,.4)",backdropFilter:"blur(10px)",borderBottom:"2px solid #5D4037",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,flexWrap:"wrap",gap:8}}>
@@ -1129,19 +1171,45 @@ export default function DigMinerApp(){
         {tab==="nft"&&<div style={{animation:"fadeIn .3s ease"}}>
           <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
             {["All",...RARITIES.map(r=>r.name)].map(f=><button key={f} onClick={()=>setFilter(f)} style={{padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${filter===f?"#FFD600":"#ccc"}`,background:filter===f?"#FFD600":"#fff",color:filter===f?"#333":f==="All"?"#333":(RARITIES.find(r=>r.name===f)?.color||"#333")}}>{f} ({fc[f]||0})</button>)}
-            <div style={{marginLeft:"auto",display:"flex",gap:8,flexWrap:"wrap"}}>
-              {canMineAny&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"7px 14px",background:"#2196F3",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+            <div style={{marginLeft:"auto",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+              {canMineAny&&!fuseMode&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"7px 14px",background:"#2196F3",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                 {txLoading==="playall"?"Starting...":"⛏️ Mine All ("+idleMiners.length+", fee: "+(PLAY_ALL_FEE*idleMiners.length)+" DC)"}
               </button>}
-              {canClaimAny&&<button disabled={!!txLoading} onClick={claimAll} style={{padding:"7px 14px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"none",borderRadius:8,color:"#333",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+              {canClaimAny&&!fuseMode&&<button disabled={!!txLoading} onClick={claimAll} style={{padding:"7px 14px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"none",borderRadius:8,color:"#333",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                 {txLoading==="claimall"?"Claiming...":"💎 Claim All ("+readyMiners.length+", fee: "+(PLAY_ALL_FEE*readyMiners.length)+" DC)"}
+              </button>}
+              {miners.length>=2&&<button onClick={()=>{setFuseMode(f=>!f);setFuseSelected([]);}} style={{padding:"7px 14px",background:fuseMode?"#7B1FA2":"linear-gradient(135deg,#9C27B0,#7B1FA2)",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",boxShadow:fuseMode?"0 0 0 2px #FFD600":"none"}}>
+                {fuseMode?"✕ Cancel Fuse":"🔥 Fuse Miners"}
               </button>}
             </div>
           </div>
+
+          {/* Fuse mode banner */}
+          {fuseMode&&<div style={{background:"linear-gradient(135deg,#4a1060,#2d0040)",borderRadius:12,padding:"14px 18px",marginBottom:14,border:"2px solid #9C27B0",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+            <div>
+              <div style={{color:"#E040FB",fontWeight:800,fontSize:13,marginBottom:3}}>🔥 Fuse Mode — Select 2 Miners</div>
+              <div style={{color:"#ccc",fontSize:11}}>Cost: {FUSE_COST} DC · 80% → higher rarity · 20% → +2 rarities · Dead miners allowed</div>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"center"}}>
+              <div style={{color:"#fff",fontSize:12}}>{fuseSelected.length}/2 selected</div>
+              {fuseSelected.length===2&&<button disabled={!!txLoading} onClick={executeFuse} style={{padding:"9px 22px",background:"linear-gradient(135deg,#E040FB,#9C27B0)",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 14px rgba(156,39,176,.5)"}}>
+                {txLoading==="fuse"?"Fusing...":"🔥 Fuse Now ("+FUSE_COST+" DC)"}
+              </button>}
+            </div>
+          </div>}
+
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>
             {filtered.length===0
               ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:"#888",fontSize:13}}><img src="/nftimgs/mistery box.png" alt="box" style={{width:60,height:60,objectFit:"contain",marginBottom:12,opacity:.5}}/><br/>No miners yet. Buy a Box in the Shop!</div>
-              :filtered.map(m=><MinerCard key={m.id} miner={m} onMine={startMiner} onClaim={claimMiner} onRepair={repairMiner} loading={!!txLoading}/>)}
+              :filtered.map(m=>{
+                const isFuseSelected=fuseSelected.find(s=>s.id===m.id);
+                return(
+                  <div key={m.id} onClick={()=>toggleFuseSelect(m)}
+                    style={{cursor:fuseMode?"pointer":"default",outline:isFuseSelected?"3px solid #E040FB":"3px solid transparent",borderRadius:14,transform:isFuseSelected?"scale(1.03)":"scale(1)",transition:"all .15s"}}>
+                    <MinerCard miner={m} onMine={fuseMode?null:startMiner} onClaim={fuseMode?null:claimMiner} onRepair={fuseMode?null:repairMiner} loading={!!txLoading||fuseMode}/>
+                  </div>
+                );
+              })}
           </div>
         </div>}
 
@@ -1191,10 +1259,10 @@ export default function DigMinerApp(){
           </div>}
 
           {/* sale ended banner */}
-          {(!saleBoxInfo.isActive||saleBoxInfo.globalRemaining<=0)&&<div style={{background:"rgba(255,255,255,.95)",borderRadius:14,padding:20,border:"2px solid #ccc",textAlign:"center",color:"#aaa"}}>
+          {saleBoxInfo.globalRemaining<=0&&<div style={{background:"rgba(255,255,255,.95)",borderRadius:14,padding:20,border:"2px solid #ccc",textAlign:"center",color:"#aaa"}}>
             <div style={{fontSize:28,marginBottom:6}}>📦</div>
-            <div style={{fontSize:14,fontWeight:700}}>{saleBoxInfo.globalRemaining<=0?"Sale Boxes — Sold Out":"Sale Ended"}</div>
-            <div style={{fontSize:12,marginTop:4}}>{saleBoxInfo.globalRemaining<=0?"All 2,000 sale boxes have been claimed.":"The 30-minute launch sale has ended. Regular boxes are still available below."}</div>
+            <div style={{fontSize:14,fontWeight:700}}>Sale Boxes — Sold Out</div>
+            <div style={{fontSize:12,marginTop:4}}>All 2,000 sale boxes have been claimed.</div>
           </div>}
 
           {/* ── regular boxes + stats ── */}
