@@ -1323,7 +1323,7 @@ export default function DigMinerApp(){
       {/* GLOBAL STATS */}
       <div style={{display:"flex",gap:0,background:"rgba(255,255,255,.9)",borderRadius:10,overflow:"hidden",marginBottom:20,border:"1px solid #ddd",flexWrap:"wrap"}}>
         {[
-          [`${(stats.total_deposited||0).toFixed(2)} ${tx.statsPool}`],
+          [`${((stats.total_deposited||0)-(stats.total_withdrawn||0)).toFixed(2)} ${tx.statsPool}`],
           [`${stats.totalMiners||0} ${tx.statsNft}`],
           [`${stats.totalPlayers||0} ${tx.statsPlayers}`],
           [`${(stats.total_withdrawn||0).toFixed(2)} ${tx.statsWithdrawn}`],
