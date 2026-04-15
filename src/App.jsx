@@ -1008,6 +1008,8 @@ export default function DigMinerApp(){
   const[showRoadmap,setShowRoadmap]=useState(false);
   const[lands,setLands]=useState([]);
   const[landSaleStartMs,setLandSaleStartMs]=useState(null);
+  const[landsMinted,setLandsMinted]=useState(0);
+  const[landMaxSupply,setLandMaxSupply]=useState(1000);
   const[landLoading,setLandLoading]=useState("");
   const[assigningLandId,setAssigningLandId]=useState(null);
   const[landReveal,setLandReveal]=useState(null);
@@ -1043,6 +1045,8 @@ export default function DigMinerApp(){
         } catch(_) {}
         setStats(d);
         if(d.landSaleStartMs) setLandSaleStartMs(d.landSaleStartMs);
+        if(d.landsMinted!=null) setLandsMinted(d.landsMinted);
+        if(d.landMaxSupply) setLandMaxSupply(d.landMaxSupply);
       } catch(_) {}
     };
     loadStats();
@@ -1871,11 +1875,23 @@ export default function DigMinerApp(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
             <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
               <img src={LAND_IMGS[0]} alt="Mystery Land Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #4CAF5088)"}}/>
-              <h3 style={{fontSize:15,fontWeight:800,marginBottom:10}}>{tx.landBoxTitle}</h3>
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:6}}>{tx.landBoxTitle}</h3>
+              {/* Supply bar */}
+              {(()=>{const remaining=landMaxSupply-landsMinted;const pct=Math.max(0,(remaining/landMaxSupply)*100);const sold=landsMinted>=landMaxSupply;return(<div style={{margin:"0 0 12px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:sold?"#EF5350":"#666",marginBottom:4}}>
+                  <span style={{fontWeight:700}}>{sold?"🔴 SOLD OUT":`🟢 ${remaining} / ${landMaxSupply} remaining`}</span>
+                  <span style={{color:"#aaa"}}>{landsMinted} minted</span>
+                </div>
+                <div style={{height:6,background:"#eee",borderRadius:3,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${100-pct}%`,background:sold?"#EF5350":pct<20?"#FF9800":"#4CAF50",borderRadius:3,transition:"width .5s"}}/>
+                </div>
+              </div>);})()}
               <div style={{textAlign:"left",padding:"0 16px",marginBottom:14,fontSize:11,color:"#555",lineHeight:1.8}}>
                 {LAND_RARITIES.map(r=><div key={r.id}>• <span style={{color:r.color,fontWeight:700}}>{r.name}:</span> {r.chance}</div>)}
               </div>
-              {landSaleStartMs&&Date.now()<landSaleStartMs?(
+              {landsMinted>=landMaxSupply?(
+                <div style={{padding:"12px",background:"#ffebee",borderRadius:8,color:"#C62828",fontWeight:700,fontSize:13}}>🔴 Sold Out — All 1,000 Land Boxes Minted</div>
+              ):landSaleStartMs&&Date.now()<landSaleStartMs?(
                 <LandCountdownButton targetMs={landSaleStartMs} onBuy={buyLandBox} loading={landLoading==="buy"}/>
               ):(
                 <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
