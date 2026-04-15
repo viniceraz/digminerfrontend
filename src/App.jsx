@@ -33,10 +33,14 @@ const T = {
     txHistory:"Transaction History",refresh:"Refresh",noTx:"No transactions yet",
     colDate:"Date",colType:"Type",colDetail:"Detail",colAmount:"Amount",
     all:"All",noMiners:"No miners yet. Buy a Box in the Shop!",
-    fuseMiners:"🔥 Fuse Miners",cancelFuse:"✕ Cancel Fuse",fuseModeTitle:"🔥 Fuse Mode — Select 2 Miners",
-    fuseModeDesc:(c)=>`Cost: ${c} DC · 80% → higher rarity · 20% → +2 rarities · Dead miners allowed`,
+    fuseMiners:"🔥 Fuse Miners",cancelFuse:"✕ Cancel Fuse",fuseModeTitle:"🔥 Fuse Mode — Select 2 Same-Rarity Miners",
+    fuseModeDesc:(c)=>`Cost: ${c} DC · Same rarity only · Result = +1 tier with boosted daily · One-time fusion`,
     fusingNow:(c)=>`🔥 Fuse Now (${c} DC)`,fusing:"Fusing...",selectedOf2:(n)=>`${n}/2 selected`,
     cantFuseMining:"Can't fuse a miner that is currently mining. Claim first.",
+    cantFuseFused:"This miner has already been fused and cannot be fused again.",
+    cantFuseDiffRarity:(r)=>`Both miners must be the same rarity. First selected is ${r}.`,
+    cantFuseMythic:"Mythic miners are already the highest tier and cannot be fused.",
+    fusedBadge:"FUSED",
     selectExactly2:"Select exactly 2 miners to fuse.",needDCToFuse:(c)=>`Need ${c} DIGCOIN to fuse.`,
     mcMining:"MINING",mcReady:"READY",mcIdle:"IDLE",mcRepair:"REPAIR",
     mcMine:"⛏️ Mine",mcClaim:"💎 Claim",mcRepairBtn:"🔧 Repair",mcLifespan:"Lifespan",mcDaily:"Daily",
@@ -79,7 +83,7 @@ const T = {
     howRaritiesTitle:"Miner Rarities",howRaritiesP:"There are 6 rarity tiers. Rarer miners earn more DIGCOIN per day and have longer lifespans, but lower drop chances.",howRaritiesChance:"chance",howRaritiesDay:"DC/day",howRaritiesDays:"day lifespan",howRaritiesWarn:"A Mythic miner earns ~39 DC/day but only lasts 11 cycles (429 DC total). A Common earns ~19 DC/day over 19 cycles (361 DC total). Mythic yields about 19% more total DIGCOIN — the real advantage is the higher daily rate, which pays back the box cost much faster.",
     howMiningTitle:"The Mining Cycle",howMiningP:"Every miner moves through a simple 3-state cycle. Mastering this loop is the key to maximizing daily earnings.",howMiningStates:[["💤","Idle","Miner is waiting. Click ⛏️ Mine to start the 24-hour cycle.","#888"],["⛏️","Mining","Countdown running. Come back when the timer hits 0.","#4CAF50"],["✅","Ready to Claim","Mining complete! Click 💎 Claim to collect your reward.","#FF9800"]],howMiningBatchTitle:"⚡ Mine All & Claim All",howMiningBatchP:"Manage all your miners at once with the batch buttons on the My NFT tab.",howMiningBatchTip:"Convenience fee: 10 DIGCOIN per miner for batch actions. With 5 miners, Mine All or Claim All costs 50 DC. Fee is deducted before processing.",howMiningBatchNote:"After claiming, each miner returns to Idle. You must click Mine again to start the next cycle — earnings don't accumulate passively.",
     howLifespanTitle:"Lifespan & Repair",howLifespanP:"Each miner has a finite lifespan in mining cycles. Every successful claim decreases the lifespan counter by 1.",howLifespanWhenTitle:"📉 When lifespan hits 0",howLifespanWhenItems:"• The miner stops mining\n• A ⚠️ icon appears on the card\n• Repair it to restore full lifespan\n• Or let it retire permanently",howLifespanRepairTitle:"🔧 Repair Cost by Rarity",howLifespanTip:"Repair resets to the original full lifespan. You can repair unlimited times — a miner never permanently dies unless you choose not to repair it.",
-    howFusionTitle:"Fusion",howFusionP:"Fusion lets you sacrifice 2 miners to forge a brand-new one with a higher rarity. Both originals are permanently destroyed and replaced by a single, stronger miner.",howFusionWarn:(c)=>`Cost: ${c} DIGCOIN per fusion · Both miners must be Idle (not mid-cycle) · Dead miners (0 lifespan) are allowed`,howFusionSameTitle:"Same Rarity + Same Rarity",howFusionDiffTitle:"Different Rarities",howFusionSameEx:"Example: Common + Common → 80% UnCommon, 20% Rare",howFusionDiffEx:"Example: Common + Rare → 80% Rare, 20% Super Rare",howFusionTableTitle:"📈 All Possible Outcomes",howFusionColA:"Miner A",howFusionColB:"Miner B",howFusionCol80:"80% Result",howFusionCol20:"20% Result",howFusionHowTitle:"🔥 How to Fuse",howFusionSteps:[["Go to My NFT tab","Make sure the 2 miners you want to fuse are both Idle (not mining)."],["Click 🔥 Fuse Miners","A purple banner appears. All miner cards become selectable."],["Select 2 miners","Click any 2 cards — they highlight with a purple border. Mining cards are locked out."],["Click 🔥 Fuse Now (50 DC)","50 DC is deducted, both miners are destroyed, and a new one is created."],["Watch the reveal animation","A special ⚗️ Fusion Result screen shows your new miner's rarity."]],howFusionTip:"Fusion is most powerful when you have duplicate low-tier miners sitting idle. Two Common miners have only 18–20 DC/day each — fusing them gives you a guaranteed UnCommon (or better) with no extra box purchase needed.",
+    howFusionTitle:"Fusion",howFusionP:"Fusion lets you sacrifice 2 same-rarity miners to forge a stronger one at the next tier. Both originals are permanently destroyed. The result keeps the parents' lifespan and earns 20% more than both parents combined.",howFusionWarn:(c)=>`Cost: ${c} DIGCOIN per fusion · Same rarity only · Both miners must be Idle · Fused miners cannot be fused again`,howFusionRuleTitle:"⚗️ Fusion Formula",howFusionTableTitle:"📈 All Possible Outcomes",howFusionColA:"Miner A",howFusionColB:"Miner B",howFusionColResult:"Result",howFusionColDaily:"Daily (example)",howFusionColLifespan:"Lifespan",howFusionHowTitle:"🔥 How to Fuse",howFusionSteps:[["Go to My NFT tab","Make sure the 2 miners you want to fuse are both Idle (not mining)."],["Click 🔥 Fuse Miners","A purple banner appears. Only idle, non-fused miners of the same rarity can be selected."],["Select 2 same-rarity miners","Click 2 cards of the same rarity — they highlight with a purple border."],["Click 🔥 Fuse Now (50 DC)","50 DC is deducted, both miners are destroyed, and a stronger one is created."],["Watch the reveal animation","A special ⚗️ Fusion Result screen shows your new miner's boosted stats."]],howFusionTip:"Best strategy: fuse miners with high daily rolls to maximize the boosted output. Two Common miners rolling 20 DC each will produce an UnCommon at 48 DC/day — more than double a normal UnCommon.",
     howWithdrawTitle:"Withdrawals",howWithdrawP:"Convert your DIGCOIN to pathUSD and withdraw to your wallet. Withdrawals are signed by the server and executed on-chain via the MinerPool smart contract.",howWithdrawExTitle:"💸 Example — Withdrawing 1000 DIGCOIN",howWithdrawRows:[["You request","1000 DIGCOIN",false],["Converted to","10 pathUSD",false],["6% protocol fee","−0.60 pathUSD",false],["You receive","9.40 pathUSD",true]],howWithdrawWarn:"Rules: 24h cooldown between withdrawals • Minimum 100 DIGCOIN (1 pathUSD) • 6% fee on every withdrawal. Fee stays in the reward pool.",
     howReferralTitle:"Referral Program",howReferralP:"Share your unique referral link and earn 4% of every deposit your referred friends make — instantly credited to your DIGCOIN balance.",howReferralYourLink:"Your Referral Link",howReferralFindLink:"Find your personalized link in the My Account tab after connecting.",howReferralSteps:[["1","Share your link","Post on social media, groups, or send to friends directly"],["2","Friend deposits","They connect and deposit pathUSD into the game"],["3","You earn 4%","Auto-credited to your DIGCOIN balance instantly"]],howReferralTip:"No cap on referrals. Every deposit your referrals make earns you 4% — indefinitely, with no extra effort required.",
     howRoiTitle:"ROI & Full Statistics",howRoiP:"Complete breakdown of all 6 miner types — earnings, returns, and ROI based on a single box price of 300 DC.",howRoiCols:["Miner","Chance","Daily Range","Avg/Day","ROI","Lifespan","Total Return","Repair"],howRoiTip:"ROI is calculated from the box price (300 DC). After ROI, all further earnings are pure profit until the miner retires.",howRoiPortTitle:"📈 Example 10-Box Portfolio",howRoiPortItems:"Avg luck: 3 Common, 3 UnCommon, 2 Rare, 1 Super Rare, 1 Legendary\nDaily income: ~255 DC/day ≈ 2.55 pathUSD\nInvestment: 2850 DC (bulk)\nEstimated ROI: ~12 days\nProfit over full lifespan: ~9000–12000 DC",
@@ -104,10 +108,14 @@ const T = {
     txHistory:"交易记录",refresh:"刷新",noTx:"暂无交易记录",
     colDate:"日期",colType:"类型",colDetail:"详情",colAmount:"金额",
     all:"全部",noMiners:"还没有矿工，去商店购买盲盒！",
-    fuseMiners:"🔥 合成矿工",cancelFuse:"✕ 取消合成",fuseModeTitle:"🔥 合成模式 — 选择2个矿工",
-    fuseModeDesc:(c)=>`费用：${c} DC · 80% → 高一阶 · 20% → +2阶 · 已损坏矿工可用`,
+    fuseMiners:"🔥 合成矿工",cancelFuse:"✕ 取消合成",fuseModeTitle:"🔥 合成模式 — 选择2个相同稀有度矿工",
+    fuseModeDesc:(c)=>`费用：${c} DC · 仅限相同稀有度 · 结果 = 高一阶+收益加成 · 仅可合成一次`,
     fusingNow:(c)=>`🔥 立即合成 (${c} DC)`,fusing:"合成中...",selectedOf2:(n)=>`${n}/2 已选`,
     cantFuseMining:"无法合成正在挖矿的矿工，请先领取。",
+    cantFuseFused:"该矿工已经合成过，无法再次合成。",
+    cantFuseDiffRarity:(r)=>`两个矿工必须是相同稀有度。第一个选择的是 ${r}。`,
+    cantFuseMythic:"神秘矿工已是最高等级，无法合成。",
+    fusedBadge:"已合成",
     selectExactly2:"请选择恰好2个矿工进行合成。",needDCToFuse:(c)=>`需要 ${c} DIGCOIN 才能合成。`,
     mcMining:"挖矿中",mcReady:"可领取",mcIdle:"空闲",mcRepair:"需修复",
     mcMine:"⛏️ 挖矿",mcClaim:"💎 领取",mcRepairBtn:"🔧 修复",mcLifespan:"寿命",mcDaily:"日收益",
@@ -150,7 +158,7 @@ const T = {
     howRaritiesTitle:"矿工稀有等级",howRaritiesP:"共有6个稀有等级。越稀有的矿工每天赚取越多 DIGCOIN，寿命越长，但掉落概率越低。",howRaritiesChance:"概率",howRaritiesDay:"DC/天",howRaritiesDays:"天寿命",howRaritiesWarn:"神秘矿工每天约赚取39 DC，但寿命仅11次（总计429 DC）。普通矿工每天约赚取19 DC，寿命19次（总计361 DC）。神秘矿工总 DIGCOIN 约多19% — 真正的优势在于更高的日收益率，能更快回本。",
     howMiningTitle:"挖矿循环",howMiningP:"每个矿工经历简单的3状态循环。掌握这个循环是最大化每日收益的关键。",howMiningStates:[["💤","空闲","矿工等待中，点击 ⛏️ 挖矿开启24小时循环。","#888"],["⛏️","挖矿中","倒计时进行中，计时器归零后回来。","#4CAF50"],["✅","可领取","挖矿完成！点击 💎 领取收集奖励。","#FF9800"]],howMiningBatchTitle:"⚡ 全部挖矿 & 全部领取",howMiningBatchP:"通过我的NFT标签上的批量按钮一次管理所有矿工。",howMiningBatchTip:"批量操作便利费：每个矿工10 DIGCOIN。5个矿工时，全部挖矿或全部领取花费50 DC，费用在处理前扣除。",howMiningBatchNote:"领取后，每个矿工回到空闲状态。您必须再次点击挖矿开始下一个循环 — 收益不会被动累积。",
     howLifespanTitle:"寿命与修复",howLifespanP:"每个矿工的寿命以挖矿次数计算。每次成功领取会将寿命计数器减少1。",howLifespanWhenTitle:"📉 寿命归零时",howLifespanWhenItems:"• 矿工停止挖矿\n• 卡片上出现 ⚠️ 图标\n• 修复以恢复完整寿命\n• 或让其永久退役",howLifespanRepairTitle:"🔧 各稀有度修复费用",howLifespanTip:"修复会重置为原始完整寿命。您可以无限次修复 — 矿工永远不会永久死亡，除非您选择不修复它。",
-    howFusionTitle:"合成",howFusionP:"合成允许您牺牲2个矿工来锻造一个更高稀有度的新矿工。两个原始矿工将被永久销毁，替换为一个更强的矿工。",howFusionWarn:(c)=>`费用：${c} DIGCOIN · 两个矿工必须处于空闲状态（非挖矿中）· 寿命为0的矿工也可使用`,howFusionSameTitle:"相同稀有度 + 相同稀有度",howFusionDiffTitle:"不同稀有度",howFusionSameEx:"示例：普通 + 普通 → 80% 非普通，20% 稀有",howFusionDiffEx:"示例：普通 + 稀有 → 80% 稀有，20% 超级稀有",howFusionTableTitle:"📈 所有可能结果",howFusionColA:"矿工 A",howFusionColB:"矿工 B",howFusionCol80:"80% 结果",howFusionCol20:"20% 结果",howFusionHowTitle:"🔥 如何合成",howFusionSteps:[["前往我的NFT标签","确保您要合成的2个矿工均处于空闲状态（未在挖矿）。"],["点击 🔥 合成矿工","出现紫色横幅，所有矿工卡片变为可选择状态。"],["选择2个矿工","点击任意2张卡片 — 它们将以紫色边框高亮显示，挖矿中的卡片被锁定。"],["点击 🔥 立即合成（50 DC）","扣除50 DC，两个矿工被销毁，新矿工被创建。"],["观看展示动画","特殊的 ⚗️ 合成结果界面将显示您新矿工的稀有度。"]],howFusionTip:"当您有多个低级别矿工闲置时，合成最为强大。两个普通矿工每天只有18-20 DC — 合成它们可获得保证的非普通（或更好），无需额外购买盲盒。",
+    howFusionTitle:"合成",howFusionP:"合成允许您牺牲2个相同稀有度的矿工，锻造一个更高阶的更强矿工。两个原始矿工永久销毁，结果矿工保留父矿工的寿命，日收益比两个父矿工合计多20%。",howFusionWarn:(c)=>`费用：${c} DIGCOIN · 仅限相同稀有度 · 两个矿工必须处于空闲状态 · 合成矿工不可再次合成`,howFusionRuleTitle:"⚗️ 合成公式",howFusionTableTitle:"📈 所有可能结果",howFusionColA:"矿工 A",howFusionColB:"矿工 B",howFusionColResult:"结果",howFusionColDaily:"日收益（示例）",howFusionColLifespan:"寿命",howFusionHowTitle:"🔥 如何合成",howFusionSteps:[["前往我的NFT标签","确保要合成的2个矿工均处于空闲状态（未在挖矿）。"],["点击 🔥 合成矿工","出现紫色横幅，仅空闲、相同稀有度、未合成过的矿工可被选择。"],["选择2个相同稀有度矿工","点击2张相同稀有度的卡片 — 它们将以紫色边框高亮。"],["点击 🔥 立即合成（50 DC）","扣除50 DC，两个矿工被销毁，更强的矿工被创建。"],["观看展示动画","特殊的 ⚗️ 合成结果界面将显示您新矿工的强化属性。"]],howFusionTip:"最佳策略：合成日收益高的矿工以最大化加成输出。两个日收益20 DC的普通矿工合成后将产出48 DC/天的非普通矿工——是普通非普通矿工的两倍多。",
     howWithdrawTitle:"提现",howWithdrawP:"将您的 DIGCOIN 转换为 pathUSD 并提取到您的钱包。提现由服务器签署，通过 MinerPool 智能合约在链上执行。",howWithdrawExTitle:"💸 示例 — 提现 1000 DIGCOIN",howWithdrawRows:[["您请求","1000 DIGCOIN",false],["换算为","10 pathUSD",false],["6% 协议手续费","−0.60 pathUSD",false],["您收到","9.40 pathUSD",true]],howWithdrawWarn:"规则：提现之间24小时冷却 · 最低100 DIGCOIN（1 pathUSD）· 每次提现6%手续费，手续费留在奖励池中。",
     howReferralTitle:"推荐计划",howReferralP:"分享您的专属推荐链接，赚取每位被推荐好友存款的4% — 即时计入您的 DIGCOIN 余额。",howReferralYourLink:"您的推荐链接",howReferralFindLink:"连接后，在我的账户标签中找到您的个性化链接。",howReferralSteps:[["1","分享您的链接","在社交媒体、群组中发布或直接发给好友"],["2","好友充值","他们连接并向游戏充值 pathUSD"],["3","您赚取4%","自动即时计入您的 DIGCOIN 余额"]],howReferralTip:"推荐无上限。您的被推荐人每次存款都能让您赚取4% — 永久有效，无需额外努力。",
     howRoiTitle:"ROI 与完整数据",howRoiP:"基于单个盲盒价格300 DC，对6种矿工类型的完整收益、回报和ROI分析。",howRoiCols:["矿工","概率","日收益范围","平均/天","ROI","寿命","总回报","修复费"],howRoiTip:"ROI 基于盲盒价格（300 DC）计算。回本后，所有进一步收益均为纯利润，直到矿工退役。",howRoiPortTitle:"📈 示例：10个盲盒投资组合",howRoiPortItems:"平均运气：3普通、3非普通、2稀有、1超级稀有、1传说\n日收益：约255 DC/天 ≈ 2.55 pathUSD\n投资额：2850 DC（批量购买）\n预计回本：约12天\n全寿命利润：约9000–12000 DC",
@@ -203,8 +211,8 @@ function BoxReveal({miner,onClose,isFuse=false}){
       {isFuse&&<div style={{color:"#E040FB",fontSize:12,fontWeight:800,letterSpacing:2,marginBottom:8}}>{tx.fusionResult}</div>}
       <div style={{filter:`drop-shadow(0 0 20px ${r.color})`,animation:"float 2s ease-in-out infinite"}}><MinerSprite rarityId={miner.rarityId} size={150}/></div>
       <div style={{color:r.color,fontSize:24,fontWeight:900,marginTop:12,textShadow:`0 0 30px ${r.color}`,fontFamily:"'Press Start 2P',monospace"}}>{r.name}!</div>
-      <div style={{color:"#ccc",fontSize:13,marginTop:8}}>{miner.dailyDigcoin} DIGCOIN/day • {r.nftAge} {tx.revealCycles} {tx.revealLifespan}</div>
-      <div style={{color:"#FFD600",fontSize:12,marginTop:4}}>ROI: ~{Math.ceil(BOX_PRICE/miner.dailyDigcoin)} days | Total: {(miner.dailyDigcoin*r.nftAge).toFixed(0)} DIGCOIN</div>
+      <div style={{color:"#ccc",fontSize:13,marginTop:8}}>{miner.dailyDigcoin} DIGCOIN/day • {isFuse?miner.nftAgeTotal:r.nftAge} {tx.revealCycles} {tx.revealLifespan}</div>
+      <div style={{color:"#FFD600",fontSize:12,marginTop:4}}>{isFuse?`Total: ${(miner.dailyDigcoin*(miner.nftAgeTotal||r.nftAge)).toFixed(0)} DIGCOIN`:`ROI: ~${Math.ceil(BOX_PRICE/miner.dailyDigcoin)} days | Total: ${(miner.dailyDigcoin*r.nftAge).toFixed(0)} DIGCOIN`}</div>
       <div style={{display:"flex",gap:6,justifyContent:"center",marginTop:8,flexWrap:"wrap"}}>
         {[["⚔️ PWR",miner.power],["⚡ NRG",miner.energy],["🛡️ DEF",miner.protective],["💥 DMG",miner.damage]].map(([l,v])=>(<span key={l} style={{background:"#1a1a2e",padding:"3px 8px",borderRadius:5,fontSize:10,color:"#aaa"}}>{l}: <b style={{color:"#fff"}}>{v}</b></span>))}
       </div>
@@ -220,7 +228,10 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading}){
   const r=RARITIES[miner.rarityId];const pct=(miner.nftAgeRemaining/miner.nftAgeTotal)*100;const dead=!miner.isAlive||miner.needsRepair;
   return(<div style={{background:"#fff",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)",border:`2px solid ${dead?"#ddd":miner.canClaim?"#FFD600":r.color}`,opacity:dead?.65:1}}>
     <div style={{background:dead?"#f5f5f5":`linear-gradient(135deg,${r.bg},#1a1a2e)`,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <span style={{color:r.color,fontWeight:800,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>{r.name}</span>
+      <span style={{color:r.color,fontWeight:800,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>
+        {r.name}
+        {miner.isFused&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#E040FB,#9C27B0)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>{tx.fusedBadge}</span>}
+      </span>
       <span style={{fontSize:9,fontWeight:600,color:miner.canClaim?"#FFD600":miner.isMining?"#4CAF50":dead?"#999":"#aaa"}}>
         {miner.canClaim?`✅ ${tx.mcReady}`:miner.isMining?`⛏️ ${tx.mcMining}`:dead?"":miner.isIdle?`💤 ${tx.mcIdle}`:""}
         <span style={{color:"#999",marginLeft:4}}>{miner.nftAgeRemaining}/{miner.nftAgeTotal}</span>
@@ -579,23 +590,12 @@ function HowItWorks(){
       <GBSection id="fusion" emoji="🔥" title={tx.howFusionTitle}/>
       <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>{tx.howFusionP}</p>
       <GBCallout type="warning">{tx.howFusionWarn(FUSE_COST)}</GBCallout>
-      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>⚗️ Rarity Outcome Rules</h3>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
-        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px",border:"1px solid #eee"}}>
-          <div style={{fontSize:12,fontWeight:800,color:"#9C27B0",marginBottom:10,textTransform:"uppercase",letterSpacing:.5}}>{tx.howFusionSameTitle}</div>
-          <div style={{fontSize:12,color:"#555",lineHeight:2}}>
-            <span style={{fontWeight:700,color:"#4CAF50"}}>80%</span> → upgrades <strong>+1 tier</strong><br/>
-            <span style={{fontWeight:700,color:"#FF9800"}}>20%</span> → jumps <strong>+2 tiers</strong>
-          </div>
-          <div style={{fontSize:11,color:"#aaa",marginTop:8}}>{tx.howFusionSameEx}</div>
-        </div>
-        <div style={{background:"#f8f9fa",borderRadius:12,padding:"18px",border:"1px solid #eee"}}>
-          <div style={{fontSize:12,fontWeight:800,color:"#E91E63",marginBottom:10,textTransform:"uppercase",letterSpacing:.5}}>{tx.howFusionDiffTitle}</div>
-          <div style={{fontSize:12,color:"#555",lineHeight:2}}>
-            <span style={{fontWeight:700,color:"#4CAF50"}}>80%</span> → keeps the <strong>highest rarity</strong><br/>
-            <span style={{fontWeight:700,color:"#FF9800"}}>20%</span> → jumps <strong>highest +2 tiers</strong>
-          </div>
-          <div style={{fontSize:11,color:"#aaa",marginTop:8}}>{tx.howFusionDiffEx}</div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>{tx.howFusionRuleTitle}</h3>
+      <div style={{background:"linear-gradient(135deg,#4a1060,#2d0040)",borderRadius:12,padding:"18px 22px",marginBottom:22,border:"1px solid #9C27B0"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,textAlign:"center"}}>
+          <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Daily</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>(A + B) × 1.20</div></div>
+          <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Lifespan</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>Parent tier's age</div></div>
+          <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Rarity</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>+1 tier up</div></div>
         </div>
       </div>
       <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12}}>{tx.howFusionTableTitle}</h3>
@@ -603,33 +603,27 @@ function HowItWorks(){
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
           <thead>
             <tr style={{background:"#1a1a2e"}}>
-              {[tx.howFusionColA,tx.howFusionColB,tx.howFusionCol80,tx.howFusionCol20].map(h=>(
+              {[tx.howFusionColA,tx.howFusionColB,tx.howFusionColResult,tx.howFusionColDaily,tx.howFusionColLifespan].map(h=>(
                 <th key={h} style={{padding:"10px 12px",color:"rgba(255,255,255,.65)",fontWeight:600,textAlign:"left",whiteSpace:"nowrap"}}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {[
-              ["Common","Common","UnCommon","Rare"],
-              ["UnCommon","UnCommon","Rare","Super Rare"],
-              ["Rare","Rare","Super Rare","Legendary"],
-              ["Super Rare","Super Rare","Legendary","Mythic"],
-              ["Legendary","Legendary","Mythic","Mythic"],
-              ["Mythic","Mythic","Mythic","Mythic"],
-              ["Common","Rare","Rare","Super Rare"],
-              ["UnCommon","Legendary","Legendary","Mythic"],
-              ["Common","Legendary","Legendary","Mythic"],
-            ].map(([a,b,r80,r20],i)=>{
-              const ca=RARITIES.find(r=>r.name===a);
-              const cb=RARITIES.find(r=>r.name===b);
-              const c80=RARITIES.find(r=>r.name===r80);
-              const c20=RARITIES.find(r=>r.name===r20);
+              [0,0,1,"(19+19)×1.2 = 45.6 DC",19],
+              [1,1,2,"(22+22)×1.2 = 52.8 DC",17],
+              [2,2,3,"(25+25)×1.2 = 60 DC",15],
+              [3,3,4,"(28+28)×1.2 = 67.2 DC",14],
+              [4,4,5,"(33+33)×1.2 = 79.2 DC",13],
+            ].map(([aId,bId,resId,daily,lifespan],i)=>{
+              const ca=RARITIES[aId];const cb=RARITIES[bId];const cr=RARITIES[resId];
               return(
                 <tr key={i} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
-                  <td style={{padding:"10px 12px",fontWeight:700,color:ca?.color}}>{a}</td>
-                  <td style={{padding:"10px 12px",fontWeight:700,color:cb?.color}}>{b}</td>
-                  <td style={{padding:"10px 12px",fontWeight:700,color:c80?.color}}>{r80}</td>
-                  <td style={{padding:"10px 12px",fontWeight:700,color:c20?.color}}>{r20}</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:ca.color}}>{ca.name}</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:cb.color}}>{cb.name}</td>
+                  <td style={{padding:"10px 12px",fontWeight:700,color:cr.color}}>{cr.name} <span style={{background:"linear-gradient(135deg,#E040FB,#9C27B0)",color:"#fff",fontSize:8,padding:"1px 4px",borderRadius:3,marginLeft:4}}>FUSED</span></td>
+                  <td style={{padding:"10px 12px",color:"#4CAF50",fontWeight:700}}>{daily}</td>
+                  <td style={{padding:"10px 12px",color:"#FF9800",fontWeight:700}}>{lifespan} days</td>
                 </tr>
               );
             })}
@@ -1170,8 +1164,15 @@ export default function DigMinerApp(){
 
   const toggleFuseSelect=(miner)=>{
     if(!fuseMode) return;
-    // Can't select mining miners
     if(miner.isMining) return notify(tx.cantFuseMining,false);
+    if(miner.isFused) return notify(tx.cantFuseFused,false);
+    if(miner.rarityId>=5) return notify(tx.cantFuseMythic,false);
+    // Enforce same rarity as first selected
+    if(fuseSelected.length===1 && !fuseSelected.find(m=>m.id===miner.id)){
+      if(fuseSelected[0].rarityId!==miner.rarityId){
+        return notify(tx.cantFuseDiffRarity(RARITIES[fuseSelected[0].rarityId].name),false);
+      }
+    }
     setFuseSelected(prev=>{
       if(prev.find(m=>m.id===miner.id)) return prev.filter(m=>m.id!==miner.id);
       if(prev.length>=2) return [prev[1],miner];
