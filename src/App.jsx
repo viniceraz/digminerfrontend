@@ -860,7 +860,23 @@ export default function DigMinerApp(){
 
   // Load global stats on mount
   useEffect(()=>{
-    fetch("/api/stats").then(r=>r.json()).then(d=>setStats(d)).catch(()=>{});
+    const loadStats = async () => {
+      try {
+        const d = await fetch("/api/stats").then(r=>r.json());
+        // Read actual on-chain pool balance instead of calculating from DB
+        try {
+          const provider = new ethers.JsonRpcProvider("https://rpc.tempo.xyz");
+          const pool = new ethers.Contract(CONTRACTS.POOL, ["function poolBalance() external view returns (uint256)"], provider);
+          const [bal, dec] = await Promise.all([
+            pool.poolBalance(),
+            new ethers.Contract(CONTRACTS.PATHUSD, ["function decimals() external view returns (uint8)"], provider).decimals(),
+          ]);
+          d.pool_balance = parseFloat(ethers.formatUnits(bal, dec));
+        } catch(_) {}
+        setStats(d);
+      } catch(_) {}
+    };
+    loadStats();
   },[]);
 
   const getProvider=()=>new ethers.BrowserProvider(window.ethereum);
@@ -1323,7 +1339,7 @@ export default function DigMinerApp(){
       {/* GLOBAL STATS */}
       <div style={{display:"flex",gap:0,background:"rgba(255,255,255,.9)",borderRadius:10,overflow:"hidden",marginBottom:20,border:"1px solid #ddd",flexWrap:"wrap"}}>
         {[
-          [`${((stats.total_deposited||0)-(stats.total_withdrawn||0)).toFixed(2)} ${tx.statsPool}`],
+          [`${(stats.pool_balance!=null?stats.pool_balance:(stats.total_deposited||0)-(stats.total_withdrawn||0)).toFixed(2)} ${tx.statsPool}`],
           [`${stats.totalMiners||0} ${tx.statsNft}`],
           [`${stats.totalPlayers||0} ${tx.statsPlayers}`],
           [`${(stats.total_withdrawn||0).toFixed(2)} ${tx.statsWithdrawn}`],
