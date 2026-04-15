@@ -1002,6 +1002,8 @@ export default function DigMinerApp(){
   const[adminLog,setAdminLog]=useState([]);
   const[adminPlayers,setAdminPlayers]=useState([]);
   const[adminLoading,setAdminLoading]=useState("");
+  const[giftWallets,setGiftWallets]=useState("");
+  const[giftResults,setGiftResults]=useState(null);
   const[fuseMode,setFuseMode]=useState(false);
   const[fuseSelected,setFuseSelected]=useState([]);
   const[fuseReveal,setFuseReveal]=useState(null);
@@ -1248,6 +1250,21 @@ export default function DigMinerApp(){
       setAdminLog(l=>[{wallet:d.wallet,amount:d.amountSent,reason:d.reason,ts:new Date().toLocaleString()},...l.slice(0,19)]);
       setAdminTo("");setAdminAmt("");setAdminReason("");
       notify(`✅ Sent ${d.amountSent} DC to ${d.wallet.slice(0,10)}...`);
+    }catch(e){notify(e.message,false);}
+    finally{setAdminLoading("");}
+  };
+
+  const adminGiftBoxes=async()=>{
+    const wallets=giftWallets.split(/[\n,]+/).map(w=>w.trim()).filter(w=>w.length>0);
+    if(!wallets.length) return notify("Paste at least one wallet address",false);
+    if(wallets.length>50) return notify("Max 50 wallets per batch",false);
+    try{
+      setAdminLoading("gift");setGiftResults(null);
+      const res=await authFetch("/api/admin/gift-boxes",{method:"POST",body:JSON.stringify({wallets})});
+      const d=await res.json();
+      if(!res.ok) return notify(d.error,false);
+      setGiftResults(d);
+      notify(`🎁 Done: ${d.sent} sent, ${d.failed} failed`);
     }catch(e){notify(e.message,false);}
     finally{setAdminLoading("");}
   };
@@ -1983,6 +2000,41 @@ export default function DigMinerApp(){
                     <td style={{padding:"6px 10px",fontWeight:700,color:"#FF9800"}}>{l.amount} DC</td>
                     <td style={{padding:"6px 10px",color:"#666"}}>{l.reason}</td>
                     <td style={{padding:"6px 10px",color:"#aaa"}}>{l.ts}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>}
+          </div>
+
+          {/* Gift Miner Boxes */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>🎁 Gift Miner Boxes</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:16}}>Send 1 free miner box to each wallet. Paste addresses one per line (max 50). No DIGCOIN charged — rarity is rolled normally.</p>
+            <textarea
+              value={giftWallets} onChange={e=>setGiftWallets(e.target.value)}
+              placeholder={"0xABC...\n0xDEF...\n0x123..."}
+              rows={6}
+              style={{width:"100%",padding:"10px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:11,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box"}}
+            />
+            <div style={{display:"flex",alignItems:"center",gap:12,marginTop:10}}>
+              <span style={{fontSize:11,color:"#888"}}>{giftWallets.split(/[\n,]+/).filter(w=>w.trim()).length} wallets</span>
+              <button disabled={adminLoading==="gift"} onClick={adminGiftBoxes} style={{padding:"9px 24px",background:"linear-gradient(135deg,#9C27B0,#E91E63)",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                {adminLoading==="gift"?"Sending...":"🎁 Send Boxes"}
+              </button>
+              {giftResults&&<span style={{fontSize:11,color:"#4CAF50",fontWeight:700}}>✅ {giftResults.sent} sent {giftResults.failed>0&&<span style={{color:"#EF5350"}}>/ {giftResults.failed} failed</span>}</span>}
+            </div>
+            {giftResults?.results&&<div style={{marginTop:14,maxHeight:220,overflowY:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
+                <thead><tr style={{background:"#f9f9f9"}}>
+                  {["Wallet","Status","Miner ID","Rarity","DC/day"].map(h=><th key={h} style={{padding:"5px 8px",borderBottom:"1px solid #eee",textAlign:"left",color:"#888"}}>{h}</th>)}
+                </tr></thead>
+                <tbody>{giftResults.results.map((r,i)=>(
+                  <tr key={i} style={{borderBottom:"1px solid #f5f5f5",background:r.success?"#fff":"#fff8f8"}}>
+                    <td style={{padding:"5px 8px",fontFamily:"monospace"}}>{r.wallet.slice(0,10)}...{r.wallet.slice(-6)}</td>
+                    <td style={{padding:"5px 8px",fontWeight:700,color:r.success?"#4CAF50":"#EF5350"}}>{r.success?"✅ Sent":"❌ Failed"}</td>
+                    <td style={{padding:"5px 8px"}}>{r.minerId||"—"}</td>
+                    <td style={{padding:"5px 8px",fontWeight:700,color:r.success?(RARITIES.find(x=>x.name===r.rarityName)?.color||"#333"):"#aaa"}}>{r.rarityName||r.error||"—"}</td>
+                    <td style={{padding:"5px 8px"}}>{r.dailyDigcoin||"—"}</td>
                   </tr>
                 ))}</tbody>
               </table>
