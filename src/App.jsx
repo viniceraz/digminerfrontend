@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import { ethers } from "ethers";
 import { MINERPOOL_ABI, PATHUSD_ABI, CONTRACTS } from "./contracts";
 
@@ -12,6 +12,16 @@ const RARITIES = [
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=10;
 const FUSE_COST=50;
+const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
+const LAND_RARITIES=[
+  {id:0,name:"Common",    chance:"35%",boostPercent:5, minerSlots:2,color:"#9E9E9E",bg:"#3a3a3a"},
+  {id:1,name:"UnCommon",  chance:"28%",boostPercent:10,minerSlots:3,color:"#4CAF50",bg:"#1b3a1b"},
+  {id:2,name:"Rare",      chance:"18%",boostPercent:15,minerSlots:4,color:"#2196F3",bg:"#1a2940"},
+  {id:3,name:"Super Rare",chance:"10%",boostPercent:20,minerSlots:5,color:"#E91E63",bg:"#3a1a2a"},
+  {id:4,name:"Legendary", chance:"6%", boostPercent:25,minerSlots:6,color:"#FF9800",bg:"#3a2a10"},
+  {id:5,name:"Mythic",    chance:"3%", boostPercent:35,minerSlots:8,color:"#9C27B0",bg:"#2a1a3a"},
+];
+const LAND_IMGS=["/landsimgs/land1.png","/landsimgs/land2.png","/landsimgs/land3.png","/landsimgs/land4.png","/landsimgs/land5.png","/landsimgs/land6.png"];
 
 const LangCtx = createContext('en');
 const T = {
@@ -74,7 +84,7 @@ const T = {
     colWallet:"Wallet",colBalance:"Balance (DC)",colDeposited:"Deposited ($)",colEarned:"Earned (DC)",colBoxes:"Boxes",colJoined:"Joined",
     roadmapTitle:"🗺️ DigMiner Roadmap",roadmapSubtitle:"What we've built — and what's coming next.",roadmapDisclaimer:"Roadmap is subject to change. Follow us for updates.",
     howNavIntro:"Introduction",howNavStart:"Quick Start",howNavBoxes:"Mystery Boxes",howNavRarities:"Rarities",
-    howNavMining:"Mining Cycle",howNavLifespan:"Lifespan & Repair",howNavFusion:"Fusion",
+    howNavMining:"Mining Cycle",howNavLifespan:"Lifespan & Repair",howNavFusion:"Fusion",howNavLands:"Lands",
     howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",
     howIntroTitle:"What is DigMiner?",howIntroP1:"DigMiner is a Click-to-Earn game running on the Tempo Mainnet blockchain. You deposit real pathUSD, buy NFT miners, run 24-hour mining cycles, and withdraw your earnings.",howIntroP2:"The core loop: Deposit → Buy Boxes → Mine → Claim → Withdraw. The rarer your miner, the more it earns and the longer it lasts.",howIntroTip:"You don't pay gas fees to mine or claim. Only deposits and withdrawals touch the blockchain — everything else is instant and free.",
     howStatExchange:"Exchange Rate",howStatBox:"Box Price",howStatBulk:"Bulk (10x)",howStatFee:"Withdraw Fee",howStatRef:"Referral Bonus",howStatBatch:"Batch Fee",
@@ -89,6 +99,21 @@ const T = {
     howRoiTitle:"ROI & Full Statistics",howRoiP:"Complete breakdown of all 6 miner types — earnings, returns, and ROI based on a single box price of 300 DC.",howRoiCols:["Miner","Chance","Daily Range","Avg/Day","ROI","Lifespan","Total Return","Repair"],howRoiTip:"ROI is calculated from the box price (300 DC). After ROI, all further earnings are pure profit until the miner retires.",howRoiPortTitle:"📈 Example 10-Box Portfolio",howRoiPortItems:"Avg luck: 3 Common, 3 UnCommon, 2 Rare, 1 Super Rare, 1 Legendary\nDaily income: ~255 DC/day ≈ 2.55 pathUSD\nInvestment: 2850 DC (bulk)\nEstimated ROI: ~12 days\nProfit over full lifespan: ~9000–12000 DC",
     howFaqTitle:"Frequently Asked Questions",howFaqItems:[["Do I pay gas to mine or claim?","No. Mining and claiming are off-chain. Gas only applies to deposits and withdrawals on Tempo."],["What if I forget to claim for more than 24h?","Nothing happens. Rewards stay pending indefinitely. The miner only loses 1 lifespan day per successful claim, not per day elapsed."],["Can I own multiple miners of the same rarity?","Yes. Own as many as you want — all mine independently and simultaneously."],["Is there a limit to how many boxes I can buy?","No limit. Buy as many as your DIGCOIN balance allows."],["What is pathUSD?","pathUSD is a USD-pegged stablecoin on the Tempo blockchain. 1 pathUSD ≈ $1 USD."],["Can I use Rabby Wallet?","Yes. Rabby is fully compatible — it uses the same window.ethereum interface as MetaMask."],["What happens if I switch accounts in MetaMask?","The game logs you out automatically for security. Connect and sign again with the new wallet."],["Is the 6% withdraw fee negotiable?","No. The fee is fixed and goes back into the reward pool to sustain the game economy."],["Can I repair a miner more than once?","Yes, unlimited times. Repair always resets to the original full lifespan."],["Why do I need to sign a message on login?","The signature proves you own the wallet without spending gas. Only you can modify your account."]],
     howFooter:"DigMiner © 2026 • Powered by Tempo Blockchain",
+    landBoxTitle:"Mystery Land Box",landBoxDesc:"Own a plot of land to permanently boost your miners' daily DIGCOIN production. Each land has a rarity that determines the boost and number of miner slots.",
+    landSaleCountdown:(h,m,s)=>`Sale opens in: ${h}h ${m}m ${s}s`,landSaleOpen:"🌍 Land Sale is OPEN!",
+    landBuyBtn:(n)=>`Buy Land Box (${n} DC)`,
+    colLand:"Land",colBoost:"Farm Boost",colSlots:"Miner Slots",colLandChance:"Chance",
+    landStatsTitle:"Land Stats",myLands:"My Lands",
+    noLands:"No lands yet. Buy a Land Box in the Shop!",
+    landAssignBtn:"Assign Miner",landUnassignBtn:"Unassign",landSlotFree:"Empty Slot",
+    landAssignTitle:"Select an idle miner to assign:",landAssignCancel:"Cancel",landAssignNoIdle:"No idle unassigned miners available.",
+    landAssigning:"Assigning...",landUnassigning:"Unassigning...",
+    howLandsTitle:"Lands",
+    howLandsP:"Lands are permanent plots that boost your miners' daily DIGCOIN income. Assign idle miners to your land and the boost is applied automatically every time you claim.",
+    howLandsSteps:[["Buy a Land Box in the Shop","Go to the Shop tab and buy a Land Box for 400 DC. Rarity is random — same chances as mystery boxes."],["Assign Idle Miners to Your Land","In My NFT tab, open your land card and click Assign Miner. Only IDLE miners can be assigned."],["Mine and Claim as Normal","Start mining and claim rewards as usual. The land boost is applied automatically at claim time."],["Unassign Anytime (Idle Only)","Move miners between lands freely — but only when they are IDLE (not actively mining)."]],
+    howLandsTip:"A miner assigned to a Mythic Land earns 35% more per claim. Multiple lands let you boost all your miners simultaneously.",
+    howLandsTableTitle:"📊 All Land Rarities",howLandsColRarity:"Rarity",howLandsColBoost:"Boost",howLandsColSlots:"Slots",howLandsColChance:"Chance",
+    howLandsWarn:(p)=>`Land boost is applied at claim time. Example: a 25 DC/day miner on a 20% Legendary Land earns ${(25*1.2).toFixed(1)} DC per claim.`,
   },
   zh:{
     tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",
@@ -149,7 +174,7 @@ const T = {
     colWallet:"钱包",colBalance:"余额(DC)",colDeposited:"充值($)",colEarned:"已赚(DC)",colBoxes:"盲盒",colJoined:"加入时间",
     roadmapTitle:"🗺️ DigMiner 路线图",roadmapSubtitle:"我们已完成的 — 以及接下来的计划。",roadmapDisclaimer:"路线图可能会有所调整，请关注我们获取最新动态。",
     howNavIntro:"游戏介绍",howNavStart:"快速开始",howNavBoxes:"神秘盒子",howNavRarities:"稀有等级",
-    howNavMining:"挖矿循环",howNavLifespan:"寿命与修复",howNavFusion:"合成",
+    howNavMining:"挖矿循环",howNavLifespan:"寿命与修复",howNavFusion:"合成",howNavLands:"土地",
     howNavWithdraw:"提现",howNavReferral:"推荐计划",howNavRoi:"ROI 表格",howNavFaq:"常见问题",
     howIntroTitle:"什么是 DigMiner？",howIntroP1:"DigMiner 是一款运行在 Tempo 主网区块链上的点击赚钱游戏。您充值真实的 pathUSD，购买 NFT 矿工，开启24小时挖矿循环，并提取收益。",howIntroP2:"核心玩法：充值 → 购买盲盒 → 挖矿 → 领取 → 提现。矿工越稀有，收益越高，寿命越长。",howIntroTip:"挖矿和领取无需支付 Gas 费用。只有充值和提现才会触发区块链交易 — 其他操作即时且免费。",
     howStatExchange:"汇率",howStatBox:"盲盒价格",howStatBulk:"批量 (10个)",howStatFee:"提现手续费",howStatRef:"推荐奖励",howStatBatch:"批量手续费",
@@ -164,6 +189,21 @@ const T = {
     howRoiTitle:"ROI 与完整数据",howRoiP:"基于单个盲盒价格300 DC，对6种矿工类型的完整收益、回报和ROI分析。",howRoiCols:["矿工","概率","日收益范围","平均/天","ROI","寿命","总回报","修复费"],howRoiTip:"ROI 基于盲盒价格（300 DC）计算。回本后，所有进一步收益均为纯利润，直到矿工退役。",howRoiPortTitle:"📈 示例：10个盲盒投资组合",howRoiPortItems:"平均运气：3普通、3非普通、2稀有、1超级稀有、1传说\n日收益：约255 DC/天 ≈ 2.55 pathUSD\n投资额：2850 DC（批量购买）\n预计回本：约12天\n全寿命利润：约9000–12000 DC",
     howFaqTitle:"常见问题",howFaqItems:[["挖矿或领取需要支付 Gas 费吗？","不需要。挖矿和领取均为链下操作。Gas 仅适用于在 Tempo 上的充值和提现。"],["如果我超过24小时忘记领取会怎样？","没有任何影响。奖励会无限期保持待领取状态。矿工每次成功领取只减少1次寿命，而不是按天计算。"],["我可以拥有多个相同稀有度的矿工吗？","可以。想拥有多少就拥有多少 — 所有矿工独立且同时挖矿。"],["购买盲盒有数量限制吗？","没有限制。只要您的 DIGCOIN 余额足够，可以购买任意数量。"],["什么是 pathUSD？","pathUSD 是 Tempo 区块链上与美元挂钩的稳定币，1 pathUSD ≈ 1 美元。"],["可以使用 Rabby 钱包吗？","可以。Rabby 完全兼容 — 它使用与 MetaMask 相同的 window.ethereum 接口。"],["在 MetaMask 中切换账户会发生什么？","为了安全，游戏会自动退出登录。用新钱包重新连接并签署即可。"],["6% 的提现手续费可以协商吗？","不可以。手续费固定，并返回奖励池以维持游戏经济。"],["矿工可以修复多次吗？","可以，无限次。修复始终重置为原始完整寿命。"],["为什么登录时需要签署消息？","签名证明您拥有该钱包，无需花费 Gas 费。只有您才能修改您的账户。"]],
     howFooter:"DigMiner © 2026 • 由 Tempo 区块链驱动",
+    landBoxTitle:"土地盒子",landBoxDesc:"拥有一块土地，永久提升矿工的每日DIGCOIN产量。每块土地的稀有度决定加成幅度和矿工格位数量。",
+    landSaleCountdown:(h,m,s)=>`开售倒计时：${h}时${m}分${s}秒`,landSaleOpen:"🌍 土地销售已开启！",
+    landBuyBtn:(n)=>`购买土地盒子 (${n} DC)`,
+    colLand:"土地",colBoost:"农场加成",colSlots:"矿工格",colLandChance:"概率",
+    landStatsTitle:"土地统计",myLands:"我的土地",
+    noLands:"还没有土地。去商店购买土地盒子！",
+    landAssignBtn:"分配矿工",landUnassignBtn:"取消分配",landSlotFree:"空闲格",
+    landAssignTitle:"选择空闲矿工进行分配：",landAssignCancel:"取消",landAssignNoIdle:"没有空闲且未分配的矿工。",
+    landAssigning:"分配中...",landUnassigning:"取消中...",
+    howLandsTitle:"土地",
+    howLandsP:"土地是永久地块，可提升矿工的每日DIGCOIN收入。将空闲矿工分配到土地上，每次领取时自动应用加成。",
+    howLandsSteps:[["在商店购买土地盒子","前往商店标签，以400 DC购买土地盒子。稀有度随机揭示。"],["将空闲矿工分配到土地","在我的NFT标签中打开土地卡片，点击分配矿工。只有空闲矿工可以被分配。"],["正常挖矿和领取","正常开始挖矿并领取，领取时自动应用土地加成。"],["随时取消分配（仅空闲时）","在土地之间自由移动矿工——但只能在空闲时。"]],
+    howLandsTip:"分配给神话土地的矿工每次领取多赚35%。拥有多块土地可同时提升所有矿工。",
+    howLandsTableTitle:"📊 所有土地稀有度",howLandsColRarity:"稀有度",howLandsColBoost:"加成",howLandsColSlots:"格位",howLandsColChance:"概率",
+    howLandsWarn:(p)=>`土地加成在领取时应用。示例：日收益25 DC的矿工在20%传说土地上每次获得${(25*1.2).toFixed(1)} DC。`,
   }
 };
 
@@ -221,7 +261,15 @@ function BoxReveal({miner,onClose,isFuse=false}){
   </div>);
 }
 
-function Timer({ms}){const[l,sL]=useState(ms);useEffect(()=>{const i=setInterval(()=>sL(x=>Math.max(0,x-1000)),1000);return()=>clearInterval(i);},[]);const h=Math.floor(l/3600000),m=Math.floor((l%3600000)/60000),s=Math.floor((l%60000)/1000);return<span>{h}h {m}m {s}s</span>;}
+// Timer accepts targetMs (absolute UTC timestamp) so it stays accurate across tab switches and stale re-mounts.
+// Legacy ms= prop is kept for withdraw cooldown (which doesn't have an absolute target).
+function Timer({targetMs,ms}){
+  const[,tick]=useState(0);
+  useEffect(()=>{const i=setInterval(()=>tick(x=>x+1),1000);return()=>clearInterval(i);},[]);
+  const rem=targetMs!=null?Math.max(0,targetMs-Date.now()):Math.max(0,ms??0);
+  const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+  return<span>{h}h {m}m {s}s</span>;
+}
 
 function MinerCard({miner,onMine,onClaim,onRepair,loading}){
   const lang=useContext(LangCtx);const tx=T[lang];
@@ -253,19 +301,34 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading}){
           :miner.canClaim
             ?<button disabled={loading} onClick={()=>onClaim(miner.id)} style={{flex:1,padding:"7px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"none",borderRadius:8,color:"#333",fontSize:11,fontWeight:800,cursor:"pointer"}}>{tx.mcClaim} +{miner.dailyDigcoin} DC</button>
             :miner.isMining
-              ?<div style={{flex:1,textAlign:"center",color:"#4CAF50",fontSize:10,padding:7}}>{tx.mcMine}… <Timer ms={miner.cooldownRemaining}/></div>
+              ?<div style={{flex:1,textAlign:"center",color:"#4CAF50",fontSize:10,padding:7}}>{tx.mcMine}… <Timer targetMs={miner.miningEndsAt}/></div>
               :<button disabled={loading} onClick={()=>onMine(miner.id)} style={{flex:1,padding:"7px",background:`linear-gradient(135deg,${r.color},${r.color}dd)`,border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcMine}</button>}
     </div>
   </div>);
 }
 
-function FarmCalculator({miners}){
+function FarmCalculator({miners, lands=[]}){
   const lang=useContext(LangCtx);const tx=T[lang];
   const[simQty,setSimQty]=useState({0:0,1:0,2:0,3:0,4:0,5:0});
   const alive=miners.filter(m=>m.isAlive&&!m.needsRepair);
-  const dailyTotal=alive.reduce((s,m)=>s+m.dailyDigcoin,0);
+
+  // Build miner → land boost lookup from lands state
+  const minerLandBoost=useMemo(()=>{
+    const map={};
+    for(const land of lands){
+      for(const a of land.assignedMiners||[]){
+        map[a.minerId]={boostPercent:land.boostPercent,landRarity:land.rarityName,landId:land.id};
+      }
+    }
+    return map;
+  },[lands]);
+
+  const effectiveDaily=(m)=>m.dailyDigcoin*(1+(minerLandBoost[m.id]?.boostPercent||0)/100);
+  const dailyTotal=alive.reduce((s,m)=>s+effectiveDaily(m),0);
   const weeklyTotal=dailyTotal*7;
   const monthlyTotal=dailyTotal*30;
+  const hasLandBoosts=alive.some(m=>minerLandBoost[m.id]);
+  const hasFused=alive.some(m=>m.isFused);
 
   // Simulator totals
   const simDaily=RARITIES.reduce((s,r)=>{
@@ -301,19 +364,31 @@ function FarmCalculator({miners}){
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
               <thead><tr style={{background:"#f5f5f5"}}>
-                {[tx.calcMiner,tx.calcRarity,tx.calcDailyDC,tx.calcDailyUSD,tx.calcMonthlyDC,tx.calcMonthlyUSD,tx.calcLifespan,tx.calcRemaining].map(h=>(
+                {[tx.calcMiner,tx.calcRarity,...((hasFused||hasLandBoosts)?["Boosts"]:[]),tx.calcDailyDC,tx.calcDailyUSD,tx.calcMonthlyDC,tx.calcMonthlyUSD,tx.calcLifespan,tx.calcRemaining].map(h=>(
                   <th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",fontWeight:700,color:"#555",whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr></thead>
               <tbody>{alive.map(m=>{
                 const r=RARITIES[m.rarityId];
-                const monthDC=m.dailyDigcoin*30;
-                const remaining=m.dailyDigcoin*m.nftAgeRemaining;
+                const lb=minerLandBoost[m.id];
+                const eff=effectiveDaily(m);
+                const monthDC=eff*30;
+                const remaining=eff*m.nftAgeRemaining;
                 return(<tr key={m.id} style={{borderBottom:"1px solid #f0f0f0"}}>
                   <td style={{padding:"8px 10px"}}><img src={NFT_IMGS[m.rarityId]} alt={r.name} style={{width:28,height:28,objectFit:"contain",verticalAlign:"middle",marginRight:6}}/><span style={{fontWeight:600,fontSize:10}}>#{m.id}</span></td>
                   <td style={{padding:"8px 10px",fontWeight:700,color:r.color}}>{r.name}</td>
-                  <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{m.dailyDigcoin.toFixed(2)}</td>
-                  <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(m.dailyDigcoin/DIG_RATE).toFixed(4)}</td>
+                  {(hasFused||hasLandBoosts)&&<td style={{padding:"8px 10px"}}>
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                      {m.isFused&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:"#fbe9e7",color:"#BF360C"}}>⚡ FUSED</span>}
+                      {lb&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:"#f3e5f5",color:"#6A1B9A"}} title={`Land #${lb.landId} (${lb.landRarity})`}>🌍 +{lb.boostPercent}%</span>}
+                      {!m.isFused&&!lb&&<span style={{color:"#ccc",fontSize:10}}>—</span>}
+                    </div>
+                  </td>}
+                  <td style={{padding:"8px 10px"}}>
+                    <span style={{fontWeight:700,color:"#FF9800"}}>{eff.toFixed(2)}</span>
+                    {lb&&<span style={{fontSize:9,color:"#888",marginLeft:4}}>(base {m.dailyDigcoin.toFixed(2)})</span>}
+                  </td>
+                  <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(eff/DIG_RATE).toFixed(4)}</td>
                   <td style={{padding:"8px 10px"}}>{monthDC.toFixed(1)}</td>
                   <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(monthDC/DIG_RATE).toFixed(3)}</td>
                   <td style={{padding:"8px 10px"}}>{m.nftAgeRemaining} days</td>
@@ -321,7 +396,7 @@ function FarmCalculator({miners}){
                 </tr>);
               })}</tbody>
               <tfoot><tr style={{background:"#FFF8E1",fontWeight:800}}>
-                <td colSpan={2} style={{padding:"10px",fontSize:12}}>{tx.calcTotal}</td>
+                <td colSpan={(hasFused||hasLandBoosts)?3:2} style={{padding:"10px",fontSize:12}}>{tx.calcTotal}</td>
                 <td style={{padding:"10px",color:"#FF9800"}}>{dailyTotal.toFixed(2)}</td>
                 <td style={{padding:"10px",color:"#4CAF50"}}>${(dailyTotal/DIG_RATE).toFixed(4)}</td>
                 <td style={{padding:"10px"}}>{monthlyTotal.toFixed(1)}</td>
@@ -335,11 +410,13 @@ function FarmCalculator({miners}){
             {RARITIES.map(r=>{
               const group=alive.filter(m=>m.rarityId===r.id);
               if(!group.length) return null;
-              const dc=group.reduce((s,m)=>s+m.dailyDigcoin,0);
+              const dc=group.reduce((s,m)=>s+effectiveDaily(m),0);
+              const fusedCount=group.filter(m=>m.isFused).length;
+              const boostedCount=group.filter(m=>minerLandBoost[m.id]).length;
               return(<div key={r.id} style={{background:r.bg||"#f5f5f5",borderRadius:10,padding:"8px 14px",border:`1px solid ${r.color}`,display:"flex",gap:10,alignItems:"center"}}>
                 <img src={NFT_IMGS[r.id]} alt={r.name} style={{width:24,height:24,objectFit:"contain"}}/>
                 <div>
-                  <div style={{fontSize:10,color:r.color,fontWeight:700}}>{r.name} ×{group.length}</div>
+                  <div style={{fontSize:10,color:r.color,fontWeight:700}}>{r.name} ×{group.length}{fusedCount>0&&<span style={{marginLeft:4,color:"#BF360C"}}>⚡×{fusedCount}</span>}{boostedCount>0&&<span style={{marginLeft:4,color:"#6A1B9A"}}>🌍×{boostedCount}</span>}</div>
                   <div style={{fontSize:11,fontWeight:800,color:"#333"}}>{dc.toFixed(1)} DC/day</div>
                 </div>
               </div>);
@@ -429,6 +506,7 @@ function HowItWorks(){
     {id:"mining",  emoji:"⛏️",  label:tx.howNavMining},
     {id:"lifespan",emoji:"⏳", label:tx.howNavLifespan},
     {id:"fusion",  emoji:"🔥", label:tx.howNavFusion},
+    {id:"lands",   emoji:"🌍", label:tx.howNavLands},
     {id:"withdraw",emoji:"🏧", label:tx.howNavWithdraw},
     {id:"referral",emoji:"🤝", label:tx.howNavReferral},
     {id:"roi",     emoji:"📊", label:tx.howNavRoi},
@@ -641,6 +719,41 @@ function HowItWorks(){
       </div>
       <GBCallout type="tip">{tx.howFusionTip}</GBCallout>
 
+      <GBSection id="lands" emoji="🌍" title={tx.howLandsTitle}/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>{tx.howLandsP}</p>
+      <GBCallout type="info">{tx.howLandsWarn(20)}</GBCallout>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:22}}>
+        {tx.howLandsSteps.map(([t,d],i)=>(
+          <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"14px 16px",background:"#f8f9fa",borderRadius:10,border:"1px solid #eee"}}>
+            <div style={{background:"#0d2e0d",color:"#4CAF50",borderRadius:"50%",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0,fontFamily:"'Outfit',sans-serif"}}>{i+1}</div>
+            <div><div style={{fontSize:13,fontWeight:700,color:"#222",marginBottom:3}}>{t}</div><div style={{fontSize:12,color:"#666",lineHeight:1.7}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12}}>{tx.howLandsTableTitle}</h3>
+      <div style={{overflowX:"auto",marginBottom:22}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"#0d2e0d"}}>
+              {[tx.howLandsColRarity,tx.howLandsColBoost,tx.howLandsColSlots,tx.howLandsColChance].map(h=>(
+                <th key={h} style={{padding:"10px 12px",color:"rgba(255,255,255,.65)",fontWeight:600,textAlign:"left",whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {LAND_RARITIES.map((r,i)=>(
+              <tr key={r.id} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
+                <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><img src={LAND_IMGS[r.id]} alt={r.name} style={{width:28,height:28,objectFit:"contain"}}/><span style={{fontWeight:700,color:r.color}}>{r.name}</span></div></td>
+                <td style={{padding:"10px 12px",fontWeight:700,color:"#4CAF50"}}>+{r.boostPercent}%</td>
+                <td style={{padding:"10px 12px",fontWeight:600,color:"#333"}}>{r.minerSlots} miners</td>
+                <td style={{padding:"10px 12px",color:"#666"}}>{r.chance}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <GBCallout type="tip">{tx.howLandsTip}</GBCallout>
+
       <GBSection id="roi" emoji="📊" title={tx.howRoiTitle}/>
       <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>{tx.howRoiP}</p>
       <div style={{overflowX:"auto",marginBottom:22}}>
@@ -726,7 +839,7 @@ function RoadmapModal({onClose}){
       items:[
         {done:false, text:"New Miner designs & exclusive seasonal rarities"},
         {done:false, text:"Marketplace — trade miners between players"},
-        {done:false, text:"Lands — own a plot to boost your daily DIGCOIN production"},
+        {done:true, text:"Lands — own a plot to boost your daily DIGCOIN production"},
         {done:false, text:"Leaderboard — top earners & top fusers"},
       ]
     },
@@ -802,6 +915,62 @@ function RoadmapModal({onClose}){
   );
 }
 
+// ══════════ LAND COUNTDOWN BUTTON ══════════
+function LandCountdownButton({targetMs,onBuy,loading}){
+  const lang=useContext(LangCtx);const tx=T[lang];
+  const[now,setNow]=useState(Date.now());
+  useEffect(()=>{const i=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(i);},[]);
+  const open=now>=targetMs;
+  const msLeft=Math.max(0,targetMs-now);
+  const h=Math.floor(msLeft/3600000),m=Math.floor((msLeft%3600000)/60000),s=Math.floor((msLeft%60000)/1000);
+  if(open) return(
+    <button disabled={loading} onClick={onBuy} style={{padding:"11px 24px",background:"linear-gradient(135deg,#4CAF50,#8BC34A)",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 14px rgba(76,175,80,.4)",width:"100%"}}>
+      {loading?"Opening...":tx.landBuyBtn(LAND_BOX_PRICE)}
+    </button>
+  );
+  return(
+    <div style={{background:"#f5f5f5",borderRadius:8,padding:"12px 14px",textAlign:"center",border:"1px solid #eee"}}>
+      <div style={{color:"#888",fontSize:9,marginBottom:6,textTransform:"uppercase",letterSpacing:1,fontWeight:700}}>Sale opens in</div>
+      <div style={{color:"#FF9800",fontSize:22,fontWeight:900,fontFamily:"'Press Start 2P',monospace"}}>{String(h).padStart(2,"0")}:{String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}</div>
+      <div style={{color:"#aaa",fontSize:9,marginTop:6}}>{tx.landBuyBtn(LAND_BOX_PRICE)} — available soon</div>
+    </div>
+  );
+}
+
+// ══════════ LAND REVEAL ══════════
+function LandReveal({land,onClose}){
+  const lang=useContext(LangCtx);const tx=T[lang];
+  const[phase,setPhase]=useState(0);
+  const r=LAND_RARITIES[land.rarityId]||LAND_RARITIES[0];
+  useEffect(()=>{const t1=setTimeout(()=>setPhase(1),1000);const t2=setTimeout(()=>setPhase(2),2000);return()=>{clearTimeout(t1);clearTimeout(t2)};},[]);
+  return(<div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.92)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
+    {phase===0&&<div style={{animation:"shake .6s infinite",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
+      <div style={{fontSize:80}}>📦</div>
+      <div style={{color:"#4CAF50",fontSize:14,fontWeight:800,letterSpacing:2}}>OPENING LAND BOX...</div>
+    </div>}
+    {phase===1&&<div style={{fontSize:100,animation:"explode .8s forwards"}}>🌍</div>}
+    {phase===2&&<div style={{textAlign:"center",animation:"popIn .5s ease",maxWidth:340}}>
+      <div style={{color:"#4CAF50",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:8}}>YOU GOT A LAND!</div>
+      <div style={{width:160,height:160,margin:"0 auto 16px",position:"relative"}}>
+        <div style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle,${r.color}44 0%,transparent 70%)`}}/>
+        <img src={LAND_IMGS[land.rarityId||0]} alt={r.name} style={{width:160,height:160,objectFit:"contain",filter:`drop-shadow(0 0 20px ${r.color})`}}/>
+      </div>
+      <div style={{color:r.color,fontSize:22,fontWeight:900,textShadow:`0 0 30px ${r.color}`,fontFamily:"'Press Start 2P',monospace",marginBottom:12}}>{r.name}!</div>
+      <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:16}}>
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:8,padding:"10px 16px",textAlign:"center"}}>
+          <div style={{color:"rgba(255,255,255,.4)",fontSize:9,marginBottom:4}}>BOOST</div>
+          <div style={{color:"#4CAF50",fontWeight:800,fontSize:18}}>+{r.boostPercent}%</div>
+        </div>
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:8,padding:"10px 16px",textAlign:"center"}}>
+          <div style={{color:"rgba(255,255,255,.4)",fontSize:9,marginBottom:4}}>SLOTS</div>
+          <div style={{color:"#FFD600",fontWeight:800,fontSize:18}}>{r.minerSlots}</div>
+        </div>
+      </div>
+      <button onClick={onClose} style={{padding:"10px 36px",background:r.color,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>Awesome!</button>
+    </div>}
+  </div>);
+}
+
 // ══════════ MAIN APP ══════════
 export default function DigMinerApp(){
   const AUTH_KEY="digminer_token";
@@ -837,6 +1006,11 @@ export default function DigMinerApp(){
   const[fuseSelected,setFuseSelected]=useState([]);
   const[fuseReveal,setFuseReveal]=useState(null);
   const[showRoadmap,setShowRoadmap]=useState(false);
+  const[lands,setLands]=useState([]);
+  const[landSaleStartMs,setLandSaleStartMs]=useState(null);
+  const[landLoading,setLandLoading]=useState("");
+  const[assigningLandId,setAssigningLandId]=useState(null);
+  const[landReveal,setLandReveal]=useState(null);
   const[lang,setLang]=useState(()=>localStorage.getItem("digminer_lang")||"en");
   const tx=T[lang];
   const toggleLang=()=>{const nl=lang==="en"?"zh":"en";setLang(nl);localStorage.setItem("digminer_lang",nl);};
@@ -868,6 +1042,7 @@ export default function DigMinerApp(){
           d.pool_balance = parseFloat(ethers.formatUnits(bal, dec));
         } catch(_) {}
         setStats(d);
+        if(d.landSaleStartMs) setLandSaleStartMs(d.landSaleStartMs);
       } catch(_) {}
     };
     loadStats();
@@ -892,6 +1067,7 @@ export default function DigMinerApp(){
       setDigcoin(data.player.digcoinBalance);
       setMiners(data.miners);
       setReferralLink(`${window.location.origin}?ref=${address}`);
+      try{const ld=await fetch(`/api/land/${address}`).then(r=>r.ok?r.json():{lands:[]});setLands(ld.lands||[]);}catch(_){}
       await loadPathUSDBalance(address);
       // Check withdraw cooldown — use stored token directly (history endpoint requires auth)
       try{
@@ -1020,6 +1196,13 @@ export default function DigMinerApp(){
       }catch(_){}
     }).catch(()=>{});
   },[loadPlayer]);
+
+  // Auto-refresh miner state every 60s so timers flip to "Ready" without manual interaction
+  useEffect(()=>{
+    if(!wallet) return;
+    const id=setInterval(()=>loadPlayer(wallet),60000);
+    return()=>clearInterval(id);
+  },[wallet,loadPlayer]);
 
   // Listen for account/chain changes
   useEffect(()=>{
@@ -1263,6 +1446,52 @@ export default function DigMinerApp(){
     finally{setTxLoading("");}
   };
 
+  const buyLandBox=async(qty=1)=>{
+    const cost=qty===10?LAND_BOX_10_PRICE:LAND_BOX_PRICE*qty;
+    if(digcoin<cost) return notify(`Need ${cost} DIGCOIN!`,false);
+    if(landSaleStartMs&&Date.now()<landSaleStartMs) return notify("Land sale hasn't opened yet!",false);
+    try{
+      setLandLoading("buy");
+      const res=await authFetch("/api/land/buy",{method:"POST",body:JSON.stringify({wallet,quantity:qty})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      if(qty===1){
+        setLandReveal(data.lands[0]);
+      }else{
+        await loadPlayer(wallet);
+        notify(`${qty} Mystery Land Boxes opened! Check My NFT tab.`);
+        return;
+      }
+      await loadPlayer(wallet);
+    }catch(e){notify(e.message,false);}
+    finally{setLandLoading("");}
+  };
+
+  const doAssignMiner=async(landId,minerId)=>{
+    try{
+      setLandLoading(`assign_${minerId}`);
+      const res=await authFetch("/api/land/assign",{method:"POST",body:JSON.stringify({wallet,landId,minerId})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      setAssigningLandId(null);
+      await loadPlayer(wallet);
+      notify("Miner assigned!");
+    }catch(e){notify(e.message,false);}
+    finally{setLandLoading("");}
+  };
+
+  const doUnassignMiner=async(minerId)=>{
+    try{
+      setLandLoading(`unassign_${minerId}`);
+      const res=await authFetch("/api/land/unassign",{method:"POST",body:JSON.stringify({wallet,minerId})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      await loadPlayer(wallet);
+      notify("Miner unassigned.");
+    }catch(e){notify(e.message,false);}
+    finally{setLandLoading("");}
+  };
+
   const alive=miners.filter(m=>m.isAlive&&!m.needsRepair);
   const idleMiners=miners.filter(m=>m.isIdle);
   const miningMiners=miners.filter(m=>m.isMining);
@@ -1433,7 +1662,10 @@ export default function DigMinerApp(){
                 <tbody>{transactions.map((t,i)=>(
                   <tr key={i} style={{borderBottom:"1px solid #f5f5f5"}}>
                     <td style={{padding:7,color:"#666"}}>{new Date(t.date).toLocaleString()}</td>
-                    <td style={{padding:7}}><span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:t.type==="deposit"?"#e8f5e9":t.type==="withdraw"?"#fff3e0":t.type==="play"?"#e3f2fd":"#fce4ec",color:t.type==="deposit"?"#2E7D32":t.type==="withdraw"?"#E65100":t.type==="play"?"#1565C0":"#880E4F"}}>{t.type.toUpperCase()}</span></td>
+                    <td style={{padding:7}}><span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,
+                      background:t.type==="deposit"?"#e8f5e9":t.type==="withdraw"?"#fff3e0":t.type==="claim"?"#e3f2fd":t.type==="box"?"#fce4ec":t.type==="repair"?"#fff8e1":t.type==="land"?"#f3e5f5":t.type==="fusion"?"#fbe9e7":t.type==="play_all"?"#e1f5fe":t.type==="claim_all"?"#e8eaf6":"#f5f5f5",
+                      color:t.type==="deposit"?"#2E7D32":t.type==="withdraw"?"#E65100":t.type==="claim"?"#1565C0":t.type==="box"?"#880E4F":t.type==="repair"?"#F57F17":t.type==="land"?"#6A1B9A":t.type==="fusion"?"#BF360C":t.type==="play_all"?"#01579B":t.type==="claim_all"?"#283593":"#555"
+                    }}>{t.type==="play_all"?"PLAY ALL":t.type==="claim_all"?"CLAIM ALL":t.type.toUpperCase()}</span></td>
                     <td style={{padding:7,color:"#333"}}>{t.detail}</td>
                     <td style={{padding:7,textAlign:"right",fontWeight:700,color:t.amount>0?"#4CAF50":"#EF5350"}}>{t.amount>0?"+":""}{t.amount} DC</td>
                   </tr>
@@ -1486,6 +1718,116 @@ export default function DigMinerApp(){
                 );
               })}
           </div>
+
+          {/* MY LANDS */}
+          <div style={{marginTop:24}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <span style={{fontSize:18}}>🌍</span>
+              <h3 style={{fontSize:15,fontWeight:800,color:"#fff"}}>{tx.myLands}</h3>
+              <span style={{fontSize:10,color:"rgba(255,255,255,.35)",background:"rgba(255,255,255,.08)",padding:"2px 8px",borderRadius:10}}>{lands.length}</span>
+            </div>
+            {lands.length===0?(
+              <div style={{textAlign:"center",padding:32,background:"rgba(255,255,255,.05)",borderRadius:12,border:"1px dashed rgba(255,255,255,.12)"}}>
+                <div style={{fontSize:36,marginBottom:8}}>🌍</div>
+                <div style={{color:"rgba(255,255,255,.4)",fontSize:12}}>{tx.noLands}</div>
+              </div>
+            ):(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+                {lands.map(land=>{
+                  const lr=LAND_RARITIES[land.rarityId]||LAND_RARITIES[0];
+                  const assignedIds=new Set(land.assignedMiners.map(a=>a.minerId));
+                  const idleUnassigned=miners.filter(m=>m.isIdle&&m.isAlive&&!m.needsRepair&&!lands.some(l=>l.assignedMiners.some(a=>a.minerId===m.id)));
+                  const isAssigning=assigningLandId===land.id;
+                  const slots=Array.from({length:land.minerSlots},(_,i)=>land.assignedMiners[i]||null);
+                  return(
+                    <div key={land.id} style={{background:`linear-gradient(135deg,${lr.bg},#0d0d1a)`,borderRadius:12,border:`2px solid ${lr.color}44`,overflow:"hidden"}}>
+                      {/* Header */}
+                      <div style={{background:`linear-gradient(90deg,${lr.color}22,transparent)`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid ${lr.color}22`}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <img src={LAND_IMGS[land.rarityId||0]} alt={lr.name} style={{width:36,height:36,objectFit:"contain"}}/>
+                          <div>
+                            <div style={{color:lr.color,fontWeight:800,fontSize:12}}>{lr.name} Land</div>
+                            <div style={{color:"rgba(255,255,255,.4)",fontSize:10}}>#{land.id}</div>
+                          </div>
+                        </div>
+                        <div style={{textAlign:"right"}}>
+                          <div style={{color:"#4CAF50",fontWeight:800,fontSize:16}}>+{land.boostPercent}%</div>
+                          <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>boost</div>
+                        </div>
+                      </div>
+                      {/* Slots */}
+                      <div style={{padding:"12px 16px"}}>
+                        <div style={{fontSize:9,color:"rgba(255,255,255,.35)",marginBottom:8,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{land.assignedMiners.length}/{land.minerSlots} miners</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                          {slots.map((asgn,i)=>{
+                            if(asgn){
+                              const slotR=RARITIES[asgn.rarityId]||RARITIES[0];
+                              const isBusy=landLoading===`unassign_${asgn.minerId}`;
+                              return(
+                                <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.07)",borderRadius:8,padding:"6px 10px",border:`1px solid ${slotR.color}33`}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                    <img src={NFT_IMGS[asgn.rarityId||0]} alt={asgn.rarityName} style={{width:24,height:24,objectFit:"contain"}}/>
+                                    <div>
+                                      <div style={{color:slotR.color,fontWeight:700,fontSize:10}}>{asgn.rarityName} #{asgn.minerId}</div>
+                                      <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>{asgn.dailyDigcoin} → <span style={{color:"#4CAF50"}}>{(asgn.dailyDigcoin*(1+land.boostPercent/100)).toFixed(1)} DC/day</span></div>
+                                    </div>
+                                  </div>
+                                  {asgn.isIdle&&(
+                                    <button disabled={!!landLoading} onClick={()=>doUnassignMiner(asgn.minerId)} style={{padding:"3px 8px",background:"rgba(239,83,80,.15)",border:"1px solid #EF5350",borderRadius:6,color:"#EF5350",fontSize:9,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                                      {isBusy?tx.landUnassigning:tx.landUnassignBtn}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            } else {
+                              return(
+                                <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.03)",borderRadius:8,padding:"6px 10px",border:"1px dashed rgba(255,255,255,.1)"}}>
+                                  <span style={{color:"rgba(255,255,255,.25)",fontSize:10}}>{tx.landSlotFree}</span>
+                                  {!isAssigning&&(
+                                    <button disabled={!!landLoading} onClick={()=>setAssigningLandId(land.id)} style={{padding:"3px 8px",background:"rgba(76,175,80,.15)",border:"1px solid #4CAF50",borderRadius:6,color:"#4CAF50",fontSize:9,fontWeight:700,cursor:"pointer"}}>
+                                      {tx.landAssignBtn}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            }
+                          })}
+                        </div>
+                        {/* Assign panel */}
+                        {isAssigning&&(
+                          <div style={{marginTop:10,background:"rgba(0,0,0,.3)",borderRadius:8,padding:"10px",border:"1px solid rgba(76,175,80,.3)"}}>
+                            <div style={{color:"rgba(255,255,255,.6)",fontSize:10,marginBottom:8}}>{tx.landAssignTitle}</div>
+                            {idleUnassigned.length===0?(
+                              <div style={{color:"rgba(255,255,255,.3)",fontSize:10}}>{tx.landAssignNoIdle}</div>
+                            ):(
+                              <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:160,overflowY:"auto"}}>
+                                {idleUnassigned.map(m=>{
+                                  const mr=RARITIES[m.rarityId]||RARITIES[0];
+                                  const isBusy=landLoading===`assign_${m.id}`;
+                                  return(
+                                    <button key={m.id} disabled={!!landLoading} onClick={()=>doAssignMiner(land.id,m.id)}
+                                      style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:"rgba(255,255,255,.06)",border:`1px solid ${mr.color}44`,borderRadius:6,cursor:"pointer",textAlign:"left",width:"100%"}}>
+                                      <img src={NFT_IMGS[m.rarityId||0]} alt={m.rarityName} style={{width:20,height:20,objectFit:"contain"}}/>
+                                      <div style={{flex:1}}>
+                                        <div style={{color:mr.color,fontWeight:700,fontSize:10}}>{m.rarityName} #{m.id}</div>
+                                        <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>{m.dailyDigcoin} DC/day</div>
+                                      </div>
+                                      <span style={{color:"#4CAF50",fontSize:9,fontWeight:700}}>{isBusy?tx.landAssigning:"+"}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <button onClick={()=>setAssigningLandId(null)} style={{marginTop:8,padding:"4px 12px",background:"transparent",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,color:"rgba(255,255,255,.4)",fontSize:9,cursor:"pointer"}}>{tx.landAssignCancel}</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>}
 
         {/* SHOP */}
@@ -1524,10 +1866,51 @@ export default function DigMinerApp(){
               </table>
             </div>
           </div>
+
+          {/* ── Land Box + stats ── */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
+              <img src={LAND_IMGS[0]} alt="Mystery Land Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #4CAF5088)"}}/>
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:10}}>{tx.landBoxTitle}</h3>
+              <div style={{textAlign:"left",padding:"0 16px",marginBottom:14,fontSize:11,color:"#555",lineHeight:1.8}}>
+                {LAND_RARITIES.map(r=><div key={r.id}>• <span style={{color:r.color,fontWeight:700}}>{r.name}:</span> {r.chance}</div>)}
+              </div>
+              {landSaleStartMs&&Date.now()<landSaleStartMs?(
+                <LandCountdownButton targetMs={landSaleStartMs} onBuy={buyLandBox} loading={landLoading==="buy"}/>
+              ):(
+                <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                  <button disabled={!!landLoading||!wallet} onClick={()=>buyLandBox(1)} style={{padding:"9px 18px",background:"#4CAF50",border:"2px solid #388E3C",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#fff"}}>
+                    {landLoading==="buy"?tx.opening:`1 Box = ${LAND_BOX_PRICE} DC`}
+                  </button>
+                  <button disabled={!!landLoading||!wallet} onClick={()=>buyLandBox(10)} style={{padding:"9px 18px",background:"linear-gradient(135deg,#388E3C,#4CAF50)",border:"2px solid #2E7D32",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#fff"}}>
+                    {landLoading==="buy"?tx.opening:`10 Box = ${LAND_BOX_10_PRICE} DC`} <span style={{fontSize:9,color:"#C8E6C9"}}>(15% OFF)</span>
+                  </button>
+                </div>
+              )}
+              <p style={{fontSize:10,color:"#aaa",marginTop:12}}>{tx.balance} {digcoin.toFixed(0)} DIGCOIN</p>
+            </div>
+            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd"}}>
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:14}}>{tx.landStatsTitle}</h3>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
+                <thead><tr style={{background:"#f9f9f9"}}>{[tx.colLand,tx.colBoost,tx.colSlots,tx.colLandChance].map(h=><th key={h} style={{padding:7,borderBottom:"2px solid #ddd",textAlign:"left"}}>{h}</th>)}</tr></thead>
+                <tbody>{LAND_RARITIES.map(r=>(
+                  <tr key={r.id} style={{borderBottom:"1px solid #f0f0f0"}}>
+                    <td style={{padding:7}}><div style={{display:"flex",alignItems:"center",gap:6}}><img src={LAND_IMGS[r.id]} alt={r.name} style={{width:22,height:22,objectFit:"contain"}}/><span style={{fontWeight:700,color:r.color}}>{r.name}</span></div></td>
+                    <td style={{padding:7,fontWeight:700,color:"#4CAF50"}}>+{r.boostPercent}%</td>
+                    <td style={{padding:7}}>{r.minerSlots}</td>
+                    <td style={{padding:7}}>{r.chance}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </div>
         </div>}
 
+        {/* LAND REVEAL */}
+        {landReveal&&<LandReveal land={landReveal} onClose={()=>setLandReveal(null)}/>}
+
         {/* CALCULATOR */}
-        {tab==="calc"&&<FarmCalculator miners={miners}/>}
+        {tab==="calc"&&<FarmCalculator miners={miners} lands={lands}/>}
 
         {/* HOW IT WORKS */}
         {tab==="how"&&<HowItWorks/>}
