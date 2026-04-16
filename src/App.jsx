@@ -310,6 +310,8 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading}){
 function FarmCalculator({miners, lands=[]}){
   const lang=useContext(LangCtx);const tx=T[lang];
   const[simQty,setSimQty]=useState({0:0,1:0,2:0,3:0,4:0,5:0});
+  const[simLandBoost,setSimLandBoost]=useState(0);  // selected land boost %
+  const[simShowFusion,setSimShowFusion]=useState(false);
   const alive=miners.filter(m=>m.isAlive&&!m.needsRepair);
 
   // Build miner → land boost lookup from lands state
@@ -330,7 +332,7 @@ function FarmCalculator({miners, lands=[]}){
   const hasLandBoosts=alive.some(m=>minerLandBoost[m.id]);
   const hasFused=alive.some(m=>m.isFused);
 
-  // Simulator totals
+  // Simulator totals (base)
   const simDaily=RARITIES.reduce((s,r)=>{
     const qty=simQty[r.id]||0;
     const avg=(r.dailyMin+r.dailyMax)/2;
@@ -338,6 +340,35 @@ function FarmCalculator({miners, lands=[]}){
   },0);
   const simWeekly=simDaily*7;
   const simMonthly=simDaily*30;
+
+  // Land boost applied
+  const simDailyBoosted=simDaily*(1+simLandBoost/100);
+
+  // Fusion potential: fuse all possible pairs per rarity (max rarity = 5 can't fuse up)
+  const fusionResult=useMemo(()=>{
+    const counts={0:simQty[0]||0,1:simQty[1]||0,2:simQty[2]||0,3:simQty[3]||0,4:simQty[4]||0,5:simQty[5]||0};
+    let fusedDaily=0;
+    const breakdown=[];
+    for(let id=0;id<=4;id++){
+      const qty=counts[id];
+      if(qty<2) continue;
+      const pairs=Math.floor(qty/2);
+      const parentAvg=(RARITIES[id].dailyMin+RARITIES[id].dailyMax)/2;
+      const fusedAvg=parentAvg*2*1.20;
+      const resultRarity=RARITIES[id+1];
+      fusedDaily+=fusedAvg*pairs;
+      breakdown.push({from:RARITIES[id],to:resultRarity,pairs,fusedAvg,dc:fusedAvg*pairs});
+    }
+    // Add unfused miners (qty=1 remainder or mythic) at base rate
+    let remainderDaily=0;
+    for(let id=0;id<=5;id++){
+      const qty=simQty[id]||0;
+      const remainder=id<=4?qty%2:qty; // mythics never fuse
+      const avg=(RARITIES[id].dailyMin+RARITIES[id].dailyMax)/2;
+      remainderDaily+=avg*remainder;
+    }
+    return{daily:fusedDaily+remainderDaily,breakdown,boosted:(fusedDaily+remainderDaily)*(1+simLandBoost/100)};
+  },[simQty,simLandBoost]);
 
   const Card=({label,dc,usd})=>(
     <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,textAlign:"center",border:"1px solid #eee",flex:1,minWidth:120}}>
@@ -476,6 +507,141 @@ function FarmCalculator({miners, lands=[]}){
           </div>
         </div>
       )}
+
+      {/* LAND BOOST SELECTOR */}
+      {simDaily>0&&(
+        <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,border:"1px solid #ddd",marginTop:0}}>
+          <div style={{fontSize:12,fontWeight:800,color:"#333",marginBottom:10}}>🌍 Land Boost Simulator</div>
+          <div style={{fontSize:11,color:"#888",marginBottom:12}}>Select a land rarity to see boosted earnings</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <button onClick={()=>setSimLandBoost(0)}
+              style={{padding:"6px 12px",borderRadius:8,border:"2px solid",borderColor:simLandBoost===0?"#333":"#ddd",
+                background:simLandBoost===0?"#333":"#fff",color:simLandBoost===0?"#fff":"#555",
+                fontSize:11,fontWeight:700,cursor:"pointer"}}>
+              None (0%)
+            </button>
+            {LAND_RARITIES.map(r=>(
+              <button key={r.id} onClick={()=>setSimLandBoost(simLandBoost===r.boostPercent?0:r.boostPercent)}
+                style={{padding:"6px 12px",borderRadius:8,border:"2px solid",borderColor:simLandBoost===r.boostPercent?r.color:"#ddd",
+                  background:simLandBoost===r.boostPercent?r.color+"22":"#fff",color:r.color,
+                  fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                {r.name} +{r.boostPercent}%
+              </button>
+            ))}
+          </div>
+          {simLandBoost>0&&(
+            <div style={{marginTop:14,background:"linear-gradient(135deg,#1a1a2e,#16213e)",borderRadius:10,padding:14,color:"#fff"}}>
+              <div style={{fontSize:10,color:"#aaa",marginBottom:8,textAlign:"center"}}>With {simLandBoost}% Land Boost</div>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center"}}>
+                {[["Daily",simDailyBoosted],["Weekly",simDailyBoosted*7],["Monthly",simDailyBoosted*30]].map(([l,dc])=>(
+                  <div key={l} style={{textAlign:"center",flex:1,minWidth:90}}>
+                    <div style={{fontSize:10,color:"#888"}}>{l}</div>
+                    <div style={{fontSize:18,fontWeight:800,color:"#B2FF59"}}>{dc.toFixed(1)} DC</div>
+                    <div style={{fontSize:10,color:"#4CAF50"}}>${(dc/DIG_RATE).toFixed(3)}</div>
+                    <div style={{fontSize:9,color:"#666",marginTop:2}}>+{(simDaily*(simLandBoost/100)).toFixed(1)} DC vs base</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FUSION POTENTIAL */}
+      {simDaily>0&&(
+        <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,border:"1px solid #ddd",marginTop:0}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:simShowFusion?14:0}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:800,color:"#333"}}>⚗️ Fusion Potential</div>
+              <div style={{fontSize:11,color:"#888",marginTop:2}}>What if you fuse all possible pairs?</div>
+            </div>
+            <button onClick={()=>setSimShowFusion(v=>!v)}
+              style={{padding:"6px 14px",borderRadius:8,border:"1px solid #E040FB",background:simShowFusion?"#E040FB":"#fff",
+                color:simShowFusion?"#fff":"#E040FB",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+              {simShowFusion?"Hide":"Show"}
+            </button>
+          </div>
+
+          {simShowFusion&&(
+            <>
+              {fusionResult.breakdown.length===0
+                ?<div style={{textAlign:"center",padding:12,color:"#aaa",fontSize:11}}>Add at least 2 miners of the same rarity to see fusion potential</div>
+                :(
+                <>
+                  {/* Fusion breakdown table */}
+                  <div style={{overflowX:"auto",marginBottom:12}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                      <thead><tr style={{background:"#f5f5f5"}}>
+                        {["From","Pairs","Result Rarity","Fused Daily","Total DC/day"].map(h=>(
+                          <th key={h} style={{padding:"7px 10px",borderBottom:"2px solid #ddd",textAlign:"left",fontWeight:700,color:"#555",whiteSpace:"nowrap"}}>{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>
+                        {fusionResult.breakdown.map((b,i)=>(
+                          <tr key={i} style={{borderBottom:"1px solid #f0f0f0",background:i%2===0?"#fafafa":"#fff"}}>
+                            <td style={{padding:"7px 10px"}}>
+                              <span style={{fontWeight:700,color:b.from.color}}>{b.from.name}</span>
+                              <span style={{color:"#aaa",margin:"0 4px"}}>×2</span>
+                            </td>
+                            <td style={{padding:"7px 10px",fontWeight:700}}>{b.pairs} pair{b.pairs>1?"s":""}</td>
+                            <td style={{padding:"7px 10px"}}>
+                              <span style={{fontWeight:700,color:b.to.color}}>→ {b.to.name}</span>
+                              <span style={{fontSize:9,color:"#888",marginLeft:4}}>(×1.20 bonus)</span>
+                            </td>
+                            <td style={{padding:"7px 10px",color:"#FF9800",fontWeight:700}}>{b.fusedAvg.toFixed(2)} DC</td>
+                            <td style={{padding:"7px 10px",color:"#FF9800",fontWeight:800}}>{b.dc.toFixed(2)} DC</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Fusion result summary */}
+                  <div style={{background:"linear-gradient(135deg,#2a0a3e,#1a0a2e)",borderRadius:10,padding:14,color:"#fff"}}>
+                    <div style={{fontSize:10,color:"#aaa",marginBottom:10,textAlign:"center"}}>After Fusing All Pairs</div>
+                    <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center",marginBottom:simLandBoost>0?12:0}}>
+                      {[["Daily",fusionResult.daily],["Weekly",fusionResult.daily*7],["Monthly",fusionResult.daily*30]].map(([l,dc])=>(
+                        <div key={l} style={{textAlign:"center",flex:1,minWidth:90}}>
+                          <div style={{fontSize:10,color:"#888"}}>{l}</div>
+                          <div style={{fontSize:18,fontWeight:800,color:"#E040FB"}}>{dc.toFixed(1)} DC</div>
+                          <div style={{fontSize:10,color:"#CE93D8"}}>${(dc/DIG_RATE).toFixed(3)}</div>
+                          <div style={{fontSize:9,color:"#666",marginTop:2}}>
+                            {dc>simDaily
+                              ?<span style={{color:"#B2FF59"}}>+{(dc-simDaily).toFixed(1)} vs base</span>
+                              :<span style={{color:"#888"}}>same as base</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Land boost on fused result */}
+                    {simLandBoost>0&&(
+                      <div style={{borderTop:"1px solid #333",paddingTop:10,marginTop:4}}>
+                        <div style={{fontSize:10,color:"#aaa",marginBottom:8,textAlign:"center"}}>Fused + {simLandBoost}% Land Boost</div>
+                        <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center"}}>
+                          {[["Daily",fusionResult.boosted],["Weekly",fusionResult.boosted*7],["Monthly",fusionResult.boosted*30]].map(([l,dc])=>(
+                            <div key={l} style={{textAlign:"center",flex:1,minWidth:90}}>
+                              <div style={{fontSize:10,color:"#888"}}>{l}</div>
+                              <div style={{fontSize:18,fontWeight:800,color:"#FFD600"}}>{dc.toFixed(1)} DC</div>
+                              <div style={{fontSize:10,color:"#4CAF50"}}>${(dc/DIG_RATE).toFixed(3)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* FUSE COST note */}
+                  <div style={{marginTop:8,fontSize:10,color:"#888",textAlign:"center"}}>
+                    ⚗️ Fusing costs {FUSE_COST} DC per pair • Fused miners get +20% daily bonus over both parents combined
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {simDaily===0&&<div style={{textAlign:"center",padding:16,color:"#aaa",fontSize:12}}>{tx.addMiners}</div>}
     </div>
   </div>);
