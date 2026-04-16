@@ -13,6 +13,7 @@ const RARITIES = [
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
 const FUSE_COST=50;
 const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
+const AUTO_PICKAXE_PRICE=3000; const AUTO_PICKAXE_MAX=500;
 const LAND_RARITIES=[
   {id:0,name:"Common",    chance:"35%",boostPercent:5, minerSlots:2,color:"#9E9E9E",bg:"#3a3a3a"},
   {id:1,name:"UnCommon",  chance:"28%",boostPercent:10,minerSlots:3,color:"#4CAF50",bg:"#1b3a1b"},
@@ -85,7 +86,7 @@ const T = {
     roadmapTitle:"🗺️ DigMiner Roadmap",roadmapSubtitle:"What we've built — and what's coming next.",roadmapDisclaimer:"Roadmap is subject to change. Follow us for updates.",
     howNavIntro:"Introduction",howNavStart:"Quick Start",howNavBoxes:"Mystery Boxes",howNavRarities:"Rarities",
     howNavMining:"Mining Cycle",howNavLifespan:"Lifespan & Repair",howNavFusion:"Fusion",howNavLands:"Lands",
-    howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",
+    howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",howNavAutoPickaxe:"Auto Pickaxe",
     howIntroTitle:"What is DigMiner?",howIntroP1:"DigMiner is a Click-to-Earn game running on the Tempo Mainnet blockchain. You deposit real pathUSD, buy NFT miners, run 24-hour mining cycles, and withdraw your earnings.",howIntroP2:"The core loop: Deposit → Buy Boxes → Mine → Claim → Withdraw. The rarer your miner, the more it earns and the longer it lasts.",howIntroTip:"You don't pay gas fees to mine or claim. Only deposits and withdrawals touch the blockchain — everything else is instant and free.",
     howStatExchange:"Exchange Rate",howStatBox:"Box Price",howStatBulk:"Bulk (10x)",howStatFee:"Withdraw Fee",howStatRef:"Referral Bonus",howStatBatch:"Batch Fee",
     howStartTitle:"Quick Start Guide",howStartSteps:[["Connect your wallet","Click Connect Wallet and approve in MetaMask or Rabby. No gas needed."],["Switch to Tempo Mainnet","The app will prompt you to add and switch to the Tempo network automatically."],["Sign the auth message","Sign a free off-chain message to prove wallet ownership. Valid for 24 hours."],["Deposit pathUSD","My Account → Deposit. Approve the token and confirm. DIGCOIN appears instantly."],["Buy a Mystery Box","Shop → Buy Box. 300 DC for 1, or 2850 DC for 10 (5% discount)."],["Start Mining","In My NFT tab, click ⛏️ Mine on your miner. Return in 24 hours."],["Claim & Withdraw","Click 💎 Claim after 24h. When ready, withdraw from My Account → Withdraw."]],
@@ -114,6 +115,25 @@ const T = {
     howLandsTip:"A miner assigned to a Mythic Land earns 35% more per claim. Multiple lands let you boost all your miners simultaneously.",
     howLandsTableTitle:"📊 All Land Rarities",howLandsColRarity:"Rarity",howLandsColBoost:"Boost",howLandsColSlots:"Slots",howLandsColChance:"Chance",
     howLandsWarn:(p)=>`Land boost is applied at claim time. Example: a 25 DC/day miner on a 20% Legendary Land earns ${(25*1.2).toFixed(1)} DC per claim.`,
+    howAutoPickaxeTitle:"Auto Pickaxe",
+    howAutoPickaxeP:"The Auto Pickaxe is a one-time lifetime tool that fully automates your mining operation. Once active, the server automatically claims all your ready miners and restarts them every cycle — no app required.",
+    howAutoPickaxeHowTitle:"⚙️ How It Works",
+    howAutoPickaxeSteps:[
+      ["Buy Once in the Shop","Go to the Shop tab and purchase the Auto Pickaxe for 3,000 DC. Supply is limited to 500 units total."],
+      ["Activate the Toggle","In your My NFT tab, a banner appears with an ON/OFF toggle. Switch it ON to enable full automation."],
+      ["Server Does Everything","Every hour the server checks all active Auto Pickaxe holders. If your miners are ready (24h passed) it claims them and restarts mining immediately."],
+      ["Toggle OFF Anytime","Want to manage manually? Just toggle OFF. Fees apply again when OFF, exactly like normal play."],
+    ],
+    howAutoPickaxePerksTitle:"⚡ Perks at a Glance",
+    howAutoPickaxePerks:[
+      ["🤖","Full Automation","Claims and restarts all miners automatically every cycle. You never need to open the app."],
+      ["💸","Zero Fees Forever","Mine All & Claim All fees are permanently waived while the toggle is ON. Saves 10 DC per miner per cycle."],
+      ["🔁","Full Control","Toggle ON/OFF at any time from the My NFT tab. Your choice, always."],
+      ["♾️","Lifetime Access","One-time purchase — no subscriptions, no renewals, works as long as you play."],
+      ["🔒","Exclusive Supply","Only 500 ever available. Once sold out it cannot be purchased again."],
+    ],
+    howAutoPickaxeTip:"With 30 miners and the Auto Pickaxe active, you save 300 DC in fees every single day — that's 9,000 DC/month back in your pocket.",
+    howAutoPickaxeWarn:"The Auto Pickaxe automates the cycle but does not extend miner lifespan. Miners still retire normally after their lifespan ends.",
   },
   zh:{
     tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",
@@ -204,6 +224,26 @@ const T = {
     howLandsTip:"分配给神话土地的矿工每次领取多赚35%。拥有多块土地可同时提升所有矿工。",
     howLandsTableTitle:"📊 所有土地稀有度",howLandsColRarity:"稀有度",howLandsColBoost:"加成",howLandsColSlots:"格位",howLandsColChance:"概率",
     howLandsWarn:(p)=>`土地加成在领取时应用。示例：日收益25 DC的矿工在20%传说土地上每次获得${(25*1.2).toFixed(1)} DC。`,
+    howNavAutoPickaxe:"自动镐",
+    howAutoPickaxeTitle:"自动镐",
+    howAutoPickaxeP:"自动镐是一次性终身工具，可完全自动化您的挖矿操作。激活后，服务器会自动在每个周期领取所有就绪矿工并重新启动它们——无需打开应用。",
+    howAutoPickaxeHowTitle:"⚙️ 使用方法",
+    howAutoPickaxeSteps:[
+      ["在商店一次性购买","前往商店标签，以3,000 DC购买自动镐。总供应量仅限500个。"],
+      ["激活切换开关","在我的NFT标签中出现带有开/关切换的横幅。切换为开以启用全自动化。"],
+      ["服务器处理一切","服务器每小时检查所有激活自动镐的持有者。如果您的矿工已就绪（24小时已过），它会立即领取并重新开始挖矿。"],
+      ["随时切换关闭","想手动管理？直接切换为关。关闭时手续费照常收取。"],
+    ],
+    howAutoPickaxePerksTitle:"⚡ 权益一览",
+    howAutoPickaxePerks:[
+      ["🤖","全自动化","每个周期自动领取并重启所有矿工，无需打开应用。"],
+      ["💸","永久零手续费","切换开启时，矿工全部和领取全部手续费永久免除，每个矿工每周期节省10 DC。"],
+      ["🔁","完全掌控","随时在我的NFT标签中切换开/关，选择权永远在您手中。"],
+      ["♾️","终身访问","一次性购买——无订阅、无续费，只要您在玩就一直有效。"],
+      ["🔒","专属供应","仅有500个，售完即止，无法再次购买。"],
+    ],
+    howAutoPickaxeTip:"拥有30个矿工并激活自动镐后，您每天节省300 DC手续费——每月节省9,000 DC回到您的口袋。",
+    howAutoPickaxeWarn:"自动镐自动化周期，但不延长矿工寿命。矿工仍会在寿命结束后正常退役。",
   }
 };
 
@@ -673,10 +713,11 @@ function HowItWorks(){
     {id:"lifespan",emoji:"⏳", label:tx.howNavLifespan},
     {id:"fusion",  emoji:"🔥", label:tx.howNavFusion},
     {id:"lands",   emoji:"🌍", label:tx.howNavLands},
-    {id:"withdraw",emoji:"🏧", label:tx.howNavWithdraw},
-    {id:"referral",emoji:"🤝", label:tx.howNavReferral},
-    {id:"roi",     emoji:"📊", label:tx.howNavRoi},
-    {id:"faq",     emoji:"❓", label:tx.howNavFaq},
+    {id:"withdraw",    emoji:"🏧", label:tx.howNavWithdraw},
+    {id:"referral",    emoji:"🤝", label:tx.howNavReferral},
+    {id:"roi",         emoji:"📊", label:tx.howNavRoi},
+    {id:"autopickaxe", emoji:"⛏️", label:tx.howNavAutoPickaxe},
+    {id:"faq",         emoji:"❓", label:tx.howNavFaq},
   ];
   const go=(id)=>{setActive(id);document.getElementById("gb-"+id)?.scrollIntoView({behavior:"smooth",block:"start"});};
   return(
@@ -963,6 +1004,41 @@ function HowItWorks(){
         </div>
       </div>
 
+      <GBSection id="autopickaxe" emoji="⛏️" title={tx.howAutoPickaxeTitle}/>
+      <div style={{display:"flex",alignItems:"center",gap:16,background:"linear-gradient(135deg,#fffde7,#fff8e1)",borderRadius:12,padding:"18px 20px",marginBottom:22,border:"1px solid #FFD600"}}>
+        <img src="/autopickaxe/autoPickaxe.png" alt="Auto Pickaxe" style={{width:72,height:72,objectFit:"contain",filter:"drop-shadow(0 0 10px #FFD60099)",flexShrink:0}}/>
+        <p style={{fontSize:14,color:"#444",lineHeight:1.9,margin:0}}>{tx.howAutoPickaxeP}</p>
+      </div>
+
+      <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:14}}>{tx.howAutoPickaxeHowTitle}</div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+        {tx.howAutoPickaxeSteps.map(([title,desc],i)=>(
+          <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",background:"#fafafa",borderRadius:10,padding:"14px 16px",border:"1px solid #eee"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",background:"#FFD600",color:"#333",fontWeight:900,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:13,color:"#222",marginBottom:3}}>{title}</div>
+              <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{fontSize:13,fontWeight:700,color:"#333",marginBottom:14}}>{tx.howAutoPickaxePerksTitle}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10,marginBottom:22}}>
+        {tx.howAutoPickaxePerks.map(([icon,title,desc])=>(
+          <div key={title} style={{background:"#fff",borderRadius:10,padding:"14px 16px",border:"1px solid #eee",display:"flex",gap:12,alignItems:"flex-start"}}>
+            <span style={{fontSize:22,flexShrink:0,lineHeight:1}}>{icon}</span>
+            <div>
+              <div style={{fontWeight:700,fontSize:12,color:"#222",marginBottom:3}}>{title}</div>
+              <div style={{fontSize:11,color:"#888",lineHeight:1.5}}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <GBCallout type="tip">{tx.howAutoPickaxeTip}</GBCallout>
+      <GBCallout type="warning">{tx.howAutoPickaxeWarn}</GBCallout>
+
       <GBSection id="faq" emoji="❓" title={tx.howFaqTitle}/>
       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:36}}>
         {tx.howFaqItems.map(([q,a],i)=>(
@@ -1181,6 +1257,9 @@ export default function DigMinerApp(){
   const[landLoading,setLandLoading]=useState("");
   const[assigningLandId,setAssigningLandId]=useState(null);
   const[landReveal,setLandReveal]=useState(null);
+  const[autoPickaxe,setAutoPickaxe]=useState({owned:false,active:false});
+  const[autoPickaxesMinted,setAutoPickaxesMinted]=useState(0);
+  const[autoPickaxeLoading,setAutoPickaxeLoading]=useState(false);
   const[lang,setLang]=useState(()=>localStorage.getItem("digminer_lang")||"en");
   const tx=T[lang];
   const toggleLang=()=>{const nl=lang==="en"?"zh":"en";setLang(nl);localStorage.setItem("digminer_lang",nl);};
@@ -1215,6 +1294,7 @@ export default function DigMinerApp(){
         if(d.landSaleStartMs) setLandSaleStartMs(d.landSaleStartMs);
         if(d.landsMinted!=null) setLandsMinted(d.landsMinted);
         if(d.landMaxSupply) setLandMaxSupply(d.landMaxSupply);
+        if(d.autoPickaxesMinted!=null) setAutoPickaxesMinted(d.autoPickaxesMinted);
       } catch(_) {}
     };
     loadStats();
@@ -1238,6 +1318,7 @@ export default function DigMinerApp(){
       const data=await res.json();
       setDigcoin(data.player.digcoinBalance);
       setMiners(data.miners);
+      if(data.autoPickaxe) setAutoPickaxe(data.autoPickaxe);
       setReferralLink(`${window.location.origin}?ref=${address}`);
       try{const ld=await fetch(`/api/land/${address}`).then(r=>r.ok?r.json():{lands:[]});setLands(ld.lands||[]);}catch(_){}
       await loadPathUSDBalance(address);
@@ -1654,6 +1735,32 @@ export default function DigMinerApp(){
     finally{setLandLoading("");}
   };
 
+  const buyAutoPickaxe=async()=>{
+    if(digcoin<AUTO_PICKAXE_PRICE) return notify(`Need ${AUTO_PICKAXE_PRICE} DIGCOIN to buy Auto Pickaxe!`,false);
+    try{
+      setAutoPickaxeLoading(true);
+      const res=await authFetch("/api/buy-auto-pickaxe",{method:"POST",body:JSON.stringify({wallet})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      setAutoPickaxe(data.autoPickaxe);
+      setAutoPickaxesMinted(v=>v+1);
+      notify("⛏️ Auto Pickaxe activated! Fees waived forever.");
+    }catch(e){notify(e.message,false);}
+    finally{setAutoPickaxeLoading(false);}
+  };
+
+  const toggleAutoPickaxe=async(active)=>{
+    try{
+      setAutoPickaxeLoading(true);
+      const res=await authFetch("/api/toggle-auto-pickaxe",{method:"POST",body:JSON.stringify({wallet,active})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      setAutoPickaxe(data.autoPickaxe);
+      notify(active?"⛏️ Auto Pickaxe ON — fees waived!":"Auto Pickaxe paused — fees apply.");
+    }catch(e){notify(e.message,false);}
+    finally{setAutoPickaxeLoading(false);}
+  };
+
   const doAssignMiner=async(landId,minerId)=>{
     try{
       setLandLoading(`assign_${minerId}`);
@@ -1867,16 +1974,38 @@ export default function DigMinerApp(){
             {["All",...RARITIES.map(r=>r.name)].map(f=><button key={f} onClick={()=>setFilter(f)} style={{padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${filter===f?"#FFD600":"#ccc"}`,background:filter===f?"#FFD600":"#fff",color:filter===f?"#333":f==="All"?"#333":(RARITIES.find(r=>r.name===f)?.color||"#333")}}>{f} ({fc[f]||0})</button>)}
             <div style={{marginLeft:"auto",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
               {canMineAny&&!fuseMode&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"7px 14px",background:"#2196F3",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                {txLoading==="playall"?tx.starting:tx.mineAllBtn(idleMiners.length)+` fee: ${PLAY_ALL_FEE*idleMiners.length} DC)`}
+                {txLoading==="playall"?tx.starting:autoPickaxe.owned&&autoPickaxe.active
+                  ?tx.mineAllBtn(idleMiners.length)+` 🪓 FREE)`
+                  :tx.mineAllBtn(idleMiners.length)+` fee: ${PLAY_ALL_FEE*idleMiners.length} DC)`}
               </button>}
               {canClaimAny&&!fuseMode&&<button disabled={!!txLoading} onClick={claimAll} style={{padding:"7px 14px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"none",borderRadius:8,color:"#333",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                {txLoading==="claimall"?tx.claiming:tx.claimAllBtn(readyMiners.length)+` fee: ${PLAY_ALL_FEE*readyMiners.length} DC)`}
+                {txLoading==="claimall"?tx.claiming:autoPickaxe.owned&&autoPickaxe.active
+                  ?tx.claimAllBtn(readyMiners.length)+` 🪓 FREE)`
+                  :tx.claimAllBtn(readyMiners.length)+` fee: ${PLAY_ALL_FEE*readyMiners.length} DC)`}
               </button>}
               {miners.length>=2&&<button onClick={()=>{setFuseMode(f=>!f);setFuseSelected([]);}} style={{padding:"7px 14px",background:fuseMode?"#7B1FA2":"linear-gradient(135deg,#9C27B0,#7B1FA2)",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",boxShadow:fuseMode?"0 0 0 2px #FFD600":"none"}}>
                 {fuseMode?tx.cancelFuse:tx.fuseMiners}
               </button>}
             </div>
           </div>
+
+          {/* Auto Pickaxe toggle banner */}
+          {autoPickaxe.owned&&<div style={{background:autoPickaxe.active?"linear-gradient(135deg,#1a3a1a,#0d2b0d)":"rgba(255,255,255,.07)",borderRadius:12,padding:"12px 16px",marginBottom:14,border:`2px solid ${autoPickaxe.active?"#4CAF50":"#555"}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <img src="/autopickaxe/autoPickaxe.png" alt="Auto Pickaxe" style={{width:36,height:36,objectFit:"contain"}}/>
+              <div>
+                <div style={{color:autoPickaxe.active?"#4CAF50":"#aaa",fontWeight:800,fontSize:12}}>⛏️ Auto Pickaxe {autoPickaxe.active?"ACTIVE":"PAUSED"}</div>
+                <div style={{color:"#888",fontSize:10,marginTop:2}}>{autoPickaxe.active?"Mine All & Claim All fees are waived":"Toggle ON to waive all Mine All & Claim All fees"}</div>
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:10,color:"#aaa"}}>{autoPickaxe.active?"ON":"OFF"}</span>
+              <div onClick={()=>!autoPickaxeLoading&&toggleAutoPickaxe(!autoPickaxe.active)}
+                style={{width:44,height:24,borderRadius:12,background:autoPickaxe.active?"#4CAF50":"#555",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+                <div style={{position:"absolute",top:3,left:autoPickaxe.active?23:3,width:18,height:18,borderRadius:9,background:"#fff",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.3)"}}/>
+              </div>
+            </div>
+          </div>}
 
           {/* Fuse mode banner */}
           {fuseMode&&<div style={{background:"linear-gradient(135deg,#4a1060,#2d0040)",borderRadius:12,padding:"14px 18px",marginBottom:14,border:"2px solid #9C27B0",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
@@ -2101,6 +2230,57 @@ export default function DigMinerApp(){
                   </tr>
                 ))}</tbody>
               </table>
+            </div>
+          </div>
+
+          {/* ── Auto Pickaxe + perks ── */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
+              <img src="/autopickaxe/autoPickaxe.png" alt="Auto Pickaxe" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #FFD60088)"}}/>
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:6}}>⛏️ Auto Pickaxe</h3>
+              {(()=>{const remaining=AUTO_PICKAXE_MAX-autoPickaxesMinted;const pct=Math.max(0,(remaining/AUTO_PICKAXE_MAX)*100);const sold=autoPickaxesMinted>=AUTO_PICKAXE_MAX;return(<div style={{margin:"0 0 14px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:sold?"#EF5350":"#666",marginBottom:4}}>
+                  <span style={{fontWeight:700}}>{sold?"🔴 SOLD OUT":`🟢 ${remaining} / ${AUTO_PICKAXE_MAX} remaining`}</span>
+                  <span style={{color:"#aaa"}}>{autoPickaxesMinted} sold</span>
+                </div>
+                <div style={{height:6,background:"#eee",borderRadius:3,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${100-pct}%`,background:sold?"#EF5350":pct<20?"#FF9800":"#FFD600",borderRadius:3,transition:"width .5s"}}/>
+                </div>
+              </div>);})()}
+              {autoPickaxesMinted>=AUTO_PICKAXE_MAX
+                ?<div style={{padding:"10px",background:"#ffebee",borderRadius:8,color:"#C62828",fontWeight:700,fontSize:13}}>🔴 Sold Out</div>
+                :autoPickaxe.owned
+                  ?<div style={{padding:"10px",background:"#E8F5E9",borderRadius:8,color:"#2E7D32",fontWeight:700,fontSize:13}}>✅ You own this — toggle it in My NFT tab</div>
+                  :<>
+                    <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                      <button disabled={autoPickaxeLoading||!wallet||digcoin<AUTO_PICKAXE_PRICE} onClick={buyAutoPickaxe}
+                        style={{padding:"9px 18px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"2px solid #E65100",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#333"}}>
+                        {autoPickaxeLoading?"Processing...":`Buy = ${AUTO_PICKAXE_PRICE} DC`}
+                      </button>
+                    </div>
+                    <p style={{fontSize:10,color:"#aaa",marginTop:12}}>{tx.balance} {digcoin.toFixed(0)} DIGCOIN</p>
+                  </>
+              }
+            </div>
+            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd"}}>
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:14}}>⚡ Perks</h3>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {[
+                  {icon:"🤖",title:"Full Automation",desc:"Automatically mines & claims all your miners every 24h — no need to open the app"},
+                  {icon:"💸",title:"Zero Fees Forever",desc:"Mine All & Claim All fees permanently waived (saves 10 DC per miner per cycle)"},
+                  {icon:"🔁",title:"Toggle Anytime",desc:"Turn ON/OFF at any time directly in the My NFT tab — you stay in control"},
+                  {icon:"♾️",title:"Lifetime Access",desc:"One-time purchase, no renewals, no subscriptions — works as long as you play"},
+                  {icon:"🔒",title:"Limited Supply",desc:`Only ${AUTO_PICKAXE_MAX} ever available — exclusive tool for serious miners`},
+                ].map(p=>(
+                  <div key={p.title} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",background:"#fafafa",borderRadius:10,border:"1px solid #f0f0f0"}}>
+                    <span style={{fontSize:20,flexShrink:0,lineHeight:1}}>{p.icon}</span>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:11,color:"#333",marginBottom:2}}>{p.title}</div>
+                      <div style={{fontSize:10,color:"#888",lineHeight:1.5}}>{p.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>}
