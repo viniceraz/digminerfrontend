@@ -1620,10 +1620,10 @@ export default function DigMinerApp(){
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.digcoinBalance}</div><div style={{fontSize:13,fontWeight:700,color:"#FF9800"}}>{digcoin.toFixed(2)} DC [{(digcoin/DIG_RATE).toFixed(4)} pathUSD]</div></div>
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.miners}</div><div style={{fontSize:11,fontWeight:700}}>{idleMiners.length} {tx.idle} · {miningMiners.length} {tx.mining} · {readyMiners.length} {tx.ready}</div></div>
           {canMineAny&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"6px 14px",background:"linear-gradient(135deg,#2196F3,#42A5F5)",border:"2px solid #1565C0",borderRadius:8,color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer"}}>
-            {txLoading==="playall"?tx.starting:tx.mineAllBtn(idleMiners.length)}
+            {txLoading==="playall"?tx.starting:`${tx.mineAllBtn(idleMiners.length)} fee: ${PLAY_ALL_FEE*idleMiners.length} DC)`}
           </button>}
           {canClaimAny&&<button disabled={!!txLoading} onClick={claimAll} style={{padding:"6px 14px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"2px solid #E65100",borderRadius:8,color:"#333",fontSize:11,fontWeight:800,cursor:"pointer"}}>
-            {txLoading==="claimall"?tx.claiming:tx.claimAllBtn(readyMiners.length)}
+            {txLoading==="claimall"?tx.claiming:`${tx.claimAllBtn(readyMiners.length)} fee: ${PLAY_ALL_FEE*readyMiners.length} DC)`}
           </button>}
         </div>
 
