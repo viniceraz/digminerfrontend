@@ -2468,8 +2468,8 @@ export default function DigMinerApp(){
                           <td style={{padding:"8px 10px",fontWeight:700}}>${(w.net_pathusd||0).toFixed(2)}</td>
                           <td style={{padding:"8px 10px"}}>
                             <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,
-                              background:w.status==="completed"?"#E8F5E9":w.status==="pending"?"#FFF8E1":"#FFEBEE",
-                              color:w.status==="completed"?"#2E7D32":w.status==="pending"?"#F57F17":"#C62828"}}>
+                              background:w.status==="completed"?"#E8F5E9":w.status==="ready"?"#E3F2FD":w.status==="pending"?"#FFF8E1":"#FFEBEE",
+                              color:w.status==="completed"?"#2E7D32":w.status==="ready"?"#1565C0":w.status==="pending"?"#F57F17":"#C62828"}}>
                               {w.status.toUpperCase()}
                             </span>
                           </td>
