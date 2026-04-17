@@ -1247,6 +1247,9 @@ export default function DigMinerApp(){
   const[withdrawDay,setWithdrawDay]=useState(()=>new Date().toISOString().slice(0,10));
   const[withdrawReport,setWithdrawReport]=useState(null);
   const[withdrawLoading,setWithdrawLoading]=useState(false);
+  const[depositDay,setDepositDay]=useState(()=>new Date().toISOString().slice(0,10));
+  const[depositReport,setDepositReport]=useState(null);
+  const[depositLoading,setDepositLoading]=useState(false);
   const[adminLoading,setAdminLoading]=useState("");
   const[giftWallets,setGiftWallets]=useState("");
   const[giftResults,setGiftResults]=useState(null);
@@ -1526,6 +1529,17 @@ export default function DigMinerApp(){
       const d=await res.json();
       if(res.ok) setAdminPlayers(d.players||[]);
     }catch(_){}
+  };
+
+  const loadDepositsByDay=async()=>{
+    try{
+      setDepositLoading(true);
+      const res=await authFetch(`/api/admin/deposits-by-day?date=${depositDay}`);
+      const d=await res.json();
+      if(res.ok) setDepositReport(d);
+      else notify(d.error,false);
+    }catch(_){}
+    finally{setDepositLoading(false);}
   };
 
   const loadWithdrawalsByDay=async()=>{
@@ -2408,6 +2422,74 @@ export default function DigMinerApp(){
                 ))}</tbody>
               </table>
             </div>}
+          </div>
+
+          {/* Deposits by day */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>💰 Deposits by Day</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:16}}>Filter all deposits by UTC date. Admin credits are shown separately.</p>
+            <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16,flexWrap:"wrap"}}>
+              <input type="date" value={depositDay} onChange={e=>setDepositDay(e.target.value)}
+                style={{padding:"8px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:13,fontFamily:"monospace"}}/>
+              <button onClick={loadDepositsByDay} disabled={depositLoading}
+                style={{padding:"8px 20px",background:"#4CAF50",border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                {depositLoading?"Loading...":"Load"}
+              </button>
+              {[0,1,2,3].map(daysAgo=>{
+                const d=new Date();d.setDate(d.getDate()-daysAgo);const v=d.toISOString().slice(0,10);
+                const label=daysAgo===0?"Today":daysAgo===1?"Yesterday":`-${daysAgo}d`;
+                return(<button key={daysAgo} onClick={()=>setDepositDay(v)}
+                  style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${depositDay===v?"#4CAF50":"#ddd"}`,background:depositDay===v?"#4CAF50":"#fff",color:depositDay===v?"#fff":"#555",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  {label}
+                </button>);
+              })}
+            </div>
+
+            {depositReport&&(
+              <>
+                <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}}>
+                  {[
+                    ["Total Deposits",depositReport.realCount,"#4CAF50"],
+                    ["Admin Credits",depositReport.adminCount,"#9C27B0"],
+                    ["Total pathUSD","$"+depositReport.totalPathUSD.toFixed(2),"#2196F3"],
+                    ["Total DC Credited",depositReport.totalDigcoin.toFixed(0)+" DC","#FF9800"],
+                  ].map(([label,val,color])=>(
+                    <div key={label} style={{flex:1,minWidth:120,background:"#f8f9fa",borderRadius:10,padding:"12px 16px",border:`1px solid ${color}33`,textAlign:"center"}}>
+                      <div style={{fontSize:10,color:"#888",marginBottom:4}}>{label}</div>
+                      <div style={{fontSize:18,fontWeight:800,color}}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {depositReport.deposits.length===0
+                  ?<div style={{textAlign:"center",padding:20,color:"#aaa",fontSize:12}}>No deposits on {depositReport.date}</div>
+                  :<div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                      <thead><tr style={{background:"#f5f5f5"}}>
+                        {["Time (UTC)","Wallet","pathUSD","DC Credited","Type"].map(h=>(
+                          <th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",color:"#555",whiteSpace:"nowrap"}}>{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>{depositReport.deposits.map((d,i)=>{
+                        const isAdmin=d.tx_hash?.startsWith("admin_");
+                        return(<tr key={i} style={{borderBottom:"1px solid #f0f0f0",background:i%2===0?"#fff":"#fafafa"}}>
+                          <td style={{padding:"8px 10px",color:"#888",whiteSpace:"nowrap"}}>{new Date(d.created_at).toUTCString().slice(17,25)}</td>
+                          <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:10}}>{d.wallet.slice(0,8)}...{d.wallet.slice(-6)}</td>
+                          <td style={{padding:"8px 10px",fontWeight:700,color:"#4CAF50"}}>{isAdmin?"—":"$"+(d.amount_pathusd||0).toFixed(2)}</td>
+                          <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{(d.digcoin_credited||0).toFixed(0)} DC</td>
+                          <td style={{padding:"8px 10px"}}>
+                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,
+                              background:isAdmin?"#F3E5F5":"#E8F5E9",color:isAdmin?"#6A1B9A":"#2E7D32"}}>
+                              {isAdmin?"ADMIN":"DEPOSIT"}
+                            </span>
+                          </td>
+                        </tr>);
+                      })}</tbody>
+                    </table>
+                  </div>
+                }
+              </>
+            )}
           </div>
 
           {/* Withdrawals by day */}
