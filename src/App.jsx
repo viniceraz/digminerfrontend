@@ -311,7 +311,7 @@ function Timer({targetMs,ms}){
   return<span>{h}h {m}m {s}s</span>;
 }
 
-function MinerCard({miner,onMine,onClaim,onRepair,loading}){
+function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
   const lang=useContext(LangCtx);const tx=T[lang];
   const r=RARITIES[miner.rarityId];const pct=(miner.nftAgeRemaining/miner.nftAgeTotal)*100;const dead=!miner.isAlive||miner.needsRepair;
   return(<div style={{background:"#fff",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)",border:`2px solid ${dead?"#ddd":miner.canClaim?"#FFD600":r.color}`,opacity:dead?.65:1}}>
@@ -319,6 +319,7 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading}){
       <span style={{color:r.color,fontWeight:800,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>
         {r.name}
         {miner.isFused&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#E040FB,#9C27B0)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>{tx.fusedBadge}</span>}
+        {inLand&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#388E3C,#4CAF50)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>🌍 LAND</span>}
       </span>
       <span style={{fontSize:9,fontWeight:600,color:miner.canClaim?"#FFD600":miner.isMining?"#4CAF50":dead?"#999":"#aaa"}}>
         {miner.canClaim?`✅ ${tx.mcReady}`:miner.isMining?`⛏️ ${tx.mcMining}`:dead?"":miner.isIdle?`💤 ${tx.mcIdle}`:""}
@@ -1794,8 +1795,9 @@ export default function DigMinerApp(){
   const canClaimAny=readyMiners.length>0;
   const canPlayAny=canClaimAny; // backward compat
   const playableCount=readyMiners.length;
-  const filtered=filter==="All"?miners:miners.filter(m=>m.rarityName===filter);
-  const fc={All:miners.length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
+  const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
+  const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):miners.filter(m=>m.rarityName===filter);
+  const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
   const TABS=[tx.tabAccount,tx.tabNft,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
   const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin"};
 
@@ -1971,7 +1973,14 @@ export default function DigMinerApp(){
         {/* MY NFT */}
         {tab==="nft"&&<div style={{animation:"fadeIn .3s ease"}}>
           <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
-            {["All",...RARITIES.map(r=>r.name)].map(f=><button key={f} onClick={()=>setFilter(f)} style={{padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${filter===f?"#FFD600":"#ccc"}`,background:filter===f?"#FFD600":"#fff",color:filter===f?"#333":f==="All"?"#333":(RARITIES.find(r=>r.name===f)?.color||"#333")}}>{f} ({fc[f]||0})</button>)}
+            {["All",...RARITIES.map(r=>r.name),"In Land"].map(f=>{
+              const isLand=f==="In Land";
+              const active=filter===f;
+              const color=isLand?"#4CAF50":RARITIES.find(r=>r.name===f)?.color||"#333";
+              return(<button key={f} onClick={()=>setFilter(f)} style={{padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${active?(isLand?"#4CAF50":"#FFD600"):"#ccc"}`,background:active?(isLand?"#4CAF50":"#FFD600"):"#fff",color:active?"#fff":(f==="All"?"#333":color)}}>
+                {isLand?"🌍 ":""}{f} ({fc[f]||0})
+              </button>);
+            })}
             <div style={{marginLeft:"auto",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
               {canMineAny&&!fuseMode&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"7px 14px",background:"#2196F3",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                 {txLoading==="playall"?tx.starting:autoPickaxe.owned&&autoPickaxe.active
@@ -2029,7 +2038,7 @@ export default function DigMinerApp(){
                 return(
                   <div key={m.id} onClick={()=>toggleFuseSelect(m)}
                     style={{cursor:fuseMode?"pointer":"default",outline:isFuseSelected?"3px solid #E040FB":"3px solid transparent",borderRadius:14,transform:isFuseSelected?"scale(1.03)":"scale(1)",transition:"all .15s"}}>
-                    <MinerCard miner={m} onMine={fuseMode?null:startMiner} onClaim={fuseMode?null:claimMiner} onRepair={fuseMode?null:repairMiner} loading={!!txLoading||fuseMode}/>
+                    <MinerCard miner={m} onMine={fuseMode?null:startMiner} onClaim={fuseMode?null:claimMiner} onRepair={fuseMode?null:repairMiner} loading={!!txLoading||fuseMode} inLand={minerInLandSet.has(m.id)}/>
                   </div>
                 );
               })}
