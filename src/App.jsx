@@ -1244,6 +1244,9 @@ export default function DigMinerApp(){
   const[adminReason,setAdminReason]=useState("");
   const[adminLog,setAdminLog]=useState([]);
   const[adminPlayers,setAdminPlayers]=useState([]);
+  const[withdrawDay,setWithdrawDay]=useState(()=>new Date().toISOString().slice(0,10));
+  const[withdrawReport,setWithdrawReport]=useState(null);
+  const[withdrawLoading,setWithdrawLoading]=useState(false);
   const[adminLoading,setAdminLoading]=useState("");
   const[giftWallets,setGiftWallets]=useState("");
   const[giftResults,setGiftResults]=useState(null);
@@ -1523,6 +1526,17 @@ export default function DigMinerApp(){
       const d=await res.json();
       if(res.ok) setAdminPlayers(d.players||[]);
     }catch(_){}
+  };
+
+  const loadWithdrawalsByDay=async()=>{
+    try{
+      setWithdrawLoading(true);
+      const res=await authFetch(`/api/admin/withdrawals-by-day?date=${withdrawDay}`);
+      const d=await res.json();
+      if(res.ok) setWithdrawReport(d);
+      else notify(d.error,false);
+    }catch(_){}
+    finally{setWithdrawLoading(false);}
   };
 
   const doDeposit=async()=>{
@@ -2394,6 +2408,78 @@ export default function DigMinerApp(){
                 ))}</tbody>
               </table>
             </div>}
+          </div>
+
+          {/* Withdrawals by day */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>🏧 Withdrawals by Day</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:16}}>Filter completed & pending withdrawals by UTC date.</p>
+            <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16,flexWrap:"wrap"}}>
+              <input type="date" value={withdrawDay} onChange={e=>setWithdrawDay(e.target.value)}
+                style={{padding:"8px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:13,fontFamily:"monospace"}}/>
+              <button onClick={loadWithdrawalsByDay} disabled={withdrawLoading}
+                style={{padding:"8px 20px",background:"#2196F3",border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                {withdrawLoading?"Loading...":"Load"}
+              </button>
+              {/* Quick nav buttons */}
+              {[0,1,2,3].map(daysAgo=>{
+                const d=new Date();d.setDate(d.getDate()-daysAgo);const v=d.toISOString().slice(0,10);
+                const label=daysAgo===0?"Today":daysAgo===1?"Yesterday":`-${daysAgo}d`;
+                return(<button key={daysAgo} onClick={()=>setWithdrawDay(v)}
+                  style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${withdrawDay===v?"#2196F3":"#ddd"}`,background:withdrawDay===v?"#2196F3":"#fff",color:withdrawDay===v?"#fff":"#555",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  {label}
+                </button>);
+              })}
+            </div>
+
+            {withdrawReport&&(
+              <>
+                {/* Summary cards */}
+                <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}}>
+                  {[
+                    ["Withdrawals",withdrawReport.count,"#2196F3"],
+                    ["Total DC",withdrawReport.totalDigcoin.toFixed(0)+" DC","#FF9800"],
+                    ["Total pathUSD","$"+withdrawReport.totalPathUSD.toFixed(2),"#4CAF50"],
+                    ["Total Fees","$"+withdrawReport.totalFees.toFixed(2),"#9C27B0"],
+                  ].map(([label,val,color])=>(
+                    <div key={label} style={{flex:1,minWidth:120,background:"#f8f9fa",borderRadius:10,padding:"12px 16px",border:`1px solid ${color}33`,textAlign:"center"}}>
+                      <div style={{fontSize:10,color:"#888",marginBottom:4}}>{label}</div>
+                      <div style={{fontSize:18,fontWeight:800,color}}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {withdrawReport.withdrawals.length===0
+                  ?<div style={{textAlign:"center",padding:20,color:"#aaa",fontSize:12}}>No withdrawals on {withdrawReport.date}</div>
+                  :<div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                      <thead><tr style={{background:"#f5f5f5"}}>
+                        {["Time (UTC)","Wallet","Amount DC","pathUSD","Fee","Net","Status"].map(h=>(
+                          <th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",color:"#555",whiteSpace:"nowrap"}}>{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>{withdrawReport.withdrawals.map((w,i)=>(
+                        <tr key={i} style={{borderBottom:"1px solid #f0f0f0",background:i%2===0?"#fff":"#fafafa"}}>
+                          <td style={{padding:"8px 10px",color:"#888",whiteSpace:"nowrap"}}>{new Date(w.created_at).toUTCString().slice(17,25)}</td>
+                          <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:10}}>{w.wallet.slice(0,8)}...{w.wallet.slice(-6)}</td>
+                          <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{(w.amount_digcoin||0).toFixed(0)}</td>
+                          <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(w.amount_pathusd||0).toFixed(2)}</td>
+                          <td style={{padding:"8px 10px",color:"#9C27B0"}}>${(w.fee_pathusd||0).toFixed(2)}</td>
+                          <td style={{padding:"8px 10px",fontWeight:700}}>${(w.net_pathusd||0).toFixed(2)}</td>
+                          <td style={{padding:"8px 10px"}}>
+                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,
+                              background:w.status==="completed"?"#E8F5E9":w.status==="pending"?"#FFF8E1":"#FFEBEE",
+                              color:w.status==="completed"?"#2E7D32":w.status==="pending"?"#F57F17":"#C62828"}}>
+                              {w.status.toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                }
+              </>
+            )}
           </div>
 
           {/* Players list */}
