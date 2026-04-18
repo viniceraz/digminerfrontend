@@ -32,7 +32,7 @@ const T = {
     connect:"Connect",connecting:"Connecting...",connectWallet:"CONNECT WALLET",connectingWallet:"CONNECTING...",
     connectSubtitle:"Mine. Earn. Withdraw. Powered by Tempo.",connectRequires:"Requires MetaMask + Tempo Mainnet",disconnectTitle:"Disconnect wallet",
     langBtn:"🇨🇳 中文",
-    statsPool:"pathUSD Pool",statsNft:"NFT",statsPlayers:"Players",statsWithdrawn:"Withdrawn",statsNetwork:"Tempo Mainnet",
+    statsPool:"pathUSD Pool",statsNft:"Miners",statsPlayers:"Players",statsWithdrawn:"Withdrawn",statsNetwork:"Tempo Mainnet",
     walletAddress:"Wallet Address",pathUSDBalance:"pathUSD Balance",digcoinBalance:"DIGCOIN Balance",miners:"Miners",
     idle:"idle",mining:"mining",ready:"ready",starting:"Starting...",claiming:"Claiming...",
     mineAllBtn:(n)=>`⛏️ Mine All (${n})`,claimAllBtn:(n)=>`💎 Claim All (${n})`,
@@ -64,7 +64,7 @@ const T = {
     calcMiner:"Miner",calcRarity:"Rarity",calcDailyDC:"Daily DC",calcDailyUSD:"Daily USD",
     calcMonthlyDC:"Monthly DC",calcMonthlyUSD:"Monthly USD",calcLifespan:"Lifespan Left",calcRemaining:"Total Remaining",
     calcTotal:"TOTAL",calcAcross:(n)=>`across ${n} miners`,
-    simulator:"🧮 Farm Simulator",simulatorDesc:"Simulate how much you would earn with any combination of miners.",
+    simulator:"🧮 Miner Simulator",simulatorDesc:"Simulate how much you would earn with any combination of miners.",
     simResult:"Simulation Result",simDaily:"Daily",simWeekly:"Weekly",simMonthly:"Monthly",
     boxCost:"Box Cost",roiLabel:"ROI",totalReturn:"Total Return",addMiners:"Add miners above to see the simulation",
     revealGetting:"Getting ready...",fusionResult:"⚗️ FUSION RESULT",revealNew:"NEW MINER UNLOCKED!",
@@ -141,7 +141,7 @@ const T = {
     connect:"连接钱包",connecting:"连接中...",connectWallet:"连接钱包",connectingWallet:"连接中...",
     connectSubtitle:"挖矿。赚取。提现。由 Tempo 驱动。",connectRequires:"需要 MetaMask + Tempo 主网",disconnectTitle:"断开钱包",
     langBtn:"🇺🇸 EN",
-    statsPool:"pathUSD 奖池",statsNft:"NFT",statsPlayers:"玩家",statsWithdrawn:"已提现",statsNetwork:"Tempo 主网",
+    statsPool:"pathUSD 奖池",statsNft:"Miners",statsPlayers:"玩家",statsWithdrawn:"已提现",statsNetwork:"Tempo 主网",
     walletAddress:"钱包地址",pathUSDBalance:"pathUSD 余额",digcoinBalance:"DIGCOIN 余额",miners:"矿工",
     idle:"空闲",mining:"挖矿中",ready:"可领取",starting:"启动中...",claiming:"领取中...",
     mineAllBtn:(n)=>`⛏️ 全部挖矿 (${n})`,claimAllBtn:(n)=>`💎 全部领取 (${n})`,
@@ -173,7 +173,7 @@ const T = {
     calcMiner:"矿工",calcRarity:"稀有度",calcDailyDC:"日 DC",calcDailyUSD:"日 USD",
     calcMonthlyDC:"月 DC",calcMonthlyUSD:"月 USD",calcLifespan:"剩余寿命",calcRemaining:"剩余总收益",
     calcTotal:"合计",calcAcross:(n)=>`共 ${n} 个矿工`,
-    simulator:"🧮 农场模拟器",simulatorDesc:"模拟任意矿工组合的收益。",
+    simulator:"🧮 矿工模拟器",simulatorDesc:"模拟任意矿工组合的收益。",
     simResult:"模拟结果",simDaily:"日",simWeekly:"周",simMonthly:"月",
     boxCost:"盲盒成本",roiLabel:"回本周期",totalReturn:"总回报",addMiners:"在上方添加矿工以查看模拟结果",
     revealGetting:"准备中...",fusionResult:"⚗️ 合成结果",revealNew:"解锁新矿工！",
@@ -412,17 +412,17 @@ function FarmCalculator({miners, lands=[]}){
   },[simQty,simLandBoost]);
 
   const Card=({label,dc,usd})=>(
-    <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,textAlign:"center",border:"1px solid #eee",flex:1,minWidth:120}}>
+    <div className="wp" style={{textAlign:"center",flex:1,minWidth:120,marginBottom:0}}>
       <div style={{fontSize:10,color:"#888",marginBottom:4}}>{label}</div>
-      <div style={{fontSize:18,fontWeight:800,color:"#FF9800"}}>{dc.toFixed(1)} DC</div>
-      <div style={{fontSize:11,color:"#4CAF50",fontWeight:600}}>${usd.toFixed(2)} USD</div>
+      <div style={{fontSize:18,fontWeight:800,color:"#8B0000"}}>{dc.toFixed(1)} DC</div>
+      <div style={{fontSize:11,color:"#2E7D32",fontWeight:600}}>${usd.toFixed(2)} USD</div>
     </div>
   );
 
   return(<div style={{animation:"fadeIn .3s ease",display:"flex",flexDirection:"column",gap:16}}>
 
     {/* YOUR MINERS STATS */}
-    <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+    <div className="wp">
       <h2 style={{fontSize:16,fontWeight:800,color:"#333",marginBottom:4}}>{tx.farmStats}</h2>
       <p style={{fontSize:11,color:"#888",marginBottom:20}}>{tx.farmStatsDesc(alive.length)}</p>
       {alive.length===0
@@ -457,7 +457,7 @@ function FarmCalculator({miners, lands=[]}){
                     </div>
                   </td>}
                   <td style={{padding:"8px 10px"}}>
-                    <span style={{fontWeight:700,color:"#FF9800"}}>{eff.toFixed(2)}</span>
+                    <span style={{fontWeight:700,color:"#8B0000"}}>{eff.toFixed(2)}</span>
                     {lb&&<span style={{fontSize:9,color:"#888",marginLeft:4}}>(base {m.dailyDigcoin.toFixed(2)})</span>}
                   </td>
                   <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(eff/DIG_RATE).toFixed(4)}</td>
@@ -469,7 +469,7 @@ function FarmCalculator({miners, lands=[]}){
               })}</tbody>
               <tfoot><tr style={{background:"#FFF8E1",fontWeight:800}}>
                 <td colSpan={(hasFused||hasLandBoosts)?3:2} style={{padding:"10px",fontSize:12}}>{tx.calcTotal}</td>
-                <td style={{padding:"10px",color:"#FF9800"}}>{dailyTotal.toFixed(2)}</td>
+                <td style={{padding:"10px",color:"#8B0000",fontWeight:800}}>{dailyTotal.toFixed(2)}</td>
                 <td style={{padding:"10px",color:"#4CAF50"}}>${(dailyTotal/DIG_RATE).toFixed(4)}</td>
                 <td style={{padding:"10px"}}>{monthlyTotal.toFixed(1)}</td>
                 <td style={{padding:"10px",color:"#4CAF50"}}>${(monthlyTotal/DIG_RATE).toFixed(3)}</td>
@@ -498,7 +498,7 @@ function FarmCalculator({miners, lands=[]}){
     </div>
 
     {/* SIMULATOR */}
-    <div style={{background:"rgba(255,255,255,.95)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+    <div className="wp">
       <h2 style={{fontSize:16,fontWeight:800,color:"#333",marginBottom:4}}>{tx.simulator}</h2>
       <p style={{fontSize:11,color:"#888",marginBottom:20}}>{tx.simulatorDesc}</p>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12,marginBottom:20}}>
@@ -551,8 +551,8 @@ function FarmCalculator({miners, lands=[]}){
 
       {/* LAND BOOST SELECTOR */}
       {simDaily>0&&(
-        <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,border:"1px solid #ddd",marginTop:0}}>
-          <div style={{fontSize:12,fontWeight:800,color:"#333",marginBottom:10}}>🌍 Land Boost Simulator</div>
+        <div className="wp">
+          <div style={{fontSize:12,fontWeight:800,color:"#3a1a00",marginBottom:10}}>🌍 Land Boost Simulator</div>
           <div style={{fontSize:11,color:"#888",marginBottom:12}}>Select a land rarity to see boosted earnings</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <button onClick={()=>setSimLandBoost(0)}
@@ -590,7 +590,7 @@ function FarmCalculator({miners, lands=[]}){
 
       {/* FUSION POTENTIAL */}
       {simDaily>0&&(
-        <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:16,border:"1px solid #ddd",marginTop:0}}>
+        <div className="wp">
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:simShowFusion?14:0}}>
             <div>
               <div style={{fontSize:12,fontWeight:800,color:"#333"}}>⚗️ Fusion Potential</div>
@@ -629,8 +629,8 @@ function FarmCalculator({miners, lands=[]}){
                               <span style={{fontWeight:700,color:b.to.color}}>→ {b.to.name}</span>
                               <span style={{fontSize:9,color:"#888",marginLeft:4}}>(×1.20 bonus)</span>
                             </td>
-                            <td style={{padding:"7px 10px",color:"#FF9800",fontWeight:700}}>{b.fusedAvg.toFixed(2)} DC</td>
-                            <td style={{padding:"7px 10px",color:"#FF9800",fontWeight:800}}>{b.dc.toFixed(2)} DC</td>
+                            <td style={{padding:"7px 10px",color:"#8B0000",fontWeight:700}}>{b.fusedAvg.toFixed(2)} DC</td>
+                            <td style={{padding:"7px 10px",color:"#8B0000",fontWeight:800}}>{b.dc.toFixed(2)} DC</td>
                           </tr>
                         ))}
                       </tbody>
@@ -722,8 +722,8 @@ function HowItWorks(){
   ];
   const go=(id)=>{setActive(id);document.getElementById("gb-"+id)?.scrollIntoView({behavior:"smooth",block:"start"});};
   return(
-  <div style={{animation:"fadeIn .3s ease",display:"flex",gap:0,background:"#fff",borderRadius:16,border:"1px solid #e0e0e0",overflow:"visible",minHeight:640,alignItems:"flex-start"}}>
-    <div style={{width:210,minWidth:210,background:"#1a1a2e",borderRadius:"16px 0 0 16px",flexShrink:0,position:"sticky",top:8,alignSelf:"flex-start"}}>
+  <div className="how-layout" style={{animation:"fadeIn .3s ease"}}>
+    <div className="how-sidebar" style={{borderRadius:"0"}}>
       <div style={{padding:"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
         <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:30,objectFit:"contain",marginBottom:6,display:"block"}}/>
         <div style={{color:"rgba(255,255,255,.35)",fontSize:9,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase"}}>Documentation</div>
@@ -740,7 +740,7 @@ function HowItWorks(){
         <a href="https://x.com/digminertempo" target="_blank" rel="noopener noreferrer" style={{display:"block",padding:"8px",background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,color:"rgba(255,255,255,.65)",fontSize:11,fontWeight:700,textDecoration:"none",textAlign:"center"}}>𝕏 Twitter</a>
       </div>
     </div>
-    <div style={{flex:1,padding:"32px 36px 40px",minWidth:0}}>
+    <div className="how-content">
 
       <GBSection id="intro" emoji="📖" title={tx.howIntroTitle}/>
       <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:14}}>{tx.howIntroP1}</p>
@@ -1217,6 +1217,18 @@ function LandReveal({land,onClose}){
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
   {
+    version:"v1.5",
+    date:"2026-04-18",
+    title:"Design Overhaul & Mobile Support",
+    tags:["ui","feature"],
+    changes:[
+      "Navbar redesigned in RuneScape Old School style",
+      "Mobile responsive layout: hamburger dropdown menu on small screens and full system responsive",
+      "Transaction history now displayed inside a styled panel with dark readable text",
+      "Stats bar label changed from NFT to Miners",
+    ],
+  },
+  {
     version:"v1.4",
     date:"2026-04-16",
     title:"Auto Pickaxe",
@@ -1291,44 +1303,44 @@ const TAG_COLORS={feature:"#2196F3",economy:"#FF9800",balance:"#4CAF50",ui:"#9C2
 
 function PatchNotes(){
   return(
-    <div style={{minHeight:"100vh",backgroundImage:"linear-gradient(to bottom,#87CEEB 0%,#E8D5A3 40%,#C4A265 100%)",backgroundAttachment:"fixed",fontFamily:"'Segoe UI',system-ui,sans-serif",padding:"32px 20px"}}>
+    <div style={{minHeight:"100vh",backgroundImage:"url('/design/bg.png')",backgroundSize:"cover",backgroundAttachment:"fixed",backgroundPosition:"center",fontFamily:"'Segoe UI',system-ui,sans-serif",padding:"32px 20px"}}>
       <div style={{maxWidth:780,margin:"0 auto"}}>
         {/* Header */}
-        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:32}}>
+        <div className="wp" style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
           <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:48,objectFit:"contain",filter:"drop-shadow(0 0 12px #FF9800)"}}/>
           <div>
-            <h1 style={{fontSize:26,fontWeight:900,color:"#fff",margin:0,textShadow:"0 2px 8px rgba(0,0,0,.4)"}}>Patch Notes</h1>
-            <p style={{fontSize:12,color:"rgba(255,255,255,.7)",margin:0}}>All updates to DigMiner — newest first</p>
+            <h1 style={{fontSize:22,fontWeight:900,color:"#3a1a00",margin:0}}>Patch Notes</h1>
+            <p style={{fontSize:11,color:"#7a5020",margin:0}}>All updates to DigMiner — newest first</p>
           </div>
-          <a href="/" style={{marginLeft:"auto",padding:"8px 18px",background:"rgba(0,0,0,.3)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,color:"#fff",fontSize:12,fontWeight:600,textDecoration:"none"}}>← Back to Game</a>
+          <a href="/" style={{marginLeft:"auto",padding:"8px 18px",background:"linear-gradient(to bottom,#3a2000,#1a0e00)",border:"2px solid #8B6914",borderRadius:4,color:"#FFD600",fontSize:12,fontWeight:700,textDecoration:"none",fontFamily:"Georgia,serif"}}>← Back</a>
         </div>
 
         {/* Patches */}
-        <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
           {PATCHES.map((p,i)=>(
-            <div key={p.version} style={{background:"rgba(255,255,255,.97)",borderRadius:16,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.1)"}}>
+            <div key={p.version} className="pn-card">
               {/* Patch header */}
-              <div style={{background:i===0?"linear-gradient(135deg,#1a1a2e,#2a1a3e)":"#1a1a2e",padding:"16px 24px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-                <div style={{background:i===0?"#FFD600":"rgba(255,255,255,.1)",color:i===0?"#333":"#fff",fontWeight:900,fontSize:13,padding:"3px 12px",borderRadius:20}}>{p.version}</div>
-                <h2 style={{color:"#fff",fontSize:16,fontWeight:800,margin:0,flex:1}}>{p.title}</h2>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.5)"}}>{p.date}</div>
+              <div style={{background:"linear-gradient(to bottom,#5a3010,#3a1a00)",padding:"12px 16px",marginBottom:12,borderRadius:3,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",margin:"-18px -22px 16px -22px"}}>
+                <div style={{background:i===0?"#FFD600":"rgba(255,255,255,.15)",color:i===0?"#333":"#fff",fontWeight:900,fontSize:12,padding:"3px 12px",borderRadius:12}}>{p.version}</div>
+                <h2 style={{color:"#FFD600",fontSize:15,fontWeight:800,margin:0,flex:1}}>{p.title}</h2>
+                <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{p.date}</div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   {p.tags.map(t=>(
-                    <span key={t} style={{padding:"2px 8px",borderRadius:10,fontSize:10,fontWeight:700,background:(TAG_COLORS[t]||"#888")+"22",color:TAG_COLORS[t]||"#888",border:`1px solid ${TAG_COLORS[t]||"#888"}44`}}>{t}</span>
+                    <span key={t} style={{padding:"2px 8px",borderRadius:10,fontSize:9,fontWeight:700,background:(TAG_COLORS[t]||"#888")+"22",color:TAG_COLORS[t]||"#aaa",border:`1px solid ${TAG_COLORS[t]||"#888"}44`}}>{t}</span>
                   ))}
                 </div>
               </div>
               {/* Changes */}
-              <ul style={{margin:0,padding:"16px 24px 20px 40px",display:"flex",flexDirection:"column",gap:8}}>
+              <ul style={{margin:0,paddingLeft:20,display:"flex",flexDirection:"column",gap:6}}>
                 {p.changes.map((c,j)=>(
-                  <li key={j} style={{fontSize:13,color:"#333",lineHeight:1.6}}>{c}</li>
+                  <li key={j} style={{fontSize:13,color:"#3a1a00",lineHeight:1.6}}>{c}</li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
 
-        <div style={{textAlign:"center",marginTop:32,color:"rgba(255,255,255,.4)",fontSize:11}}>
+        <div style={{textAlign:"center",marginTop:24,color:"rgba(255,255,255,.4)",fontSize:11}}>
           DigMiner • digminer.xyz
         </div>
       </div>
@@ -1950,10 +1962,11 @@ export default function DigMinerApp(){
   const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
   const TABS=[tx.tabAccount,tx.tabNft,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
   const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin"};
+  const[menuOpen,setMenuOpen]=useState(false);
 
   if(window.location.pathname==='/patchnotes') return <PatchNotes/>;
 
-  return(<LangCtx.Provider value={lang}><div style={{minHeight:"100vh",backgroundImage:"linear-gradient(to bottom,#87CEEB 0%,#E8D5A3 40%,#C4A265 100%)",backgroundAttachment:"fixed",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+  return(<LangCtx.Provider value={lang}><div style={{minHeight:"100vh",backgroundImage:"url('/design/bg.png')",backgroundSize:"cover",backgroundAttachment:"fixed",backgroundPosition:"center",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
       *{box-sizing:border-box;margin:0;padding:0}
@@ -1964,6 +1977,68 @@ export default function DigMinerApp(){
       @keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
       @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       body{overflow-x:hidden} input:focus{outline:2px solid #FF9800} button:hover:not(:disabled){filter:brightness(1.1)} button:active:not(:disabled){transform:scale(.97)} button:disabled{opacity:.6;cursor:not-allowed}
+
+      /* === WOOD PANEL === */
+      .wp{background:linear-gradient(to bottom,#e8d8b0,#d4bc7c,#e0cc94);border:8px solid #6b3c10;border-radius:6px;box-shadow:0 0 0 2px #2a1008,0 6px 18px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,255,255,.25);margin-bottom:14px;padding:18px 22px}
+      .wp h3,.wp h2{color:#3a1a00;margin-bottom:8px}
+      .wp p,.wp label{color:#5a3810}
+      .wp table thead tr{background:rgba(90,48,16,.12)!important}
+      .wp table tbody tr{border-bottom:1px solid rgba(90,48,16,.15)!important}
+      .wp input,.wp textarea{border:1px solid #c8a870!important;background:rgba(255,255,255,.55)!important;border-radius:6px}
+      .wp-dark{background:linear-gradient(to bottom,#7a4818,#5a3010,#7a4818);border-radius:6px;box-shadow:0 0 0 2px #2a1008,0 8px 24px rgba(0,0,0,.6);margin-bottom:14px;padding:8px}
+      .wp-dark>.wp-in{background:linear-gradient(to bottom,#e8d8b0,#d4bc7c,#e0cc94);border-radius:3px;padding:18px 22px;height:100%}
+
+      /* === STATS BAR === */
+      .sb{background:linear-gradient(to bottom,#7a4818,#5a3010,#7a4818);border-radius:6px;box-shadow:0 0 0 2px #2a1008,0 8px 24px rgba(0,0,0,.6);margin-bottom:16px;padding:8px}
+      .sb-in{display:flex;background:linear-gradient(to bottom,#e0cfa0,#cbb87a,#d8c490);border-radius:3px;flex-wrap:wrap}
+
+      /* === GRIDS === */
+      .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+      .g2-16{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      .g-miners{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+      .g-lands{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+
+      /* === MAIN === */
+      .dig-main{max-width:1100px;margin:0 auto;padding:20px}
+
+      /* === HEADER (OSRS style) === */
+      .dig-header{background:linear-gradient(to bottom,#2e1f06 0%,#1a1000 40%,#231608 70%,#2e1f06 100%);border-top:3px solid #c8a020;border-bottom:3px solid #6b4800;height:68px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,200,0,.15)}
+      .osrs-btn{padding:6px 12px;background:linear-gradient(to bottom,#3d2b08,#1e1200);border:2px solid #8B6914;border-radius:3px;color:#FFD600;font-size:10px;font-weight:700;cursor:pointer;font-family:Georgia,serif;transition:filter .1s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;line-height:1}
+      .osrs-btn:hover{filter:brightness(1.2)}
+      .osrs-btn.active{background:linear-gradient(to bottom,#8B6914,#5a4008);color:#fff;border-color:#FFD600}
+      .nav-tabs{display:flex;gap:3px;flex-wrap:wrap;align-items:center;justify-content:center;flex:1}
+      .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;background:none;border:none}
+      .hamburger span{display:block;width:22px;height:2px;background:#FFD600;border-radius:2px}
+      .mobile-menu{display:none;position:absolute;top:68px;left:0;right:0;background:#1a1000;border-bottom:3px solid #6b4800;z-index:199;padding:10px 16px;flex-direction:column;gap:6px;box-shadow:0 8px 20px rgba(0,0,0,.8)}
+      .mobile-menu.open{display:flex}
+      .mobile-menu .osrs-btn{width:100%;justify-content:flex-start;font-size:12px;padding:10px 14px}
+
+      /* === HOW IT WORKS === */
+      .how-layout{display:flex;gap:0;background:linear-gradient(to bottom,#e8d8b0,#d4bc7c,#e0cc94);border:8px solid #6b3c10;border-radius:6px;box-shadow:0 0 0 2px #2a1008,0 6px 18px rgba(0,0,0,.55);overflow:hidden;min-height:640px;align-items:flex-start;margin-bottom:14px}
+      .how-sidebar{width:210px;min-width:210px;background:#3a1a00;flex-shrink:0;position:sticky;top:8px;align-self:flex-start}
+      .how-content{flex:1;padding:24px;overflow:auto}
+
+      /* === PATCH NOTES === */
+      .pn-card{background:linear-gradient(to bottom,#e8d8b0,#d4bc7c,#e0cc94);border:8px solid #6b3c10;border-radius:6px;box-shadow:0 0 0 2px #2a1008,0 6px 18px rgba(0,0,0,.55);margin-bottom:16px;padding:20px 24px}
+
+      /* === MOBILE === */
+      @media(max-width:768px){
+        .dig-header{height:56px!important;padding:0 14px!important}
+        .nav-tabs{display:none!important}
+        .hamburger{display:flex!important}
+        .g2,.g2-16{grid-template-columns:1fr!important}
+        .g-lands{grid-template-columns:1fr!important}
+        .sb-in>div{min-width:50%!important}
+        .dig-main{padding:10px!important}
+        .how-layout{flex-direction:column!important;min-height:auto!important}
+        .how-sidebar{width:100%!important;min-width:unset!important;position:static!important;border-radius:0!important}
+        .wp{padding:12px 14px!important}
+        .wp-dark>.wp-in{padding:12px 14px!important}
+      }
+      @media(max-width:480px){
+        .g-miners{grid-template-columns:1fr 1fr!important}
+        .sb-in>div{min-width:100%!important;border-right:none!important;border-bottom:1px solid rgba(90,48,16,.3)!important}
+      }
     `}</style>
 
     {/* MAINTENANCE OVERLAY — blocks everything for non-admins */}
@@ -1996,36 +2071,57 @@ export default function DigMinerApp(){
     {showRoadmap&&<RoadmapModal onClose={()=>setShowRoadmap(false)}/>}
 
     {/* HEADER */}
-    <header style={{background:"rgba(0,0,0,.4)",backdropFilter:"blur(10px)",borderBottom:"2px solid #5D4037",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,flexWrap:"wrap",gap:8}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:38,objectFit:"contain"}}/>
-        <button onClick={toggleLang} style={{padding:"5px 12px",background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{tx.langBtn}</button>
+    <header className="dig-header" style={{position:"sticky"}}>
+      {/* Left: logo + lang */}
+      <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+        <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:44,objectFit:"contain"}}/>
+        <button onClick={toggleLang} className="osrs-btn" style={{fontSize:11}}>{tx.langBtn}</button>
       </div>
-      <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
-        {TABS.map(n=><button key={n} onClick={()=>setTab(tabMap[n])} style={{padding:"6px 12px",background:tab===tabMap[n]?"#FFD600":"rgba(255,255,255,.15)",border:"1px solid #8D6E63",borderRadius:6,color:tab===tabMap[n]?"#333":"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}}>{n}</button>)}
-        <a href="/patchnotes" style={{padding:"6px 12px",background:"rgba(255,255,255,.1)",border:"1px solid #8D6E63",borderRadius:6,color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:600,cursor:"pointer",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4}}>📋 Patch Notes</a>
-        <button onClick={()=>notify(tx.marketplaceNotify,true)} style={{padding:"6px 12px",background:"rgba(255,255,255,.07)",border:"1px dashed #8D6E63",borderRadius:6,color:"rgba(255,255,255,.45)",fontSize:10,fontWeight:600,cursor:"pointer"}}>{tx.marketplace} <span style={{fontSize:8,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 4px",marginLeft:3,fontWeight:700,verticalAlign:"middle"}}>{tx.marketplaceSoon}</span></button>
+
+      {/* Center: nav tabs (desktop) */}
+      <div className="nav-tabs">
+        {TABS.map(n=><button key={n} onClick={()=>setTab(tabMap[n])} className={"osrs-btn"+(tab===tabMap[n]?" active":"")}>{n}</button>)}
+        <a href="/patchnotes" className="osrs-btn">📋 Patch Notes</a>
+        <button onClick={()=>notify(tx.marketplaceNotify,true)} className="osrs-btn" style={{color:"rgba(255,214,0,.4)",borderStyle:"dashed",borderColor:"#5a4008"}}>{tx.marketplace} <span style={{fontSize:8,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 4px",marginLeft:4,fontWeight:700}}>{tx.marketplaceSoon}</span></button>
+      </div>
+
+      {/* Right: wallet + hamburger */}
+      <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
         {wallet
-          ?<div style={{display:"flex",alignItems:"center",gap:6}}>
-            <div style={{padding:"6px 12px",background:"rgba(0,0,0,.3)",borderRadius:6,color:"#FFD600",fontSize:10,fontWeight:600,border:"1px solid #5D4037"}}>{wallet.slice(0,6)}...{wallet.slice(-4)}</div>
-            <button onClick={()=>{setWallet(null);setMiners([]);setDigcoin(0);setTransactions([]);setWithdrawCooldown(0);setIsAdmin(false);setPathUSDBalance("0.0000");localStorage.removeItem(AUTH_KEY);setAuthToken(null);}} style={{padding:"6px 10px",background:"rgba(200,0,0,.35)",border:"1px solid #c62828",borderRadius:6,color:"#ff8a80",fontSize:10,fontWeight:700,cursor:"pointer"}} title={tx.disconnectTitle}>✕</button>
-          </div>
-          :<button disabled={loading} onClick={connectWallet} style={{padding:"6px 14px",background:"#FFD600",border:"none",borderRadius:6,color:"#333",fontSize:11,fontWeight:700,cursor:"pointer"}}>{loading?tx.connecting:tx.connect}</button>}
+          ?<>
+            <div className="osrs-btn" style={{fontFamily:"monospace",cursor:"default"}}>{wallet.slice(0,6)}...{wallet.slice(-4)}</div>
+            <button className="osrs-btn" style={{borderColor:"#c62828",color:"#ff8a80",background:"linear-gradient(to bottom,#5a0000,#2a0000)"}} onClick={()=>{setWallet(null);setMiners([]);setDigcoin(0);setTransactions([]);setWithdrawCooldown(0);setIsAdmin(false);setPathUSDBalance("0.0000");localStorage.removeItem(AUTH_KEY);setAuthToken(null);}} title={tx.disconnectTitle}>✕</button>
+          </>
+          :<button disabled={loading} className="osrs-btn active" onClick={connectWallet}>{loading?tx.connecting:tx.connect}</button>}
+        {/* Hamburger (mobile only) */}
+        <button className="hamburger" onClick={()=>setMenuOpen(o=>!o)} aria-label="Menu">
+          <span/><span/><span/>
+        </button>
       </div>
     </header>
 
-    <main style={{maxWidth:1100,margin:"0 auto",padding:20}}>
+    {/* Mobile dropdown menu */}
+    <div className={"mobile-menu"+(menuOpen?" open":"")}>
+      {TABS.map(n=><button key={n} onClick={()=>{setTab(tabMap[n]);setMenuOpen(false);}} className={"osrs-btn"+(tab===tabMap[n]?" active":"")}>{n}</button>)}
+      <a href="/patchnotes" className="osrs-btn">📋 Patch Notes</a>
+      <button onClick={()=>{notify(tx.marketplaceNotify,true);setMenuOpen(false);}} className="osrs-btn" style={{color:"rgba(255,214,0,.5)",borderStyle:"dashed"}}>{tx.marketplace} <span style={{fontSize:9,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 5px",marginLeft:4}}>{tx.marketplaceSoon}</span></button>
+      <button onClick={toggleLang} className="osrs-btn" style={{marginTop:4}}>{tx.langBtn}</button>
+    </div>
+
+    <main style={{maxWidth:1100,margin:"0 auto",padding:20}} className="dig-main">
       {/* GLOBAL STATS */}
-      <div style={{display:"flex",gap:0,background:"rgba(255,255,255,.9)",borderRadius:10,overflow:"hidden",marginBottom:20,border:"1px solid #ddd",flexWrap:"wrap"}}>
-        {[
-          [`${(stats.pool_balance!=null?stats.pool_balance:(stats.total_deposited||0)-(stats.total_withdrawn||0)).toFixed(2)} ${tx.statsPool}`],
-          [`${stats.totalMiners||0} ${tx.statsNft}`],
-          [`${stats.totalPlayers||0} ${tx.statsPlayers}`],
-          [`${(stats.total_withdrawn||0).toFixed(2)} ${tx.statsWithdrawn}`],
-          [`${tx.statsNetwork}`],
-        ].map(([v],i)=>(
-          <div key={i} style={{flex:1,minWidth:130,padding:"10px 14px",borderRight:i<4?"1px solid #eee":"none",fontSize:11,fontWeight:600,color:"#333",textAlign:"center"}}>{v}</div>
-        ))}
+      <div className="sb">
+        <div className="sb-in">
+          {[
+            [`${(stats.pool_balance!=null?stats.pool_balance:(stats.total_deposited||0)-(stats.total_withdrawn||0)).toFixed(2)} ${tx.statsPool}`],
+            [`${stats.totalMiners||0} ${tx.statsNft}`],
+            [`${stats.totalPlayers||0} ${tx.statsPlayers}`],
+            [`${(stats.total_withdrawn||0).toFixed(2)} ${tx.statsWithdrawn}`],
+            [`${tx.statsNetwork}`],
+          ].map(([v],i)=>(
+            <div key={i} style={{flex:1,minWidth:130,padding:"14px 16px",borderRight:i<4?"1px solid rgba(90,48,16,.3)":"none",fontSize:14,fontWeight:800,color:"#3a1a00",textAlign:"center"}}>{v}</div>
+          ))}
+        </div>
       </div>
 
       {!wallet&&tab==="how"?<HowItWorks/>:!wallet?(
@@ -2039,13 +2135,14 @@ export default function DigMinerApp(){
         </div>
       ):<>
         {/* WALLET BAR */}
-        <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:"12px 20px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",border:"1px solid #ddd",flexWrap:"wrap",gap:10}}>
+        <div className="wp-dark">
+        <div className="wp-in" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:14}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:36,height:36,borderRadius:8,background:"#5D4037",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⛏️</div>
+            <img src="/design/icon-wallet-lg.png" style={{width:48,height:48,objectFit:"contain"}}/>
             <div><div style={{fontSize:11,fontWeight:700,color:"#333"}}>{tx.walletAddress}</div><div style={{fontSize:9,color:"#888",fontFamily:"monospace"}}>{wallet}</div></div>
           </div>
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.pathUSDBalance}</div><div style={{fontSize:13,fontWeight:700}}>{pathUSDBalance} pathUSD</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.digcoinBalance}</div><div style={{fontSize:13,fontWeight:700,color:"#FF9800"}}>{digcoin.toFixed(2)} DC [{(digcoin/DIG_RATE).toFixed(4)} pathUSD]</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.digcoinBalance}</div><div style={{fontSize:13,fontWeight:700,color:"#8B0000"}}>{digcoin.toFixed(2)} DC [{(digcoin/DIG_RATE).toFixed(4)} pathUSD]</div></div>
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.miners}</div><div style={{fontSize:11,fontWeight:700}}>{idleMiners.length} {tx.idle} · {miningMiners.length} {tx.mining} · {readyMiners.length} {tx.ready}</div></div>
           {canMineAny&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"6px 14px",background:"linear-gradient(135deg,#2196F3,#42A5F5)",border:"2px solid #1565C0",borderRadius:8,color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer"}}>
             {txLoading==="playall"?tx.starting:`${tx.mineAllBtn(idleMiners.length)} fee: ${PLAY_ALL_FEE*idleMiners.length} DC)`}
@@ -2053,36 +2150,39 @@ export default function DigMinerApp(){
           {canClaimAny&&<button disabled={!!txLoading} onClick={claimAll} style={{padding:"6px 14px",background:"linear-gradient(135deg,#FF9800,#FFD600)",border:"2px solid #E65100",borderRadius:8,color:"#333",fontSize:11,fontWeight:800,cursor:"pointer"}}>
             {txLoading==="claimall"?tx.claiming:`${tx.claimAllBtn(readyMiners.length)} fee: ${PLAY_ALL_FEE*readyMiners.length} DC)`}
           </button>}
-        </div>
+        </div></div>
 
         {/* MY ACCOUNT */}
         {tab==="account"&&<div style={{animation:"fadeIn .3s ease"}}>
-          <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:"12px 20px",marginBottom:14,border:"1px solid #ddd"}}>
-            <div style={{fontSize:10,color:"#888",marginBottom:4}}>{tx.referralLink}</div>
-            <input readOnly value={referralLink} style={{width:"100%",padding:"7px 12px",border:"1px solid #ddd",borderRadius:6,fontSize:11,color:"#555",background:"#fafafa",cursor:"pointer"}}
+          <div className="wp-dark">
+          <div className="wp-in">
+            <div style={{fontSize:10,color:"#7a5020",fontWeight:700,marginBottom:4}}>{tx.referralLink}</div>
+            <input readOnly value={referralLink} style={{width:"100%",padding:"7px 12px",border:"1px solid #c8a870",borderRadius:6,fontSize:11,color:"#555",background:"rgba(255,255,255,.5)",cursor:"pointer"}}
               onClick={e=>{e.target.select();document.execCommand("copy");notify(tx.referralCopied);}}/>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+          </div></div>
+          <div className="g2">
             {/* DEPOSIT */}
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:18,border:"1px solid #ddd"}}>
+            <div className="wp-dark">
+            <div className="wp-in">
               <h3 style={{fontSize:13,fontWeight:700,marginBottom:4}}>{tx.depositTitle}</h3>
               <p style={{fontSize:10,color:"#888",marginBottom:8}}>{tx.depositDesc}</p>
               <div style={{display:"flex",gap:6,marginBottom:8}}>
-                <input type="number" placeholder="0.00" value={depositAmt} onChange={e=>setDepositAmt(e.target.value)} style={{flex:1,padding:"7px 10px",border:"1px solid #ddd",borderRadius:6,fontSize:12}} min="0" step="0.01"/>
-                <span style={{padding:"7px 10px",background:"#f5f5f5",borderRadius:6,fontSize:11,fontWeight:600,display:"flex",alignItems:"center"}}>pathUSD</span>
+                <input type="number" placeholder="0.00" value={depositAmt} onChange={e=>setDepositAmt(e.target.value)} style={{flex:1,padding:"7px 10px",border:"1px solid #c8a870",borderRadius:6,fontSize:12,background:"rgba(255,255,255,.5)"}} min="0" step="0.01"/>
+                <span style={{padding:"7px 10px",background:"rgba(255,255,255,.4)",border:"1px solid #c8a870",borderRadius:6,fontSize:11,fontWeight:600,display:"flex",alignItems:"center",color:"#5a3010"}}>pathUSD</span>
               </div>
               {depositAmt&&<div style={{fontSize:10,color:"#4CAF50",marginBottom:8}}>= {(parseFloat(depositAmt||0)*DIG_RATE).toFixed(0)} DIGCOIN</div>}
               <button disabled={!!txLoading} onClick={doDeposit} style={{padding:"7px 20px",background:"#4CAF50",border:"none",borderRadius:6,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                 {txLoading==="deposit"?tx.processing:tx.deposit}
               </button>
-            </div>
+            </div></div>
             {/* WITHDRAW */}
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:18,border:"1px solid #FFB74D"}}>
+            <div className="wp-dark">
+            <div className="wp-in">
               <h3 style={{fontSize:13,fontWeight:700,marginBottom:4}}>{tx.withdrawTitle} <span style={{fontSize:10,color:"#999",fontWeight:400}}>{tx.withdrawFee}</span></h3>
               <p style={{fontSize:10,color:"#888",marginBottom:8}}>{tx.withdrawDesc}</p>
               <div style={{display:"flex",gap:6,marginBottom:8}}>
-                <input type="number" placeholder="0" value={withdrawAmt} onChange={e=>setWithdrawAmt(e.target.value)} style={{flex:1,padding:"7px 10px",border:"1px solid #ddd",borderRadius:6,fontSize:12}} min="0"/>
-                <span style={{padding:"7px 10px",background:"#f5f5f5",borderRadius:6,fontSize:11,fontWeight:600}}>DIGCOIN</span>
+                <input type="number" placeholder="0" value={withdrawAmt} onChange={e=>setWithdrawAmt(e.target.value)} style={{flex:1,padding:"7px 10px",border:"1px solid #c8a870",borderRadius:6,fontSize:12,background:"rgba(255,255,255,.5)"}} min="0"/>
+                <span style={{padding:"7px 10px",background:"rgba(255,255,255,.4)",border:"1px solid #c8a870",borderRadius:6,fontSize:11,fontWeight:600,color:"#5a3010"}}>DIGCOIN</span>
               </div>
               {withdrawAmt&&<div style={{fontSize:10,color:"#FF9800",marginBottom:8}}>
                 = {(parseFloat(withdrawAmt||0)/DIG_RATE).toFixed(4)} pathUSD → net {(parseFloat(withdrawAmt||0)/DIG_RATE*0.90).toFixed(4)} pathUSD
@@ -2091,32 +2191,32 @@ export default function DigMinerApp(){
                 {txLoading==="withdraw"?tx.processing:withdrawCooldown>0?<Timer ms={withdrawCooldown}/>:tx.withdraw}
               </button>
               {withdrawCooldown>0&&<p style={{fontSize:10,color:"#E65100",marginTop:4}}>{tx.withdrawCooldownMsg} <Timer ms={withdrawCooldown}/></p>}
-            </div>
+            </div></div>
           </div>
           {/* TRANSACTIONS */}
-          <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:18,border:"1px solid #ddd"}}>
+          <div className="wp" style={{marginTop:4}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <h3 style={{fontSize:13,fontWeight:700,color:"#5D4037"}}>{tx.txHistory}</h3>
-              <button onClick={()=>loadTransactions(wallet)} style={{fontSize:10,padding:"4px 10px",background:"#f5f5f5",border:"1px solid #ddd",borderRadius:5,cursor:"pointer"}}>{tx.refresh}</button>
+              <h3 style={{fontSize:13,fontWeight:800,color:"#1a0800"}}>{tx.txHistory}</h3>
+              <button onClick={()=>loadTransactions(wallet)} className="osrs-btn">{tx.refresh}</button>
             </div>
             {transactions.length===0
-              ?<div style={{textAlign:"center",padding:20,color:"#aaa",fontSize:12}}>{tx.noTx}</div>
-              :<table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
-                <thead><tr style={{background:"#f9f9f9"}}>
-                  <th style={{padding:7,textAlign:"left",borderBottom:"1px solid #eee"}}>{tx.colDate}</th>
-                  <th style={{padding:7,textAlign:"left",borderBottom:"1px solid #eee"}}>{tx.colType}</th>
-                  <th style={{padding:7,textAlign:"left",borderBottom:"1px solid #eee"}}>{tx.colDetail}</th>
-                  <th style={{padding:7,textAlign:"right",borderBottom:"1px solid #eee"}}>{tx.colAmount}</th>
+              ?<div style={{textAlign:"center",padding:20,color:"#7a5020",fontSize:12,fontWeight:600}}>{tx.noTx}</div>
+              :<table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                <thead><tr style={{background:"rgba(90,48,16,.15)"}}>
+                  <th style={{padding:"8px 7px",textAlign:"left",borderBottom:"2px solid rgba(90,48,16,.3)",color:"#1a0800",fontWeight:800}}>{tx.colDate}</th>
+                  <th style={{padding:"8px 7px",textAlign:"left",borderBottom:"2px solid rgba(90,48,16,.3)",color:"#1a0800",fontWeight:800}}>{tx.colType}</th>
+                  <th style={{padding:"8px 7px",textAlign:"left",borderBottom:"2px solid rgba(90,48,16,.3)",color:"#1a0800",fontWeight:800}}>{tx.colDetail}</th>
+                  <th style={{padding:"8px 7px",textAlign:"right",borderBottom:"2px solid rgba(90,48,16,.3)",color:"#1a0800",fontWeight:800}}>{tx.colAmount}</th>
                 </tr></thead>
                 <tbody>{transactions.map((t,i)=>(
-                  <tr key={i} style={{borderBottom:"1px solid #f5f5f5"}}>
-                    <td style={{padding:7,color:"#666"}}>{new Date(t.date).toLocaleString()}</td>
-                    <td style={{padding:7}}><span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,
-                      background:t.type==="deposit"?"#e8f5e9":t.type==="withdraw"?"#fff3e0":t.type==="claim"?"#e3f2fd":t.type==="box"?"#fce4ec":t.type==="repair"?"#fff8e1":t.type==="land"?"#f3e5f5":t.type==="fusion"?"#fbe9e7":t.type==="play_all"?"#e1f5fe":t.type==="claim_all"?"#e8eaf6":"#f5f5f5",
-                      color:t.type==="deposit"?"#2E7D32":t.type==="withdraw"?"#E65100":t.type==="claim"?"#1565C0":t.type==="box"?"#880E4F":t.type==="repair"?"#F57F17":t.type==="land"?"#6A1B9A":t.type==="fusion"?"#BF360C":t.type==="play_all"?"#01579B":t.type==="claim_all"?"#283593":"#555"
+                  <tr key={i} style={{borderBottom:"1px solid rgba(90,48,16,.15)",background:i%2===0?"rgba(255,255,255,.15)":"transparent"}}>
+                    <td style={{padding:"7px",color:"#1a0800",fontWeight:600}}>{new Date(t.date).toLocaleString()}</td>
+                    <td style={{padding:"7px"}}><span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:800,
+                      background:t.type==="deposit"?"#e8f5e9":t.type==="withdraw"?"#fff3e0":t.type==="claim"?"#e3f2fd":t.type==="box"?"#fce4ec":t.type==="repair"?"#fff8e1":t.type==="land"?"#f3e5f5":t.type==="fusion"?"#fbe9e7":t.type==="play_all"?"#e1f5fe":t.type==="claim_all"?"#e8eaf6":"#eee",
+                      color:t.type==="deposit"?"#1B5E20":t.type==="withdraw"?"#BF360C":t.type==="claim"?"#0D47A1":t.type==="box"?"#880E4F":t.type==="repair"?"#E65100":t.type==="land"?"#4A148C":t.type==="fusion"?"#BF360C":t.type==="play_all"?"#01579B":t.type==="claim_all"?"#1A237E":"#333"
                     }}>{t.type==="play_all"?"PLAY ALL":t.type==="claim_all"?"CLAIM ALL":t.type.toUpperCase()}</span></td>
-                    <td style={{padding:7,color:"#333"}}>{t.detail}</td>
-                    <td style={{padding:7,textAlign:"right",fontWeight:700,color:t.amount>0?"#4CAF50":"#EF5350"}}>{t.amount>0?"+":""}{t.amount} DC</td>
+                    <td style={{padding:"7px",color:"#1a0800",fontWeight:600}}>{t.detail}</td>
+                    <td style={{padding:"7px",textAlign:"right",fontWeight:800,color:t.amount>0?"#1B5E20":"#BF360C"}}>{t.amount>0?"+":""}{t.amount} DC</td>
                   </tr>
                 ))}</tbody>
               </table>}
@@ -2183,7 +2283,7 @@ export default function DigMinerApp(){
             </div>
           </div>}
 
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>
+          <div className="g-miners">
             {filtered.length===0
               ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:"#888",fontSize:13}}><img src="/nftimgs/mistery box.png" alt="box" style={{width:60,height:60,objectFit:"contain",marginBottom:12,opacity:.5}}/><br/>{tx.noMiners}</div>
               :filtered.map(m=>{
@@ -2210,7 +2310,7 @@ export default function DigMinerApp(){
                 <div style={{color:"rgba(255,255,255,.4)",fontSize:12}}>{tx.noLands}</div>
               </div>
             ):(
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+              <div className="g-lands">
                 {lands.map(land=>{
                   const lr=LAND_RARITIES[land.rarityId]||LAND_RARITIES[0];
                   const assignedIds=new Set(land.assignedMiners.map(a=>a.minerId));
@@ -2313,8 +2413,8 @@ export default function DigMinerApp(){
 
 
           {/* ── regular boxes + stats ── */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
+          <div className="g2-16">
+            <div className="wp" style={{textAlign:"center"}}>
               <img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #FFD60088)"}}/>
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:10}}>{tx.buyBox}</h3>
               <div style={{textAlign:"left",padding:"0 16px",marginBottom:14,fontSize:11,color:"#555",lineHeight:1.8}}>
@@ -2330,7 +2430,7 @@ export default function DigMinerApp(){
               </div>
               <p style={{fontSize:10,color:"#aaa",marginTop:12}}>{tx.balance} {digcoin.toFixed(0)} DIGCOIN</p>
             </div>
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd"}}>
+            <div className="wp">
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:14}}>{tx.nftStats}</h3>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
                 <thead><tr style={{background:"#f9f9f9"}}>{[tx.colNft,tx.colDaily,tx.colRoi,tx.colAge,tx.colRepair].map(h=><th key={h} style={{padding:7,borderBottom:"2px solid #ddd",textAlign:"left"}}>{h}</th>)}</tr></thead>
@@ -2346,8 +2446,8 @@ export default function DigMinerApp(){
           </div>
 
           {/* ── Land Box + stats ── */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
+          <div className="g2-16">
+            <div className="wp" style={{textAlign:"center"}}>
               <img src={LAND_IMGS[0]} alt="Mystery Land Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #4CAF5088)"}}/>
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:6}}>{tx.landBoxTitle}</h3>
               {/* Supply bar */}
@@ -2379,7 +2479,7 @@ export default function DigMinerApp(){
               )}
               <p style={{fontSize:10,color:"#aaa",marginTop:12}}>{tx.balance} {digcoin.toFixed(0)} DIGCOIN</p>
             </div>
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd"}}>
+            <div className="wp">
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:14}}>{tx.landStatsTitle}</h3>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
                 <thead><tr style={{background:"#f9f9f9"}}>{[tx.colLand,tx.colBoost,tx.colSlots,tx.colLandChance].map(h=><th key={h} style={{padding:7,borderBottom:"2px solid #ddd",textAlign:"left"}}>{h}</th>)}</tr></thead>
@@ -2396,8 +2496,8 @@ export default function DigMinerApp(){
           </div>
 
           {/* ── Auto Pickaxe + perks ── */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd",textAlign:"center"}}>
+          <div className="g2-16">
+            <div className="wp" style={{textAlign:"center"}}>
               <img src="/autopickaxe/autoPickaxe.png" alt="Auto Pickaxe" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #FFD60088)"}}/>
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:6}}>⛏️ Auto Pickaxe</h3>
               {(()=>{const remaining=AUTO_PICKAXE_MAX-autoPickaxesMinted;const pct=Math.max(0,(remaining/AUTO_PICKAXE_MAX)*100);const sold=autoPickaxesMinted>=AUTO_PICKAXE_MAX;return(<div style={{margin:"0 0 14px"}}>
@@ -2424,7 +2524,7 @@ export default function DigMinerApp(){
                   </>
               }
             </div>
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:12,padding:24,border:"1px solid #ddd"}}>
+            <div className="wp">
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:14}}>⚡ Perks</h3>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {[
