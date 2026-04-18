@@ -1214,6 +1214,128 @@ function LandReveal({land,onClose}){
   </div>);
 }
 
+// ══════════ PATCH NOTES ══════════
+const PATCHES = [
+  {
+    version:"v1.4",
+    date:"2026-04-16",
+    title:"Auto Pickaxe",
+    tags:["feature","economy"],
+    changes:[
+      "Added Auto Pickaxe — a lifetime tool available in the Shop for 3,000 DC (supply: 500 units)",
+      "Auto Pickaxe ON: server automatically claims and restarts all miners every cycle — no app interaction required",
+      "Auto Pickaxe ON: Mine All & Claim All fees permanently waived",
+      "Toggle ON/OFF at any time from the My NFT tab",
+      "Added Auto Pickaxe section to How It Works documentation",
+    ],
+  },
+  {
+    version:"v1.3",
+    date:"2026-04-16",
+    title:"NFT Inventory Visual Update",
+    tags:["ui","feature"],
+    changes:[
+      "Miner cards now display a 🌍 LAND badge when assigned to a land plot",
+      "Miner cards already showed ⚡ FUSED badge — now both badges appear side by side",
+      "Added 'In Land' filter button to the My NFT tab to show only land-assigned miners",
+      "Farm Calculator updated: boosts column shows FUSED and LAND badges per miner",
+      "Farm Simulator now includes Land Boost selector and Fusion Potential calculator",
+    ],
+  },
+  {
+    version:"v1.2",
+    date:"2026-04-15",
+    title:"Lands System",
+    tags:["feature","economy"],
+    changes:[
+      "Introduced Land Boxes in the Shop — 300 DC each, limited supply of 1,000 total",
+      "6 land rarities: Common (+5%), UnCommon (+10%), Rare (+15%), Super Rare (+20%), Legendary (+25%), Mythic (+35%)",
+      "Lands boost miner daily earnings at claim time — assign idle miners to your land",
+      "Each land has a fixed number of miner slots based on rarity (2–8 slots)",
+      "Land supply progress bar visible in Shop — shows remaining / 1,000",
+      "My NFT tab: land cards show assigned miners, assign/unassign buttons",
+      "Transaction History now includes fusions, Play All fees and Claim All fees",
+    ],
+  },
+  {
+    version:"v1.1",
+    date:"2026-04-16",
+    title:"Mine All & Claim All Fee Reduction",
+    tags:["balance","economy"],
+    changes:[
+      "Play All (Mine All) fee reduced from 10 DC to 5 DC per miner",
+      "Claim All fee reduced from 10 DC to 5 DC per miner",
+      "Fee amount now shown directly on all Mine All and Claim All buttons",
+      "Example: 10 miners → Mine All costs 50 DC (was 100 DC)",
+    ],
+  },
+  {
+    version:"v1.0",
+    date:"2026-04-14",
+    title:"Fusion System",
+    tags:["feature","economy"],
+    changes:[
+      "Introduced Fusion — sacrifice 2 same-rarity miners to forge 1 stronger miner at the next tier",
+      "Fused miners earn 20% more than both parents combined (e.g. 2× Common → UnCommon at ×2.4 earnings)",
+      "Fusion costs 50 DC and requires both miners to be Idle",
+      "Fused miners inherit combined lifespan of both parents",
+      "Fused miners cannot be fused again",
+      "⚡ FUSED badge displayed on fused miner cards",
+      "Fusion reveal animation added",
+      "How It Works: full Fusion documentation section added",
+    ],
+  },
+];
+
+const TAG_COLORS={feature:"#2196F3",economy:"#FF9800",balance:"#4CAF50",ui:"#9C27B0",fix:"#EF5350"};
+
+function PatchNotes(){
+  return(
+    <div style={{minHeight:"100vh",backgroundImage:"linear-gradient(to bottom,#87CEEB 0%,#E8D5A3 40%,#C4A265 100%)",backgroundAttachment:"fixed",fontFamily:"'Segoe UI',system-ui,sans-serif",padding:"32px 20px"}}>
+      <div style={{maxWidth:780,margin:"0 auto"}}>
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:32}}>
+          <img src="/nftimgs/diglogo.png" alt="DigMiner" style={{height:48,objectFit:"contain",filter:"drop-shadow(0 0 12px #FF9800)"}}/>
+          <div>
+            <h1 style={{fontSize:26,fontWeight:900,color:"#fff",margin:0,textShadow:"0 2px 8px rgba(0,0,0,.4)"}}>Patch Notes</h1>
+            <p style={{fontSize:12,color:"rgba(255,255,255,.7)",margin:0}}>All updates to DigMiner — newest first</p>
+          </div>
+          <a href="/" style={{marginLeft:"auto",padding:"8px 18px",background:"rgba(0,0,0,.3)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,color:"#fff",fontSize:12,fontWeight:600,textDecoration:"none"}}>← Back to Game</a>
+        </div>
+
+        {/* Patches */}
+        <div style={{display:"flex",flexDirection:"column",gap:20}}>
+          {PATCHES.map((p,i)=>(
+            <div key={p.version} style={{background:"rgba(255,255,255,.97)",borderRadius:16,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.1)"}}>
+              {/* Patch header */}
+              <div style={{background:i===0?"linear-gradient(135deg,#1a1a2e,#2a1a3e)":"#1a1a2e",padding:"16px 24px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                <div style={{background:i===0?"#FFD600":"rgba(255,255,255,.1)",color:i===0?"#333":"#fff",fontWeight:900,fontSize:13,padding:"3px 12px",borderRadius:20}}>{p.version}</div>
+                <h2 style={{color:"#fff",fontSize:16,fontWeight:800,margin:0,flex:1}}>{p.title}</h2>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.5)"}}>{p.date}</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {p.tags.map(t=>(
+                    <span key={t} style={{padding:"2px 8px",borderRadius:10,fontSize:10,fontWeight:700,background:(TAG_COLORS[t]||"#888")+"22",color:TAG_COLORS[t]||"#888",border:`1px solid ${TAG_COLORS[t]||"#888"}44`}}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              {/* Changes */}
+              <ul style={{margin:0,padding:"16px 24px 20px 40px",display:"flex",flexDirection:"column",gap:8}}>
+                {p.changes.map((c,j)=>(
+                  <li key={j} style={{fontSize:13,color:"#333",lineHeight:1.6}}>{c}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div style={{textAlign:"center",marginTop:32,color:"rgba(255,255,255,.4)",fontSize:11}}>
+          DigMiner • digminer.xyz
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ══════════ MAIN APP ══════════
 export default function DigMinerApp(){
   const AUTH_KEY="digminer_token";
@@ -1829,6 +1951,8 @@ export default function DigMinerApp(){
   const TABS=[tx.tabAccount,tx.tabNft,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
   const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin"};
 
+  if(window.location.pathname==='/patchnotes') return <PatchNotes/>;
+
   return(<LangCtx.Provider value={lang}><div style={{minHeight:"100vh",backgroundImage:"linear-gradient(to bottom,#87CEEB 0%,#E8D5A3 40%,#C4A265 100%)",backgroundAttachment:"fixed",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
@@ -1879,6 +2003,7 @@ export default function DigMinerApp(){
       </div>
       <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
         {TABS.map(n=><button key={n} onClick={()=>setTab(tabMap[n])} style={{padding:"6px 12px",background:tab===tabMap[n]?"#FFD600":"rgba(255,255,255,.15)",border:"1px solid #8D6E63",borderRadius:6,color:tab===tabMap[n]?"#333":"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}}>{n}</button>)}
+        <a href="/patchnotes" style={{padding:"6px 12px",background:"rgba(255,255,255,.1)",border:"1px solid #8D6E63",borderRadius:6,color:"rgba(255,255,255,.8)",fontSize:10,fontWeight:600,cursor:"pointer",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4}}>📋 Patch Notes</a>
         <button onClick={()=>notify(tx.marketplaceNotify,true)} style={{padding:"6px 12px",background:"rgba(255,255,255,.07)",border:"1px dashed #8D6E63",borderRadius:6,color:"rgba(255,255,255,.45)",fontSize:10,fontWeight:600,cursor:"pointer"}}>{tx.marketplace} <span style={{fontSize:8,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 4px",marginLeft:3,fontWeight:700,verticalAlign:"middle"}}>{tx.marketplaceSoon}</span></button>
         {wallet
           ?<div style={{display:"flex",alignItems:"center",gap:6}}>
