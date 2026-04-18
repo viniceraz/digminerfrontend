@@ -2454,7 +2454,7 @@ export default function DigMinerApp(){
               {(()=>{const remaining=landMaxSupply-landsMinted;const pct=Math.max(0,(remaining/landMaxSupply)*100);const sold=landsMinted>=landMaxSupply;return(<div style={{margin:"0 0 12px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:sold?"#EF5350":"#666",marginBottom:4}}>
                   <span style={{fontWeight:700}}>{sold?"🔴 SOLD OUT":`🟢 ${remaining} / ${landMaxSupply} remaining`}</span>
-                  <span style={{color:"#aaa"}}>{landsMinted} minted</span>
+                  <span style={{color:"#1a0800",fontWeight:600}}>{landsMinted} minted</span>
                 </div>
                 <div style={{height:6,background:"#eee",borderRadius:3,overflow:"hidden"}}>
                   <div style={{height:"100%",width:`${100-pct}%`,background:sold?"#EF5350":pct<20?"#FF9800":"#4CAF50",borderRadius:3,transition:"width .5s"}}/>
@@ -2503,7 +2503,7 @@ export default function DigMinerApp(){
               {(()=>{const remaining=AUTO_PICKAXE_MAX-autoPickaxesMinted;const pct=Math.max(0,(remaining/AUTO_PICKAXE_MAX)*100);const sold=autoPickaxesMinted>=AUTO_PICKAXE_MAX;return(<div style={{margin:"0 0 14px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:sold?"#EF5350":"#666",marginBottom:4}}>
                   <span style={{fontWeight:700}}>{sold?"🔴 SOLD OUT":`🟢 ${remaining} / ${AUTO_PICKAXE_MAX} remaining`}</span>
-                  <span style={{color:"#aaa"}}>{autoPickaxesMinted} sold</span>
+                  <span style={{color:"#1a0800",fontWeight:600}}>{autoPickaxesMinted} sold</span>
                 </div>
                 <div style={{height:6,background:"#eee",borderRadius:3,overflow:"hidden"}}>
                   <div style={{height:"100%",width:`${100-pct}%`,background:sold?"#EF5350":pct<20?"#FF9800":"#FFD600",borderRadius:3,transition:"width .5s"}}/>
