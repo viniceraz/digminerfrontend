@@ -3329,6 +3329,8 @@ export default function DigMinerApp(){
                     ["Losses",dungeonReport.losses,"#EF5350"],
                     ["DC Paid Out",dungeonReport.totalPaid.toFixed(0)+" DC","#FF9800"],
                     ["Box Drops",dungeonReport.boxDrops,"#9C27B0"],
+                    ["Maps Bought",dungeonReport.maps.length,"#2196F3"],
+                    ["Maps DC Spent",dungeonReport.totalMapSpent.toFixed(0)+" DC","#00BCD4"],
                   ].map(([label,val,color])=>(
                     <div key={label} style={{flex:1,minWidth:100,background:"#f8f9fa",borderRadius:10,padding:"12px 16px",border:`1px solid ${color}33`,textAlign:"center"}}>
                       <div style={{fontSize:10,color:"#888",marginBottom:4}}>{label}</div>
@@ -3360,6 +3362,28 @@ export default function DigMinerApp(){
                           <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{r.result==="win"?(r.reward_digcoin||0).toFixed(0):"—"}</td>
                           <td style={{padding:"8px 10px",color:"#EF5350"}}>{r.hp_lost>0?`-${r.hp_lost}`:"—"}</td>
                           <td style={{padding:"8px 10px",textAlign:"center"}}>{r.box_dropped?"📦":"—"}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                }
+
+                <h3 style={{fontSize:14,fontWeight:800,color:"#333",margin:"20px 0 10px"}}>🗺️ Map Purchases</h3>
+                {dungeonReport.maps.length===0
+                  ?<div style={{textAlign:"center",padding:16,color:"#aaa",fontSize:12}}>No map purchases on {dungeonReport.date}</div>
+                  :<div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                      <thead><tr style={{background:"#f5f5f5"}}>
+                        {["Time (UTC)","Wallet","Detail","DC Spent"].map(h=>(
+                          <th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",color:"#555",whiteSpace:"nowrap"}}>{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>{dungeonReport.maps.map((m,i)=>(
+                        <tr key={i} style={{borderBottom:"1px solid #f0f0f0",background:i%2===0?"#fff":"#fafafa"}}>
+                          <td style={{padding:"8px 10px",color:"#888",whiteSpace:"nowrap"}}>{new Date(m.created_at).toUTCString().slice(17,25)}</td>
+                          <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:10}}>{m.wallet.slice(0,8)}...{m.wallet.slice(-6)}</td>
+                          <td style={{padding:"8px 10px",color:"#333"}}>{m.detail}</td>
+                          <td style={{padding:"8px 10px",fontWeight:700,color:"#2196F3"}}>{(m.amount_digcoin||0).toFixed(0)} DC</td>
                         </tr>
                       ))}</tbody>
                     </table>
