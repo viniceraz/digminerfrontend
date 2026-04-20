@@ -2688,7 +2688,7 @@ export default function DigMinerApp(){
                   </div>
                 )}
                 <div style={{pointerEvents:"auto",cursor:"pointer",transition:"transform .15s",transform:merchantBounce?"scale(1.12)":"scale(1)"}} onClick={handleClick} title="Talk to the Merchant">
-                  <img src="/Dungeons/merchant.png" alt="Merchant" style={{height:360,objectFit:"contain",filter:"drop-shadow(0 4px 12px rgba(0,0,0,.8))",display:"block"}}/>
+                  <img src="/Dungeons/merchant.png" alt="Merchant" style={{height:120,objectFit:"contain",filter:"drop-shadow(0 4px 12px rgba(0,0,0,.8))",display:"block"}}/>
                   <div style={{textAlign:"center",fontSize:9,color:"#c8a020",fontWeight:700,letterSpacing:1,textShadow:"0 1px 4px rgba(0,0,0,.9)"}}>MERCHANT</div>
                 </div>
               </div>
