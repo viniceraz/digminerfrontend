@@ -12,7 +12,7 @@ const RARITIES = [
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
 const FUSE_COST=50;
-const DUNGEON_COOLDOWN_MS=60*1000;
+const DUNGEON_COOLDOWN_MS=20*1000;
 const DUNGEONS={
   easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/mapa1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
   medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/mapa2.png", color:"#FF9800", darkColor:"#3a2a10"},
