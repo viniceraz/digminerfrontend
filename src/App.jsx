@@ -339,6 +339,23 @@ function BoxReveal({miner,onClose,isFuse=false}){
   </div>);
 }
 
+function MapReveal({qty,dungeon,onClose}){
+  const[phase,setPhase]=useState(0);
+  useEffect(()=>{const t1=setTimeout(()=>setPhase(1),800);const t2=setTimeout(()=>setPhase(2),1600);return()=>{clearTimeout(t1);clearTimeout(t2)};},[]);
+  return(<div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.92)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
+    {phase===0&&<div style={{animation:"shake .6s infinite",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
+      <img src={dungeon.mapImg} alt="Map" style={{width:140,height:140,objectFit:"contain",filter:`drop-shadow(0 0 20px ${dungeon.color})`}}/>
+    </div>}
+    {phase===1&&<div style={{fontSize:120,animation:"explode .8s forwards"}}>🗺️</div>}
+    {phase===2&&<div style={{textAlign:"center",animation:"popIn .5s ease"}}>
+      <img src={dungeon.mapImg} alt="Map" style={{width:140,height:140,objectFit:"contain",filter:`drop-shadow(0 0 24px ${dungeon.color})`,animation:"float 2s ease-in-out infinite"}}/>
+      <div style={{color:dungeon.color,fontSize:20,fontWeight:900,marginTop:14,textShadow:`0 0 24px ${dungeon.color}`,fontFamily:"'Press Start 2P',monospace"}}>{qty}× {dungeon.name} Map</div>
+      <div style={{color:"#aaa",fontSize:13,marginTop:8}}>Added to your inventory — ready to use!</div>
+      <button onClick={onClose} style={{marginTop:18,padding:"10px 36px",background:dungeon.color,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>Continue</button>
+    </div>}
+  </div>);
+}
+
 // Timer accepts targetMs (absolute UTC timestamp) so it stays accurate across tab switches and stale re-mounts.
 // Legacy ms= prop is kept for withdraw cooldown (which doesn't have an absolute target).
 function Timer({targetMs,ms}){
@@ -372,7 +389,7 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
     </div>
     <div style={{padding:"6px 14px",textAlign:"center",borderTop:"1px solid #eee"}}><span style={{fontSize:13,fontWeight:700,color:"#333"}}>{miner.dailyDigcoin} DIGCOIN/day</span></div>
     <div style={{padding:"0 14px 4px"}}><div style={{height:4,background:"#eee",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:pct>50?r.color:pct>20?"#FFA726":"#EF5350",borderRadius:2,transition:"width .5s"}}/></div></div>
-    {(()=>{const hp=miner.hp??100;const maxHp=miner.maxHp??100;const hpPct=(hp/maxHp)*100;return(
+    {(()=>{const hp=miner.hp??r.maxHp??100;const maxHp=miner.maxHp??r.maxHp??100;const hpPct=(hp/maxHp)*100;return(
     <div style={{padding:"0 14px 6px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
         <span style={{fontSize:9,color:"#999",fontWeight:600}}>HP</span>
@@ -1553,6 +1570,7 @@ export default function DigMinerApp(){
   const[selectedMinerForDungeon,setSelectedMinerForDungeon]=useState(null);
   const[merchantMsg,setMerchantMsg]=useState(null);
   const[merchantBounce,setMerchantBounce]=useState(false);
+  const[mapReveal,setMapReveal]=useState(null);
   const[dungeonTick,setDungeonTick]=useState(0);
   const[seedPoolAmt,setSeedPoolAmt]=useState("");
   const[seedPoolLoading,setSeedPoolLoading]=useState(false);
@@ -1953,7 +1971,7 @@ export default function DigMinerApp(){
       if(!res.ok) return notify(data.error,false);
       setDungeonMaps(prev=>({...prev,[mapType]:(prev[mapType]||0)+qty}));
       await loadPlayer(wallet);
-      notify(`Bought ${qty}x ${d.name} Map! -${cost} DC`);
+      setMapReveal({qty,dungeon:d});
     }catch(e){notify(e.message,false);}
     finally{setDungeonLoading("");}
   };
@@ -2295,6 +2313,7 @@ export default function DigMinerApp(){
     {notif&&<div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:10000,padding:"10px 24px",borderRadius:10,background:notif.ok?"#2E7D32":"#C62828",color:"#fff",fontSize:13,fontWeight:600,animation:"slideDown .3s ease",boxShadow:"0 4px 20px rgba(0,0,0,.3)",whiteSpace:"nowrap",maxWidth:"90vw",textAlign:"center"}}>{notif.msg}</div>}
     {revealing&&<BoxReveal miner={revealing} onClose={closeReveal}/>}
     {fuseReveal&&<BoxReveal miner={fuseReveal} onClose={closeFuseReveal} isFuse/>}
+    {mapReveal&&<MapReveal qty={mapReveal.qty} dungeon={mapReveal.dungeon} onClose={()=>setMapReveal(null)}/>}
     {showRoadmap&&<RoadmapModal onClose={()=>setShowRoadmap(false)}/>}
 
     {/* HEADER */}
@@ -2680,7 +2699,9 @@ export default function DigMinerApp(){
           {dungeonResult&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setDungeonResult(null)}>
             <div style={{maxWidth:420,width:"100%",background:"linear-gradient(to bottom,#2a1500,#1a0c00)",border:`4px solid ${dungeonResult.result==="win"?"#FFD600":"#8B0000"}`,borderRadius:12,boxShadow:`0 0 40px ${dungeonResult.result==="win"?"rgba(255,214,0,.4)":"rgba(139,0,0,.5)"}`,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
               <div style={{background:dungeonResult.result==="win"?"linear-gradient(to right,#2E7D32,#1B5E20)":"linear-gradient(to right,#8B0000,#4a0000)",padding:"20px",textAlign:"center"}}>
-                <div style={{fontSize:56,lineHeight:1}}>{dungeonResult.result==="win"?"🏆":"💀"}</div>
+                {dungeonResult.result==="win"
+                  ?<div style={{fontSize:56,lineHeight:1}}>🏆</div>
+                  :<img src="/Dungeons/dead.png" alt="Defeat" style={{height:72,objectFit:"contain",filter:"drop-shadow(0 0 12px #8B0000)"}}/>}
                 <h2 style={{fontFamily:"Georgia,serif",color:"#FFD600",fontSize:28,margin:"8px 0 0",letterSpacing:3,textShadow:"0 2px 8px rgba(0,0,0,.8)"}}>
                   {dungeonResult.result==="win"?"VICTORY!":"DEFEAT"}
                 </h2>
@@ -2696,7 +2717,7 @@ export default function DigMinerApp(){
                   <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2}}>A Mystery Box was added to your miners!</div>
                 </div>}
                 {dungeonResult.result==="loss"&&<div style={{background:"rgba(139,0,0,.15)",border:"2px solid #8B0000",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
-                  <div style={{fontSize:14,fontWeight:700,color:"#ff6b6b"}}>💔 Miner HP: {dungeonResult.newHp}/100</div>
+                  <div style={{fontSize:14,fontWeight:700,color:"#ff6b6b"}}>💔 Miner HP: {dungeonResult.newHp}/{dungeonResult.maxHp??100}</div>
                   {dungeonResult.needsRepair&&<div style={{fontSize:12,color:"#ff4444",fontWeight:700,marginTop:4}}>⚠️ NEEDS REPAIR!</div>}
                   <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:4}}>-{dungeonResult.hpLost} HP lost in battle</div>
                 </div>}
