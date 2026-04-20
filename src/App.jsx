@@ -1525,6 +1525,9 @@ export default function DigMinerApp(){
   const[depositDay,setDepositDay]=useState(()=>new Date().toISOString().slice(0,10));
   const[depositReport,setDepositReport]=useState(null);
   const[depositLoading,setDepositLoading]=useState(false);
+  const[dungeonDay,setDungeonDay]=useState(()=>new Date().toISOString().slice(0,10));
+  const[dungeonReport,setDungeonReport]=useState(null);
+  const[dungeonReportLoading,setDungeonReportLoading]=useState(false);
   const[adminLoading,setAdminLoading]=useState("");
   const[giftWallets,setGiftWallets]=useState("");
   const[giftResults,setGiftResults]=useState(null);
@@ -1861,6 +1864,17 @@ export default function DigMinerApp(){
       else notify(d.error,false);
     }catch(_){}
     finally{setWithdrawLoading(false);}
+  };
+
+  const loadDungeonRunsByDay=async()=>{
+    try{
+      setDungeonReportLoading(true);
+      const res=await authFetch(`/api/admin/dungeon-runs-by-day?date=${dungeonDay}`);
+      const d=await res.json();
+      if(res.ok) setDungeonReport(d);
+      else notify(d.error,false);
+    }catch(_){}
+    finally{setDungeonReportLoading(false);}
   };
 
   const doDeposit=async()=>{
@@ -3276,6 +3290,76 @@ export default function DigMinerApp(){
                               {w.status.toUpperCase()}
                             </span>
                           </td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                }
+              </>
+            )}
+          </div>
+
+          {/* Dungeon runs by day */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"1px solid #ddd"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>⚔️ Dungeon Runs by Day</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:16}}>All dungeon runs for all players on the selected UTC date.</p>
+            <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16,flexWrap:"wrap"}}>
+              <input type="date" value={dungeonDay} onChange={e=>setDungeonDay(e.target.value)}
+                style={{padding:"8px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:13,fontFamily:"monospace"}}/>
+              <button onClick={loadDungeonRunsByDay} disabled={dungeonReportLoading}
+                style={{padding:"8px 20px",background:"#E91E63",border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                {dungeonReportLoading?"Loading...":"Load"}
+              </button>
+              {[0,1,2,3].map(daysAgo=>{
+                const d=new Date();d.setDate(d.getDate()-daysAgo);const v=d.toISOString().slice(0,10);
+                const label=daysAgo===0?"Today":daysAgo===1?"Yesterday":`-${daysAgo}d`;
+                return(<button key={daysAgo} onClick={()=>setDungeonDay(v)}
+                  style={{padding:"6px 12px",borderRadius:7,border:`1px solid ${dungeonDay===v?"#E91E63":"#ddd"}`,background:dungeonDay===v?"#E91E63":"#fff",color:dungeonDay===v?"#fff":"#555",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  {label}
+                </button>);
+              })}
+            </div>
+
+            {dungeonReport&&(
+              <>
+                <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}}>
+                  {[
+                    ["Total Runs",dungeonReport.total,"#E91E63"],
+                    ["Wins",dungeonReport.wins,"#4CAF50"],
+                    ["Losses",dungeonReport.losses,"#EF5350"],
+                    ["DC Paid Out",dungeonReport.totalPaid.toFixed(0)+" DC","#FF9800"],
+                    ["Box Drops",dungeonReport.boxDrops,"#9C27B0"],
+                  ].map(([label,val,color])=>(
+                    <div key={label} style={{flex:1,minWidth:100,background:"#f8f9fa",borderRadius:10,padding:"12px 16px",border:`1px solid ${color}33`,textAlign:"center"}}>
+                      <div style={{fontSize:10,color:"#888",marginBottom:4}}>{label}</div>
+                      <div style={{fontSize:18,fontWeight:800,color}}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {dungeonReport.runs.length===0
+                  ?<div style={{textAlign:"center",padding:20,color:"#aaa",fontSize:12}}>No dungeon runs on {dungeonReport.date}</div>
+                  :<div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                      <thead><tr style={{background:"#f5f5f5"}}>
+                        {["Time (UTC)","Wallet","Miner","Dungeon","Result","Reward DC","HP Lost","Box Drop"].map(h=>(
+                          <th key={h} style={{padding:"8px 10px",borderBottom:"2px solid #ddd",textAlign:"left",color:"#555",whiteSpace:"nowrap"}}>{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>{dungeonReport.runs.map((r,i)=>(
+                        <tr key={i} style={{borderBottom:"1px solid #f0f0f0",background:i%2===0?"#fff":"#fafafa"}}>
+                          <td style={{padding:"8px 10px",color:"#888",whiteSpace:"nowrap"}}>{new Date(r.created_at).toUTCString().slice(17,25)}</td>
+                          <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:10}}>{r.wallet.slice(0,8)}...{r.wallet.slice(-6)}</td>
+                          <td style={{padding:"8px 10px",color:"#888"}}>#{r.miner_id}</td>
+                          <td style={{padding:"8px 10px",fontWeight:700,color:r.dungeon_type==="easy"?"#4CAF50":r.dungeon_type==="medium"?"#FF9800":"#E91E63",textTransform:"capitalize"}}>{r.dungeon_type}</td>
+                          <td style={{padding:"8px 10px"}}>
+                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:r.result==="win"?"#E8F5E9":"#FFEBEE",color:r.result==="win"?"#2E7D32":"#C62828"}}>
+                              {r.result.toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{padding:"8px 10px",fontWeight:700,color:"#FF9800"}}>{r.result==="win"?(r.reward_digcoin||0).toFixed(0):"—"}</td>
+                          <td style={{padding:"8px 10px",color:"#EF5350"}}>{r.hp_lost>0?`-${r.hp_lost}`:"—"}</td>
+                          <td style={{padding:"8px 10px",textAlign:"center"}}>{r.box_dropped?"📦":"—"}</td>
                         </tr>
                       ))}</tbody>
                     </table>
