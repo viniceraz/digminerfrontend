@@ -1355,6 +1355,20 @@ function LandReveal({land,onClose}){
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
   {
+    version:"v1.7",
+    date:"2026-04-20",
+    title:"Fusion & Dungeon Improvements",
+    tags:["fix","feature"],
+    changes:[
+      "Repair now restores the full rarity lifespan instead of the fused lifespan — a fused miner born with 8/8 now repairs to 13/13 (Legendary full lifespan)",
+      "Dungeon cooldown reduced from 60s to 20s",
+      "Dungeon battle history now shows PnL per run and total PnL (last 100 runs)",
+      "Dungeon miner selector now displays correct max HP per rarity",
+      "Map purchase now triggers a reveal animation (same style as Mystery Box)",
+      "Defeat modal now shows correct max HP for the miner's rarity",
+    ],
+  },
+  {
     version:"v1.6",
     date:"2026-04-20",
     title:"Dungeon System — Public Launch",
