@@ -12,6 +12,11 @@ const RARITIES = [
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
 const FUSE_COST=50;
+const DUNGEONS={
+  easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/mapa1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
+  medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/mapa2.png", color:"#FF9800", darkColor:"#3a2a10"},
+  hard:  {id:"hard",  name:"DigKing",  mapItem:"map_hard",   mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg", mapImg:"/Dungeons/mapa3.png", color:"#E91E63", darkColor:"#3a1a2a"},
+};
 const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
 const AUTO_PICKAXE_PRICE=3000; const AUTO_PICKAXE_MAX=500;
 const LAND_RARITIES=[
@@ -27,7 +32,7 @@ const LAND_IMGS=["/landsimgs/land1.png","/landsimgs/land2.png","/landsimgs/land3
 const LangCtx = createContext('en');
 const T = {
   en:{
-    tabAccount:"My Account",tabNft:"My NFT",tabShop:"Shop",tabCalc:"Calculator",tabHow:"How It Works",tabAdmin:"⚙️ Admin",
+    tabAccount:"My Account",tabNft:"My NFT",tabShop:"Shop",tabCalc:"Calculator",tabHow:"How It Works",tabAdmin:"⚙️ Admin",tabDungeon:"⚔️ Dungeons",
     marketplace:"🏪 Marketplace",marketplaceSoon:"SOON",marketplaceNotify:"Marketplace coming soon! Stay tuned.",
     connect:"Connect",connecting:"Connecting...",connectWallet:"CONNECT WALLET",connectingWallet:"CONNECTING...",
     connectSubtitle:"Mine. Earn. Withdraw. Powered by Tempo.",connectRequires:"Requires MetaMask + Tempo Mainnet",disconnectTitle:"Disconnect wallet",
@@ -136,7 +141,7 @@ const T = {
     howAutoPickaxeWarn:"The Auto Pickaxe automates the cycle but does not extend miner lifespan. Miners still retire normally after their lifespan ends.",
   },
   zh:{
-    tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",
+    tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",tabDungeon:"⚔️ 地下城",
     marketplace:"🏪 市场",marketplaceSoon:"即将上线",marketplaceNotify:"市场即将上线！敬请期待。",
     connect:"连接钱包",connecting:"连接中...",connectWallet:"连接钱包",connectingWallet:"连接中...",
     connectSubtitle:"挖矿。赚取。提现。由 Tempo 驱动。",connectRequires:"需要 MetaMask + Tempo 主网",disconnectTitle:"断开钱包",
@@ -1401,6 +1406,16 @@ export default function DigMinerApp(){
   const[autoPickaxe,setAutoPickaxe]=useState({owned:false,active:false});
   const[autoPickaxesMinted,setAutoPickaxesMinted]=useState(0);
   const[autoPickaxeLoading,setAutoPickaxeLoading]=useState(false);
+  const[dungeonMaps,setDungeonMaps]=useState({map_easy:0,map_medium:0,map_hard:0});
+  const[dungeonRuns,setDungeonRuns]=useState([]);
+  const[dungeonLoading,setDungeonLoading]=useState("");
+  const[dungeonResult,setDungeonResult]=useState(null);
+  const[selectedDungeon,setSelectedDungeon]=useState("easy");
+  const[selectedMinerForDungeon,setSelectedMinerForDungeon]=useState(null);
+  const[merchantMsg,setMerchantMsg]=useState(null);
+  const[merchantBounce,setMerchantBounce]=useState(false);
+  const[seedPoolAmt,setSeedPoolAmt]=useState("");
+  const[seedPoolLoading,setSeedPoolLoading]=useState(false);
   const[lang,setLang]=useState(()=>localStorage.getItem("digminer_lang")||"en");
   const tx=T[lang];
   const toggleLang=()=>{const nl=lang==="en"?"zh":"en";setLang(nl);localStorage.setItem("digminer_lang",nl);};
@@ -1452,6 +1467,17 @@ export default function DigMinerApp(){
     }catch(e){console.error("pathUSD balance error:",e.message);}
   };
 
+  const loadDungeonInventory=async(address)=>{
+    try{
+      const token=localStorage.getItem("digminer_token");
+      const res=await fetch(`/api/dungeon/inventory?wallet=${address}`,{headers:token?{Authorization:`Bearer ${token}`}:{}});
+      if(!res.ok) return;
+      const data=await res.json();
+      setDungeonMaps(data.maps||{map_easy:0,map_medium:0,map_hard:0});
+      setDungeonRuns(data.recentRuns||[]);
+    }catch(_){}
+  };
+
   const loadPlayer=useCallback(async(address)=>{
     try{
       const res=await fetch(`/api/player/${address}`);
@@ -1462,6 +1488,7 @@ export default function DigMinerApp(){
       if(data.autoPickaxe) setAutoPickaxe(data.autoPickaxe);
       setReferralLink(`${window.location.origin}?ref=${address}`);
       try{const ld=await fetch(`/api/land/${address}`).then(r=>r.ok?r.json():{lands:[]});setLands(ld.lands||[]);}catch(_){}
+      await loadDungeonInventory(address);
       await loadPathUSDBalance(address);
       // Check withdraw cooldown — use stored token directly (history endpoint requires auth)
       try{
@@ -1751,6 +1778,41 @@ export default function DigMinerApp(){
     finally{setTxLoading("");}
   };
 
+  const buyMap=async(mapType,qty=1)=>{
+    if(!wallet) return notify("Connect wallet first",false);
+    const d=Object.values(DUNGEONS).find(d=>d.mapItem===mapType);
+    const cost=d.mapCost*qty;
+    if(digcoin<cost) return notify(`Need ${cost} DC to buy ${qty}x map`,false);
+    try{
+      setDungeonLoading("buy_"+mapType);
+      const res=await authFetch("/api/dungeon/buy-map",{method:"POST",body:JSON.stringify({wallet,mapType,quantity:qty})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      setDungeonMaps(prev=>({...prev,[mapType]:(prev[mapType]||0)+qty}));
+      await loadPlayer(wallet);
+      notify(`Bought ${qty}x ${d.name} Map! -${cost} DC`);
+    }catch(e){notify(e.message,false);}
+    finally{setDungeonLoading("");}
+  };
+
+  const runDungeon=async(dungeonType,minerId)=>{
+    if(!wallet) return notify("Connect wallet first",false);
+    const d=DUNGEONS[dungeonType];
+    if(!d) return;
+    if((dungeonMaps[d.mapItem]||0)<1) return notify(`No ${d.name} maps! Buy one first.`,false);
+    try{
+      setDungeonLoading("run_"+minerId);
+      const res=await authFetch("/api/dungeon/run",{method:"POST",body:JSON.stringify({wallet,minerId,dungeonType})});
+      const data=await res.json();
+      if(!res.ok) return notify(data.error,false);
+      setDungeonMaps(prev=>({...prev,[d.mapItem]:Math.max(0,(prev[d.mapItem]||1)-1)}));
+      setDungeonResult(data);
+      await loadPlayer(wallet);
+      await loadDungeonInventory(wallet);
+    }catch(e){notify(e.message,false);}
+    finally{setDungeonLoading("");}
+  };
+
   const buyBox=async(qty)=>{
     const cost=qty===10?BOX_10_PRICE:BOX_PRICE*qty;
     if(digcoin<cost) return notify(`Need ${cost} DIGCOIN. Deposit pathUSD first!`,false);
@@ -1960,8 +2022,8 @@ export default function DigMinerApp(){
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
   const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=[tx.tabAccount,tx.tabNft,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
-  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin"};
+  const TABS=[tx.tabAccount,tx.tabNft,...(isAdmin?[tx.tabDungeon]:[]),tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
+  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon"};
   const[menuOpen,setMenuOpen]=useState(false);
 
   if(window.location.pathname==='/patchnotes') return <PatchNotes/>;
@@ -2408,6 +2470,244 @@ export default function DigMinerApp(){
           </div>
         </div>}
 
+        {/* DUNGEONS */}
+        {tab==="dungeon"&&<div style={{animation:"fadeIn .3s ease",position:"relative"}}>
+
+          {/* Merchant NPC */}
+          {(()=>{
+            const LINES=[
+              "Psst! A map is all that stands between you and glory... or a grave.",
+              "I've seen a thousand miners enter the DigKing's lair. Three came back.",
+              "Buy a map, friend. The Goblins have been restless lately...",
+              "That Spider Queen has eight eyes — and she's watching you RIGHT NOW.",
+              "I don't sell courage. But I do sell maps. Same thing, really.",
+              "Word of advice: always repair before a Hard dungeon. Always.",
+              "The DigKing hoards more DIGCOIN than the entire pool. Just sayin'...",
+              "Lost your miner to Goblins? Rookie mistake. Buy the Spider map next time.",
+              "Every map I sell comes with a 0% refund policy. Just like life.",
+              "You look lucky today. Could be wrong. Usually am.",
+            ];
+            const handleClick=()=>{
+              const idx=Math.floor(Math.random()*LINES.length);
+              setMerchantMsg(LINES[idx]);
+              setMerchantBounce(true);
+              setTimeout(()=>setMerchantBounce(false),400);
+              setTimeout(()=>setMerchantMsg(null),5000);
+            };
+            return(
+              <div style={{position:"fixed",bottom:24,right:24,zIndex:900,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,pointerEvents:"none"}}>
+                {merchantMsg&&(
+                  <div style={{pointerEvents:"none",maxWidth:240,background:"linear-gradient(to bottom,#2a1500,#1a0c00)",border:"2px solid #c8a020",borderRadius:12,padding:"10px 14px",boxShadow:"0 4px 20px rgba(0,0,0,.7)",position:"relative",animation:"fadeIn .2s ease"}}>
+                    <div style={{fontSize:12,color:"#e8d8b0",fontFamily:"Georgia,serif",lineHeight:1.5,fontStyle:"italic"}}>"{merchantMsg}"</div>
+                    <div style={{position:"absolute",bottom:-10,right:28,width:0,height:0,borderLeft:"10px solid transparent",borderRight:"10px solid transparent",borderTop:"10px solid #c8a020"}}/>
+                    <div style={{position:"absolute",bottom:-8,right:29,width:0,height:0,borderLeft:"9px solid transparent",borderRight:"9px solid transparent",borderTop:"9px solid #1a0c00"}}/>
+                  </div>
+                )}
+                <div style={{pointerEvents:"auto",cursor:"pointer",transition:"transform .15s",transform:merchantBounce?"scale(1.12)":"scale(1)"}} onClick={handleClick} title="Talk to the Merchant">
+                  <img src="/Dungeons/merchant.png" alt="Merchant" style={{height:360,objectFit:"contain",filter:"drop-shadow(0 4px 12px rgba(0,0,0,.8))",display:"block"}}/>
+                  <div style={{textAlign:"center",fontSize:9,color:"#c8a020",fontWeight:700,letterSpacing:1,textShadow:"0 1px 4px rgba(0,0,0,.9)"}}>MERCHANT</div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Victory/Defeat Modal */}
+          {dungeonResult&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setDungeonResult(null)}>
+            <div style={{maxWidth:420,width:"100%",background:"linear-gradient(to bottom,#2a1500,#1a0c00)",border:`4px solid ${dungeonResult.result==="win"?"#FFD600":"#8B0000"}`,borderRadius:12,boxShadow:`0 0 40px ${dungeonResult.result==="win"?"rgba(255,214,0,.4)":"rgba(139,0,0,.5)"}`,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+              <div style={{background:dungeonResult.result==="win"?"linear-gradient(to right,#2E7D32,#1B5E20)":"linear-gradient(to right,#8B0000,#4a0000)",padding:"20px",textAlign:"center"}}>
+                <div style={{fontSize:56,lineHeight:1}}>{dungeonResult.result==="win"?"🏆":"💀"}</div>
+                <h2 style={{fontFamily:"Georgia,serif",color:"#FFD600",fontSize:28,margin:"8px 0 0",letterSpacing:3,textShadow:"0 2px 8px rgba(0,0,0,.8)"}}>
+                  {dungeonResult.result==="win"?"VICTORY!":"DEFEAT"}
+                </h2>
+                <p style={{color:"rgba(255,255,255,.7)",fontSize:12,margin:"4px 0 0"}}>— {dungeonResult.dungeonName} Dungeon —</p>
+              </div>
+              <div style={{padding:"20px 24px"}}>
+                {dungeonResult.result==="win"&&<div style={{background:"rgba(46,125,50,.15)",border:"2px solid #2E7D32",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
+                  <div style={{fontSize:28,fontWeight:800,color:"#4CAF50",fontFamily:"Georgia,serif"}}>+{dungeonResult.rewardDigcoin} DC</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>DIGCOIN added to your balance</div>
+                </div>}
+                {dungeonResult.boxDropped&&<div style={{background:"rgba(255,152,0,.15)",border:"2px solid #FF9800",borderRadius:10,padding:"12px",marginBottom:12,textAlign:"center"}}>
+                  <div style={{fontSize:15,fontWeight:800,color:"#FFD600"}}>🎁 BONUS DROP!</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2}}>A Mystery Box was added to your miners!</div>
+                </div>}
+                {dungeonResult.result==="loss"&&<div style={{background:"rgba(139,0,0,.15)",border:"2px solid #8B0000",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#ff6b6b"}}>💔 Miner HP: {dungeonResult.newHp}/100</div>
+                  {dungeonResult.needsRepair&&<div style={{fontSize:12,color:"#ff4444",fontWeight:700,marginTop:4}}>⚠️ NEEDS REPAIR!</div>}
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:4}}>-{dungeonResult.hpLost} HP lost in battle</div>
+                </div>}
+                <div style={{textAlign:"center",marginBottom:14}}>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>Win chance: {dungeonResult.finalWinChance}% · Roll was {dungeonResult.result==="win"?"lucky 🍀":"unlucky 💨"}</div>
+                </div>
+                <button onClick={()=>setDungeonResult(null)} style={{width:"100%",padding:"10px",background:"linear-gradient(to bottom,#8B6914,#5a4008)",border:"2px solid #FFD600",borderRadius:8,color:"#FFD600",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:1}}>
+                  CONTINUE
+                </button>
+              </div>
+            </div>
+          </div>}
+
+          {/* Hero Banner */}
+          <div style={{position:"relative",borderRadius:8,overflow:"hidden",marginBottom:16,border:"4px solid #6b3c10",boxShadow:"0 0 0 2px #2a1008,0 8px 24px rgba(0,0,0,.6)"}}>
+            <img src="/Dungeons/dungeonpfp.jpeg" alt="Dungeons" style={{width:"100%",height:160,objectFit:"cover",objectPosition:"center 30%",display:"block"}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(to right,rgba(0,0,0,.85) 0%,rgba(0,0,0,.4) 60%,rgba(0,0,0,.1) 100%)"}}/>
+            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 28px",flexWrap:"wrap",gap:12}}>
+              <div>
+                <h1 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:800,color:"#FFD600",textShadow:"0 2px 12px rgba(0,0,0,.9)",margin:0,letterSpacing:2}}>⚔️ DUNGEONS</h1>
+                <p style={{color:"rgba(255,255,255,.75)",fontSize:13,margin:"6px 0 0",textShadow:"1px 1px 4px rgba(0,0,0,.8)"}}>Send your miners into the dark. Fame or defeat awaits.</p>
+              </div>
+              <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                <div style={{background:"rgba(0,0,0,.65)",border:"2px solid #FFD600",borderRadius:10,padding:"10px 18px",textAlign:"center",backdropFilter:"blur(4px)"}}>
+                  <div style={{fontSize:9,color:"#c8a020",fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>💰 Dungeon Pool</div>
+                  <div style={{fontSize:20,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",textShadow:"0 2px 8px rgba(0,0,0,.9)"}}>{(stats.dungeonPoolBalance||0).toFixed(0)} DC</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.5)",marginTop:1}}>{((stats.dungeonPoolBalance||0)/DIG_RATE).toFixed(2)} pathUSD</div>
+                </div>
+                <div style={{background:"rgba(0,0,0,.65)",border:"2px solid #4CAF50",borderRadius:10,padding:"10px 18px",textAlign:"center",backdropFilter:"blur(4px)"}}>
+                  <div style={{fontSize:9,color:"#81c784",fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>🏆 Total Paid Out</div>
+                  <div style={{fontSize:20,fontWeight:800,color:"#4CAF50",fontFamily:"Georgia,serif",textShadow:"0 2px 8px rgba(0,0,0,.9)"}}>{(stats.dungeonTotalPaid||0).toFixed(0)} DC</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.5)",marginTop:1}}>to brave miners</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Map Inventory */}
+          <div style={{background:"linear-gradient(to bottom,#1a0c00,#2a1500)",border:"3px solid #6b3c10",borderRadius:8,boxShadow:"0 0 0 2px #2a1008",padding:"14px 20px",marginBottom:16,display:"flex",gap:0,alignItems:"center",flexWrap:"wrap"}}>
+            <div style={{fontSize:11,fontWeight:800,color:"#c8a020",letterSpacing:2,textTransform:"uppercase",marginRight:20,flexShrink:0}}>🗺️ Your Maps</div>
+            {Object.values(DUNGEONS).map((d,i)=>(
+              <div key={d.id} style={{flex:1,minWidth:120,display:"flex",alignItems:"center",gap:10,padding:"8px 16px",borderLeft:i>0?"1px solid rgba(200,160,32,.2)":"none"}}>
+                <img src={d.mapImg} alt={d.name} style={{height:44,objectFit:"contain",filter:"drop-shadow(0 2px 4px rgba(0,0,0,.6))"}}/>
+                <div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.5)",fontWeight:700}}>{d.name} Map</div>
+                  <div style={{fontSize:22,fontWeight:800,color:dungeonMaps[d.mapItem]>0?"#FFD600":"rgba(255,255,255,.25)",fontFamily:"Georgia,serif",lineHeight:1}}>{dungeonMaps[d.mapItem]||0}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recent Winners */}
+          {(stats.dungeonRecentWins||[]).length>0&&<div style={{background:"linear-gradient(to right,rgba(0,0,0,.7),rgba(26,12,0,.8))",border:"2px solid rgba(255,214,0,.2)",borderRadius:8,padding:"10px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+            <div style={{fontSize:10,color:"#c8a020",fontWeight:800,letterSpacing:2,flexShrink:0}}>🏆 RECENT WINNERS</div>
+            {(stats.dungeonRecentWins||[]).map((w,i)=>{
+              const colors={easy:"#4CAF50",medium:"#FF9800",hard:"#E91E63"};
+              return(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,.05)",border:`1px solid ${colors[w.dungeonType]||"#555"}44`,borderRadius:20,padding:"4px 12px"}}>
+                <span style={{fontSize:10,color:colors[w.dungeonType]||"#aaa",fontWeight:700,textTransform:"capitalize"}}>{w.dungeonType}</span>
+                <span style={{fontSize:11,color:"rgba(255,255,255,.6)",fontFamily:"monospace"}}>{w.wallet}</span>
+                <span style={{fontSize:11,fontWeight:800,color:"#FFD600"}}>+{w.reward} DC</span>
+              </div>
+            );})}
+          </div>}
+
+          {/* Dungeon Cards */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16,marginBottom:16}}>
+            {Object.values(DUNGEONS).map(d=>{
+              const mapCount=dungeonMaps[d.mapItem]||0;
+              const eligibleMiners=miners.filter(m=>m.isAlive&&!m.needsRepair&&!m.isMining&&!(m.dungeonCooldownRemaining>0));
+              const borderColors={easy:"#4CAF50",medium:"#C62828",hard:"#FF6F00"};
+              const glowColors={easy:"rgba(76,175,80,.3)",medium:"rgba(198,40,40,.3)",hard:"rgba(255,111,0,.4)"};
+              const diffLabels={easy:"EASY",medium:"MEDIUM",hard:"⚠️ HARD"};
+              return(
+              <div key={d.id} style={{background:"linear-gradient(to bottom,#1a0c00,#120800)",border:`3px solid ${borderColors[d.id]}`,borderRadius:10,boxShadow:`0 0 0 1px #2a1008, 0 8px 24px rgba(0,0,0,.7), 0 0 20px ${glowColors[d.id]}`,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+
+                {/* Boss Image */}
+                <div style={{position:"relative",height:200,overflow:"hidden"}}>
+                  <img src={d.img} alt={d.name} style={{width:"100%",height:"100%",objectFit:"cover",imageRendering:"pixelated"}}/>
+                  <div style={{position:"absolute",inset:0,background:`linear-gradient(to top, #120800 0%, rgba(0,0,0,0) 50%)`}}/>
+                  {/* Map floats top-right */}
+                  <div style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.6)",borderRadius:8,padding:4,border:`2px solid ${borderColors[d.id]}`}}>
+                    <img src={d.mapImg} alt="map" style={{height:44,objectFit:"contain",display:"block",filter:"drop-shadow(0 2px 4px rgba(0,0,0,.8))"}}/>
+                  </div>
+                  {/* Difficulty badge */}
+                  <div style={{position:"absolute",top:10,left:10,background:borderColors[d.id],color:"#fff",padding:"3px 12px",borderRadius:20,fontSize:10,fontWeight:800,letterSpacing:1,boxShadow:"0 2px 6px rgba(0,0,0,.5)"}}>
+                    {diffLabels[d.id]}
+                  </div>
+                  {/* Name overlay */}
+                  <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 14px"}}>
+                    <div style={{fontSize:22,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",textShadow:"0 2px 8px rgba(0,0,0,.9)",letterSpacing:1}}>{d.name}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,.5)",letterSpacing:2,textTransform:"uppercase"}}>Dungeon · {mapCount} map{mapCount!==1?"s":""} owned</div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:`${borderColors[d.id]}33`,margin:"0"}}>
+                  {[["💰 Prize",`${d.prize} DC`,"#FFD600"],["🎯 Win",`${d.winChance}%`,"#4fc3f7"],["💔 HP Loss",`-${d.hpLoss}`,"#ef9a9a"]].map(([l,v,c],i)=>(
+                    <div key={i} style={{padding:"8px 6px",textAlign:"center",background:"rgba(0,0,0,.4)"}}>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,.45)",fontWeight:700,marginBottom:2}}>{l}</div>
+                      <div style={{fontSize:14,fontWeight:800,color:c,fontFamily:"Georgia,serif"}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:`${borderColors[d.id]}22`,marginBottom:12}}>
+                  {[["🗺️ Map Cost",`${d.mapCost} DC`,"#c8a870"],["🎁 Box Drop",`${d.boxDrop}% on win`,"#ba68c8"]].map(([l,v,c],i)=>(
+                    <div key={i} style={{padding:"6px 6px",textAlign:"center",background:"rgba(0,0,0,.3)"}}>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,.4)",fontWeight:700,marginBottom:1}}>{l}</div>
+                      <div style={{fontSize:12,fontWeight:800,color:c}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div style={{padding:"0 14px 14px",display:"flex",flexDirection:"column",gap:8,marginTop:"auto"}}>
+                  {/* Buy map buttons */}
+                  <div style={{display:"flex",gap:6}}>
+                    {[1,5].map(qty=>(
+                      <button key={qty} disabled={!!dungeonLoading||digcoin<d.mapCost*qty} onClick={()=>buyMap(d.mapItem,qty)}
+                        style={{flex:1,padding:"7px 6px",background:digcoin>=d.mapCost*qty?"linear-gradient(to bottom,#3d2b08,#1e1200)":"rgba(255,255,255,.05)",border:`1px solid ${digcoin>=d.mapCost*qty?"#8B6914":"rgba(255,255,255,.1)"}`,borderRadius:6,color:digcoin>=d.mapCost*qty?"#FFD600":"rgba(255,255,255,.25)",fontSize:11,fontWeight:700,cursor:digcoin>=d.mapCost*qty?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
+                        {dungeonLoading==="buy_"+d.mapItem?"Buying...":`Buy ${qty>1?qty+"x ":""}Map — ${d.mapCost*qty} DC`}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Miner select + enter */}
+                  {mapCount>0?(
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      <select value={selectedMinerForDungeon||""} onChange={e=>setSelectedMinerForDungeon(e.target.value?parseInt(e.target.value):null)}
+                        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`2px solid ${borderColors[d.id]}66`,background:"rgba(0,0,0,.4)",fontSize:12,color:"#e8d8b0",fontWeight:600,outline:"none"}}>
+                        <option value="">— Select a Miner —</option>
+                        {eligibleMiners.map(m=>(
+                          <option key={m.id} value={m.id}>#{m.id} {m.rarityName} · HP {m.hp??100}/100</option>
+                        ))}
+                      </select>
+                      <button disabled={!selectedMinerForDungeon||!!dungeonLoading} onClick={()=>runDungeon(d.id,selectedMinerForDungeon)}
+                        style={{width:"100%",padding:"10px",background:selectedMinerForDungeon?`linear-gradient(to bottom,${borderColors[d.id]},${d.darkColor})`:"rgba(255,255,255,.05)",border:`2px solid ${selectedMinerForDungeon?borderColors[d.id]:"rgba(255,255,255,.1)"}`,borderRadius:8,color:selectedMinerForDungeon?"#FFD600":"rgba(255,255,255,.2)",fontSize:14,fontWeight:800,cursor:selectedMinerForDungeon?"pointer":"not-allowed",fontFamily:"Georgia,serif",letterSpacing:1,textShadow:selectedMinerForDungeon?"0 1px 4px rgba(0,0,0,.8)":"none",transition:"all .2s"}}>
+                        {dungeonLoading==="run_"+selectedMinerForDungeon?"⚔️ Entering...":"⚔️ ENTER DUNGEON"}
+                      </button>
+                    </div>
+                  ):(
+                    <div style={{textAlign:"center",padding:"10px",background:"rgba(139,0,0,.1)",border:"1px dashed rgba(139,0,0,.4)",borderRadius:8,fontSize:11,color:"rgba(255,100,100,.7)",fontWeight:700}}>
+                      🗺️ Buy a map above to enter this dungeon
+                    </div>
+                  )}
+                </div>
+              </div>
+            );})}
+          </div>
+
+          {/* Recent Runs */}
+          {dungeonRuns.length>0&&<div style={{background:"linear-gradient(to bottom,#1a0c00,#120800)",border:"3px solid #6b3c10",borderRadius:8,boxShadow:"0 0 0 2px #2a1008",padding:"16px 20px"}}>
+            <h3 style={{fontSize:14,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",marginBottom:12,letterSpacing:1}}>⚔️ BATTLE HISTORY</h3>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead><tr style={{background:"rgba(255,214,0,.06)",borderBottom:"1px solid rgba(255,214,0,.15)"}}>
+                  {["Date","Dungeon","Miner","Result","Reward","HP Lost","Drop"].map(h=>(
+                    <th key={h} style={{padding:"7px 10px",textAlign:"left",fontWeight:700,color:"rgba(255,255,255,.4)",fontSize:10,letterSpacing:1,textTransform:"uppercase"}}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>{dungeonRuns.map((r,i)=>(
+                  <tr key={r.id} style={{borderBottom:"1px solid rgba(255,255,255,.05)",background:i%2===0?"transparent":"rgba(255,255,255,.03)"}}>
+                    <td style={{padding:"7px 10px",color:"rgba(255,255,255,.5)",fontSize:11}}>{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td style={{padding:"7px 10px",color:"#c8a870",fontWeight:700,textTransform:"capitalize"}}>{r.dungeon_type}</td>
+                    <td style={{padding:"7px 10px",color:"rgba(255,255,255,.6)"}}>#{r.miner_id}</td>
+                    <td style={{padding:"7px 10px",fontWeight:800,color:r.result==="win"?"#4CAF50":"#ef5350",letterSpacing:1}}>{r.result==="win"?"⚔️ WIN":"💀 LOSS"}</td>
+                    <td style={{padding:"7px 10px",fontWeight:700,color:"#FFD600"}}>{r.reward_digcoin>0?`+${r.reward_digcoin} DC`:"—"}</td>
+                    <td style={{padding:"7px 10px",color:"#ef9a9a"}}>{r.hp_lost>0?`-${r.hp_lost} HP`:"—"}</td>
+                    <td style={{padding:"7px 10px"}}>{r.box_dropped?<span style={{fontSize:16}}>🎁</span>:"—"}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </div>}
+        </div>}
+
         {/* SHOP */}
         {tab==="shop"&&<div style={{display:"flex",flexDirection:"column",gap:16,animation:"fadeIn .3s ease"}}>
 
@@ -2612,6 +2912,39 @@ export default function DigMinerApp(){
                 ))}</tbody>
               </table>
             </div>}
+          </div>
+
+          {/* Seed Dungeon Pool */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"2px solid #FFD600"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#333",marginBottom:4}}>⚔️ Seed Dungeon Pool</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:16}}>Add DIGCOIN directly to the dungeon prize pool. Current balance: <strong>{(stats.dungeonPoolBalance||0).toFixed(0)} DC</strong></p>
+            <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap"}}>
+              <div style={{flex:1,minWidth:160}}>
+                <div style={{fontSize:10,color:"#888",marginBottom:4}}>Amount (DC)</div>
+                <input type="number" min="1" value={seedPoolAmt} onChange={e=>setSeedPoolAmt(e.target.value)} placeholder="e.g. 10000"
+                  style={{width:"100%",padding:"9px 12px",border:"2px solid #FFD600",borderRadius:8,fontSize:13,fontWeight:700}}/>
+              </div>
+              {[1000,5000,10000].map(v=>(
+                <button key={v} onClick={()=>setSeedPoolAmt(String(v))}
+                  style={{padding:"9px 16px",background:"#fff8e1",border:"1px solid #FFD600",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#5a4008"}}>
+                  {v.toLocaleString()} DC
+                </button>
+              ))}
+              <button disabled={seedPoolLoading||!seedPoolAmt} onClick={async()=>{
+                setSeedPoolLoading(true);
+                try{
+                  const res=await authFetch("/api/admin/seed-dungeon-pool",{method:"POST",body:JSON.stringify({amount:parseFloat(seedPoolAmt)})});
+                  const d=await res.json();
+                  if(!res.ok) return notify(d.error,false);
+                  setStats(prev=>({...prev,dungeonPoolBalance:d.newBalance}));
+                  setSeedPoolAmt("");
+                  notify(`✅ Pool seeded! New balance: ${d.newBalance.toFixed(0)} DC`);
+                }catch(e){notify(e.message,false);}
+                finally{setSeedPoolLoading(false);}
+              }} style={{padding:"9px 24px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"none",borderRadius:8,color:"#333",fontSize:13,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}>
+                {seedPoolLoading?"Seeding...":"💰 Seed Pool"}
+              </button>
+            </div>
           </div>
 
           {/* Gift Miner Boxes */}
