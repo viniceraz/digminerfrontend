@@ -2882,29 +2882,43 @@ export default function DigMinerApp(){
           </div>
 
           {/* Recent Runs */}
-          {dungeonRuns.length>0&&<div style={{background:"linear-gradient(to bottom,#1a0c00,#120800)",border:"3px solid #6b3c10",borderRadius:8,boxShadow:"0 0 0 2px #2a1008",padding:"16px 20px"}}>
-            <h3 style={{fontSize:14,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",marginBottom:12,letterSpacing:1}}>⚔️ BATTLE HISTORY</h3>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                <thead><tr style={{background:"rgba(255,214,0,.06)",borderBottom:"1px solid rgba(255,214,0,.15)"}}>
-                  {["Date","Dungeon","Miner","Result","Reward","HP Lost","Drop"].map(h=>(
-                    <th key={h} style={{padding:"7px 10px",textAlign:"left",fontWeight:700,color:"rgba(255,255,255,.4)",fontSize:10,letterSpacing:1,textTransform:"uppercase"}}>{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>{dungeonRuns.map((r,i)=>(
-                  <tr key={r.id} style={{borderBottom:"1px solid rgba(255,255,255,.05)",background:i%2===0?"transparent":"rgba(255,255,255,.03)"}}>
-                    <td style={{padding:"7px 10px",color:"rgba(255,255,255,.5)",fontSize:11}}>{new Date(r.created_at).toLocaleDateString()}</td>
-                    <td style={{padding:"7px 10px",color:"#c8a870",fontWeight:700,textTransform:"capitalize"}}>{r.dungeon_type}</td>
-                    <td style={{padding:"7px 10px",color:"rgba(255,255,255,.6)"}}>#{r.miner_id}</td>
-                    <td style={{padding:"7px 10px",fontWeight:800,color:r.result==="win"?"#4CAF50":"#ef5350",letterSpacing:1}}>{r.result==="win"?"⚔️ WIN":"💀 LOSS"}</td>
-                    <td style={{padding:"7px 10px",fontWeight:700,color:"#FFD600"}}>{r.reward_digcoin>0?`+${r.reward_digcoin} DC`:"—"}</td>
-                    <td style={{padding:"7px 10px",color:"#ef9a9a"}}>{r.hp_lost>0?`-${r.hp_lost} HP`:"—"}</td>
-                    <td style={{padding:"7px 10px"}}>{r.box_dropped?<span style={{fontSize:16}}>🎁</span>:"—"}</td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
-          </div>}
+          {dungeonRuns.length>0&&(()=>{
+            const totalPnl=dungeonRuns.reduce((s,r)=>{const mc=DUNGEONS[r.dungeon_type]?.mapCost||0;return s+(r.reward_digcoin||0)-mc;},0);
+            return(
+            <div style={{background:"linear-gradient(to bottom,#1a0c00,#120800)",border:"3px solid #6b3c10",borderRadius:8,boxShadow:"0 0 0 2px #2a1008",padding:"16px 20px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                <h3 style={{fontSize:14,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",letterSpacing:1,margin:0}}>⚔️ BATTLE HISTORY</h3>
+                <div style={{background:"rgba(0,0,0,.4)",border:`1px solid ${totalPnl>=0?"#4CAF50":"#ef5350"}`,borderRadius:8,padding:"6px 14px",textAlign:"center"}}>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Total PnL (last 20)</div>
+                  <div style={{fontSize:15,fontWeight:800,color:totalPnl>=0?"#4CAF50":"#ef5350"}}>{totalPnl>=0?"+":""}{totalPnl} DC</div>
+                </div>
+              </div>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead><tr style={{background:"rgba(255,214,0,.06)",borderBottom:"1px solid rgba(255,214,0,.15)"}}>
+                    {["Date","Dungeon","Miner","Result","Reward","HP Lost","Drop","PnL"].map(h=>(
+                      <th key={h} style={{padding:"7px 10px",textAlign:"left",fontWeight:700,color:"rgba(255,255,255,.4)",fontSize:10,letterSpacing:1,textTransform:"uppercase"}}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>{dungeonRuns.map((r,i)=>{
+                    const mapCost=DUNGEONS[r.dungeon_type]?.mapCost||0;
+                    const pnl=(r.reward_digcoin||0)-mapCost;
+                    return(
+                    <tr key={r.id} style={{borderBottom:"1px solid rgba(255,255,255,.05)",background:i%2===0?"transparent":"rgba(255,255,255,.03)"}}>
+                      <td style={{padding:"7px 10px",color:"rgba(255,255,255,.5)",fontSize:11}}>{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td style={{padding:"7px 10px",color:"#c8a870",fontWeight:700,textTransform:"capitalize"}}>{r.dungeon_type}</td>
+                      <td style={{padding:"7px 10px",color:"rgba(255,255,255,.6)"}}>#{r.miner_id}</td>
+                      <td style={{padding:"7px 10px",fontWeight:800,color:r.result==="win"?"#4CAF50":"#ef5350",letterSpacing:1}}>{r.result==="win"?"⚔️ WIN":"💀 LOSS"}</td>
+                      <td style={{padding:"7px 10px",fontWeight:700,color:"#FFD600"}}>{r.reward_digcoin>0?`+${r.reward_digcoin} DC`:"—"}</td>
+                      <td style={{padding:"7px 10px",color:"#ef9a9a"}}>{r.hp_lost>0?`-${r.hp_lost} HP`:"—"}</td>
+                      <td style={{padding:"7px 10px"}}>{r.box_dropped?<span style={{fontSize:16}}>🎁</span>:"—"}</td>
+                      <td style={{padding:"7px 10px",fontWeight:800,color:pnl>=0?"#4CAF50":"#ef5350"}}>{pnl>=0?"+":""}{pnl} DC</td>
+                    </tr>);
+                  })}</tbody>
+                </table>
+              </div>
+            </div>);
+          })()}
         </div>}
 
         {/* SHOP */}
