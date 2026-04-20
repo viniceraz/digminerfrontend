@@ -3,12 +3,12 @@ import { ethers } from "ethers";
 import { MINERPOOL_ABI, PATHUSD_ABI, CONTRACTS } from "./contracts";
 
 const RARITIES = [
-  { id:0, name:"Common",    chance:"30%", dailyMin:18, dailyMax:20, nftAge:19, repair:0.24, color:"#9E9E9E", bg:"#3a3a3a" },
-  { id:1, name:"UnCommon",  chance:"30%", dailyMin:21, dailyMax:23, nftAge:17, repair:0.40, color:"#4CAF50", bg:"#1b3a1b" },
-  { id:2, name:"Rare",      chance:"18%", dailyMin:24, dailyMax:26, nftAge:15, repair:0.60, color:"#2196F3", bg:"#1a2940" },
-  { id:3, name:"Super Rare",chance:"8%",  dailyMin:27, dailyMax:30, nftAge:14, repair:0.80, color:"#E91E63", bg:"#3a1a2a" },
-  { id:4, name:"Legendary", chance:"4%",  dailyMin:31, dailyMax:35, nftAge:13, repair:1.00, color:"#FF9800", bg:"#3a2a10" },
-  { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a" },
+  { id:0, name:"Common",    chance:"30%", dailyMin:18, dailyMax:20, nftAge:19, repair:0.24, color:"#9E9E9E", bg:"#3a3a3a", maxHp:100 },
+  { id:1, name:"UnCommon",  chance:"30%", dailyMin:21, dailyMax:23, nftAge:17, repair:0.40, color:"#4CAF50", bg:"#1b3a1b", maxHp:125 },
+  { id:2, name:"Rare",      chance:"18%", dailyMin:24, dailyMax:26, nftAge:15, repair:0.60, color:"#2196F3", bg:"#1a2940", maxHp:150 },
+  { id:3, name:"Super Rare",chance:"8%",  dailyMin:27, dailyMax:30, nftAge:14, repair:0.80, color:"#E91E63", bg:"#3a1a2a", maxHp:200 },
+  { id:4, name:"Legendary", chance:"4%",  dailyMin:31, dailyMax:35, nftAge:13, repair:1.00, color:"#FF9800", bg:"#3a2a10", maxHp:250 },
+  { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a", maxHp:350 },
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
 const FUSE_COST=50;
@@ -16,7 +16,7 @@ const DUNGEON_COOLDOWN_MS=60*1000;
 const DUNGEONS={
   easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/mapa1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
   medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/mapa2.png", color:"#FF9800", darkColor:"#3a2a10"},
-  hard:  {id:"hard",  name:"DigKing",  mapItem:"map_hard",   mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg", mapImg:"/Dungeons/mapa3.png", color:"#E91E63", darkColor:"#3a1a2a"},
+  hard:  {id:"hard",  name:"Miner's Bane",  mapItem:"map_hard",   mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg", mapImg:"/Dungeons/mapa3.png", color:"#E91E63", darkColor:"#3a1a2a"},
 };
 const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
 const AUTO_PICKAXE_PRICE=3000; const AUTO_PICKAXE_MAX=500;
@@ -92,15 +92,15 @@ const T = {
     roadmapTitle:"🗺️ DigMiner Roadmap",roadmapSubtitle:"What we've built — and what's coming next.",roadmapDisclaimer:"Roadmap is subject to change. Follow us for updates.",
     howNavIntro:"Introduction",howNavStart:"Quick Start",howNavBoxes:"Mystery Boxes",howNavRarities:"Rarities",
     howNavMining:"Mining Cycle",howNavLifespan:"Lifespan & Repair",howNavFusion:"Fusion",howNavLands:"Lands",
-    howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",howNavAutoPickaxe:"Auto Pickaxe",
+    howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",howNavAutoPickaxe:"Auto Pickaxe",howNavDungeon:"Dungeons",
     howIntroTitle:"What is DigMiner?",howIntroP1:"DigMiner is a Click-to-Earn game running on the Tempo Mainnet blockchain. You deposit real pathUSD, buy NFT miners, run 24-hour mining cycles, and withdraw your earnings.",howIntroP2:"The core loop: Deposit → Buy Boxes → Mine → Claim → Withdraw. The rarer your miner, the more it earns and the longer it lasts.",howIntroTip:"You don't pay gas fees to mine or claim. Only deposits and withdrawals touch the blockchain — everything else is instant and free.",
     howStatExchange:"Exchange Rate",howStatBox:"Box Price",howStatBulk:"Bulk (10x)",howStatFee:"Withdraw Fee",howStatRef:"Referral Bonus",howStatBatch:"Batch Fee",
     howStartTitle:"Quick Start Guide",howStartSteps:[["Connect your wallet","Click Connect Wallet and approve in MetaMask or Rabby. No gas needed."],["Switch to Tempo Mainnet","The app will prompt you to add and switch to the Tempo network automatically."],["Sign the auth message","Sign a free off-chain message to prove wallet ownership. Valid for 24 hours."],["Deposit pathUSD","My Account → Deposit. Approve the token and confirm. DIGCOIN appears instantly."],["Buy a Mystery Box","Shop → Buy Box. 300 DC for 1, or 2850 DC for 10 (5% discount)."],["Start Mining","In My NFT tab, click ⛏️ Mine on your miner. Return in 24 hours."],["Claim & Withdraw","Click 💎 Claim after 24h. When ready, withdraw from My Account → Withdraw."]],
     howBoxesTitle:"Mystery Boxes",howBoxesP1:"Each Mystery Box contains 1 random NFT miner. Rarity is determined at opening — you cannot choose which one you get.",howBoxesP2:"After purchase, an animation reveals your miner. It appears immediately in the NFT tab, ready to mine.",howBoxesSingle:"SINGLE BOX",howBoxesBulk:"x10 BOXES",howBoxesBestValue:"BEST VALUE",howBoxesSingleSub:"= 3 pathUSD",howBoxesBulkSub:"5% discount — saves 150 DC",howBoxesTip:"Each box roll is independent. Buying 10 boxes does not guarantee any specific rarity — you get 10 separate random outcomes.",
     howRaritiesTitle:"Miner Rarities",howRaritiesP:"There are 6 rarity tiers. Rarer miners earn more DIGCOIN per day and have longer lifespans, but lower drop chances.",howRaritiesChance:"chance",howRaritiesDay:"DC/day",howRaritiesDays:"day lifespan",howRaritiesWarn:"A Mythic miner earns ~39 DC/day but only lasts 11 cycles (429 DC total). A Common earns ~19 DC/day over 19 cycles (361 DC total). Mythic yields about 19% more total DIGCOIN — the real advantage is the higher daily rate, which pays back the box cost much faster.",
     howMiningTitle:"The Mining Cycle",howMiningP:"Every miner moves through a simple 3-state cycle. Mastering this loop is the key to maximizing daily earnings.",howMiningStates:[["💤","Idle","Miner is waiting. Click ⛏️ Mine to start the 24-hour cycle.","#888"],["⛏️","Mining","Countdown running. Come back when the timer hits 0.","#4CAF50"],["✅","Ready to Claim","Mining complete! Click 💎 Claim to collect your reward.","#FF9800"]],howMiningBatchTitle:"⚡ Mine All & Claim All",howMiningBatchP:"Manage all your miners at once with the batch buttons on the My NFT tab.",howMiningBatchTip:"Convenience fee: 5 DIGCOIN per miner for batch actions. With 5 miners, Mine All or Claim All costs 25 DC. Fee is deducted before processing.",howMiningBatchNote:"After claiming, each miner returns to Idle. You must click Mine again to start the next cycle — earnings don't accumulate passively.",
-    howLifespanTitle:"Lifespan & Repair",howLifespanP:"Each miner has a finite lifespan in mining cycles. Every successful claim decreases the lifespan counter by 1.",howLifespanWhenTitle:"📉 When lifespan hits 0",howLifespanWhenItems:"• The miner stops mining\n• A ⚠️ icon appears on the card\n• Repair it to restore full lifespan\n• Or let it retire permanently",howLifespanRepairTitle:"🔧 Repair Cost by Rarity",howLifespanTip:"Repair resets to the original full lifespan. You can repair unlimited times — a miner never permanently dies unless you choose not to repair it.",
-    howFusionTitle:"Fusion",howFusionP:"Fusion lets you sacrifice 2 same-rarity miners to forge a stronger one at the next tier. Both originals are permanently destroyed. The result keeps the parents' lifespan and earns 20% more than both parents combined.",howFusionWarn:(c)=>`Cost: ${c} DIGCOIN per fusion · Same rarity only · Both miners must be Idle · Fused miners cannot be fused again`,howFusionRuleTitle:"⚗️ Fusion Formula",howFusionTableTitle:"📈 All Possible Outcomes",howFusionColA:"Miner A",howFusionColB:"Miner B",howFusionColResult:"Result",howFusionColDaily:"Daily (example)",howFusionColLifespan:"Lifespan",howFusionHowTitle:"🔥 How to Fuse",howFusionSteps:[["Go to My NFT tab","Make sure the 2 miners you want to fuse are both Idle (not mining)."],["Click 🔥 Fuse Miners","A purple banner appears. Only idle, non-fused miners of the same rarity can be selected."],["Select 2 same-rarity miners","Click 2 cards of the same rarity — they highlight with a purple border."],["Click 🔥 Fuse Now (50 DC)","50 DC is deducted, both miners are destroyed, and a stronger one is created."],["Watch the reveal animation","A special ⚗️ Fusion Result screen shows your new miner's boosted stats."]],howFusionTip:"Best strategy: fuse miners with high daily rolls to maximize the boosted output. Two Common miners rolling 20 DC each will produce an UnCommon at 48 DC/day — more than double a normal UnCommon.",
+    howLifespanTitle:"Lifespan & Repair",howLifespanP:"Each miner has a finite lifespan in mining cycles. Every successful claim decreases the lifespan counter by 1.",howLifespanWhenTitle:"📉 When lifespan hits 0",howLifespanWhenItems:"• The miner stops mining\n• A ⚠️ icon appears on the card\n• Repair it to restore full lifespan\n• Or let it retire permanently",howLifespanRepairTitle:"🔧 Repair Cost by Rarity",howLifespanFusedNote:"⚡ Fused miners cost 2× the base repair price.",howLifespanTip:"Repair resets to the original full lifespan and restores full HP. You can repair unlimited times — a miner never permanently dies unless you choose not to repair it.",
+    howFusionTitle:"Fusion",howFusionP:"Fusion lets you sacrifice 2 same-rarity miners to forge a stronger one at the next tier. Both originals are permanently destroyed. The fused miner earns 20% more than both parents combined. Its lifespan is set to the average of both parents' remaining cycles — not a full reset.",howFusionWarn:(c)=>`Cost: ${c} DIGCOIN per fusion · Same rarity only · Both miners must be Idle · Fused miners cannot be fused again`,howFusionRuleTitle:"⚗️ Fusion Formula",howFusionTableTitle:"📈 All Possible Outcomes",howFusionColA:"Miner A",howFusionColB:"Miner B",howFusionColResult:"Result",howFusionColDaily:"Daily (example)",howFusionColLifespan:"Lifespan",howFusionHowTitle:"🔥 How to Fuse",howFusionSteps:[["Go to My NFT tab","Make sure the 2 miners you want to fuse are both Idle (not mining)."],["Click 🔥 Fuse Miners","A purple banner appears. Only idle, non-fused miners of the same rarity can be selected."],["Select 2 same-rarity miners","Click 2 cards of the same rarity — they highlight with a purple border."],["Click 🔥 Fuse Now (50 DC)","50 DC is deducted, both miners are destroyed, and a stronger one is created."],["Watch the reveal animation","A special ⚗️ Fusion Result screen shows your new miner's boosted stats."]],howFusionTip:"Best strategy: fuse miners with high daily rolls to maximize the boosted output. Two Common miners rolling 20 DC each will produce an UnCommon at 48 DC/day — more than double a normal UnCommon.",
     howWithdrawTitle:"Withdrawals",howWithdrawP:"Convert your DIGCOIN to pathUSD and withdraw to your wallet. Withdrawals are signed by the server and executed on-chain via the MinerPool smart contract.",howWithdrawExTitle:"💸 Example — Withdrawing 1000 DIGCOIN",howWithdrawRows:[["You request","1000 DIGCOIN",false],["Converted to","10 pathUSD",false],["6% protocol fee","−0.60 pathUSD",false],["You receive","9.40 pathUSD",true]],howWithdrawWarn:"Rules: 24h cooldown between withdrawals • Minimum 100 DIGCOIN (1 pathUSD) • 6% fee on every withdrawal. Fee stays in the reward pool.",
     howReferralTitle:"Referral Program",howReferralP:"Share your unique referral link and earn 4% of every deposit your referred friends make — instantly credited to your DIGCOIN balance.",howReferralYourLink:"Your Referral Link",howReferralFindLink:"Find your personalized link in the My Account tab after connecting.",howReferralSteps:[["1","Share your link","Post on social media, groups, or send to friends directly"],["2","Friend deposits","They connect and deposit pathUSD into the game"],["3","You earn 4%","Auto-credited to your DIGCOIN balance instantly"]],howReferralTip:"No cap on referrals. Every deposit your referrals make earns you 4% — indefinitely, with no extra effort required.",
     howRoiTitle:"ROI & Full Statistics",howRoiP:"Complete breakdown of all 6 miner types — earnings, returns, and ROI based on a single box price of 300 DC.",howRoiCols:["Miner","Chance","Daily Range","Avg/Day","ROI","Lifespan","Total Return","Repair"],howRoiTip:"ROI is calculated from the box price (300 DC). After ROI, all further earnings are pure profit until the miner retires.",howRoiPortTitle:"📈 Example 10-Box Portfolio",howRoiPortItems:"Avg luck: 3 Common, 3 UnCommon, 2 Rare, 1 Super Rare, 1 Legendary\nDaily income: ~255 DC/day ≈ 2.55 pathUSD\nInvestment: 2850 DC (bulk)\nEstimated ROI: ~12 days\nProfit over full lifespan: ~9000–12000 DC",
@@ -140,6 +140,38 @@ const T = {
     ],
     howAutoPickaxeTip:"With 30 miners and the Auto Pickaxe active, you save 300 DC in fees every single day — that's 9,000 DC/month back in your pocket.",
     howAutoPickaxeWarn:"The Auto Pickaxe automates the cycle but does not extend miner lifespan. Miners still retire normally after their lifespan ends.",
+    howDungeonTitle:"Dungeons",
+    howDungeonP:"Dungeons let you send your miners on combat expeditions to earn DIGCOIN from the prize pool. Each run requires a Map item — buy them from the Merchant in the Dungeon tab using DIGCOIN.",
+    howDungeonMapsTitle:"🗺️ Maps & Dungeon Tiers",
+    howDungeonMapCols:["Map","Map Cost","Dungeon","Win Chance","Prize","HP Loss","Box Drop"],
+    howDungeonMaps:[
+      ["Goblin Map","50 DC","Easy — Goblins","45%","80 DC","−25 HP","2% on win"],
+      ["Spider Map","150 DC","Medium — Spiders","40%","280 DC","−40 HP","5% on win"],
+      ["Miner's Bane Map","400 DC","Hard — Miner's Bane","35%","900 DC","−60 HP","10% on win"],
+    ],
+    howDungeonHowTitle:"⚔️ How to Run a Dungeon",
+    howDungeonSteps:[
+      ["Buy a Map from the Merchant","In the Dungeon tab, click the Merchant NPC to open the shop. Buy the map for the dungeon you want to attempt."],
+      ["Select a Miner & Enter","Pick any miner with HP remaining. HP is only deducted on defeat — winning a run costs no HP."],
+      ["Wait for the Result","The outcome is instant — you either collect the prize from the pool, or leave empty-handed (and damaged)."],
+      ["Mystery Box on Win","Winning gives a small chance to drop a Mystery Box on top of the DIGCOIN prize. Chance scales with dungeon difficulty."],
+      ["Repair When Needed","If a miner hits 0 HP it cannot enter dungeons. Repair it in the My NFT tab to restore full HP and lifespan."],
+    ],
+    howDungeonPoolTitle:"💰 Prize Pool",
+    howDungeonPoolP:"All map purchases flow into the dungeon prize pool. When you win, your reward is drawn directly from that pool. Entry is blocked if the pool balance is below the prize amount — the pool must have enough to pay out before you can enter.",
+    howDungeonCooldownP:"Each dungeon has a 1-minute cooldown per miner. After a run, that dungeon slot is locked for 60 seconds before the same miner can re-enter.",
+    howDungeonHPTitle:"❤️ HP per Rarity — Runs Before Repair",
+    howDungeonHPCols:["Rarity","Max HP","Easy (−25)","Medium (−40)","Hard (−60)"],
+    howDungeonHPRows:[
+      ["Common",    100, 4, 2, 1],
+      ["UnCommon",  125, 5, 3, 2],
+      ["Rare",      150, 6, 3, 2],
+      ["Super Rare",200, 8, 5, 3],
+      ["Legendary", 250,10, 6, 4],
+      ["Mythic",    350,14, 8, 5],
+    ],
+    howDungeonTip:"Higher rarity miners have more HP and survive more runs per repair cycle. A Mythic can do 5 Hard runs before needing repair; a Common dies after just 1. Plan your dungeon runs accordingly.",
+    howDungeonWarn:"Box drops only occur on wins. HP is only lost on defeat — winning costs no HP. Prizes come from the pool — always verify the pool has balance before buying expensive maps.",
   },
   zh:{
     tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",tabDungeon:"⚔️ 地下城",
@@ -201,15 +233,15 @@ const T = {
     roadmapTitle:"🗺️ DigMiner 路线图",roadmapSubtitle:"我们已完成的 — 以及接下来的计划。",roadmapDisclaimer:"路线图可能会有所调整，请关注我们获取最新动态。",
     howNavIntro:"游戏介绍",howNavStart:"快速开始",howNavBoxes:"神秘盒子",howNavRarities:"稀有等级",
     howNavMining:"挖矿循环",howNavLifespan:"寿命与修复",howNavFusion:"合成",howNavLands:"土地",
-    howNavWithdraw:"提现",howNavReferral:"推荐计划",howNavRoi:"ROI 表格",howNavFaq:"常见问题",
+    howNavWithdraw:"提现",howNavReferral:"推荐计划",howNavRoi:"ROI 表格",howNavFaq:"常见问题",howNavDungeon:"地下城",
     howIntroTitle:"什么是 DigMiner？",howIntroP1:"DigMiner 是一款运行在 Tempo 主网区块链上的点击赚钱游戏。您充值真实的 pathUSD，购买 NFT 矿工，开启24小时挖矿循环，并提取收益。",howIntroP2:"核心玩法：充值 → 购买盲盒 → 挖矿 → 领取 → 提现。矿工越稀有，收益越高，寿命越长。",howIntroTip:"挖矿和领取无需支付 Gas 费用。只有充值和提现才会触发区块链交易 — 其他操作即时且免费。",
     howStatExchange:"汇率",howStatBox:"盲盒价格",howStatBulk:"批量 (10个)",howStatFee:"提现手续费",howStatRef:"推荐奖励",howStatBatch:"批量手续费",
     howStartTitle:"快速开始指南",howStartSteps:[["连接钱包","点击连接钱包并在 MetaMask 或 Rabby 中确认，无需 Gas 费用。"],["切换到 Tempo 主网","应用会自动提示您添加并切换到 Tempo 网络。"],["签署验证消息","签署一条免费的链下消息以证明钱包所有权，有效期24小时。"],["充值 pathUSD","我的账户 → 充值。授权代币并确认，DIGCOIN 即时到账。"],["购买神秘盒子","商店 → 购买盲盒。单个300 DC，或10个2850 DC（95折）。"],["开始挖矿","在我的NFT标签中，点击矿工上的 ⛏️ 挖矿。24小时后回来。"],["领取并提现","24小时后点击 💎 领取。准备好后，在我的账户 → 提现。"]],
     howBoxesTitle:"神秘盒子",howBoxesP1:"每个神秘盒子包含1个随机 NFT 矿工。稀有度在开箱时决定 — 您无法选择获得哪种矿工。",howBoxesP2:"购买后，动画将展示您的矿工。它会立即出现在 NFT 标签中，随时可以开始挖矿。",howBoxesSingle:"单个盲盒",howBoxesBulk:"10个盲盒",howBoxesBestValue:"最优惠",howBoxesSingleSub:"= 3 pathUSD",howBoxesBulkSub:"95折 — 节省150 DC",howBoxesTip:"每次开箱结果独立。购买10个盲盒不保证获得特定稀有度 — 您将获得10个独立的随机结果。",
     howRaritiesTitle:"矿工稀有等级",howRaritiesP:"共有6个稀有等级。越稀有的矿工每天赚取越多 DIGCOIN，寿命越长，但掉落概率越低。",howRaritiesChance:"概率",howRaritiesDay:"DC/天",howRaritiesDays:"天寿命",howRaritiesWarn:"神秘矿工每天约赚取39 DC，但寿命仅11次（总计429 DC）。普通矿工每天约赚取19 DC，寿命19次（总计361 DC）。神秘矿工总 DIGCOIN 约多19% — 真正的优势在于更高的日收益率，能更快回本。",
     howMiningTitle:"挖矿循环",howMiningP:"每个矿工经历简单的3状态循环。掌握这个循环是最大化每日收益的关键。",howMiningStates:[["💤","空闲","矿工等待中，点击 ⛏️ 挖矿开启24小时循环。","#888"],["⛏️","挖矿中","倒计时进行中，计时器归零后回来。","#4CAF50"],["✅","可领取","挖矿完成！点击 💎 领取收集奖励。","#FF9800"]],howMiningBatchTitle:"⚡ 全部挖矿 & 全部领取",howMiningBatchP:"通过我的NFT标签上的批量按钮一次管理所有矿工。",howMiningBatchTip:"批量操作便利费：每个矿工10 DIGCOIN。5个矿工时，全部挖矿或全部领取花费50 DC，费用在处理前扣除。",howMiningBatchNote:"领取后，每个矿工回到空闲状态。您必须再次点击挖矿开始下一个循环 — 收益不会被动累积。",
-    howLifespanTitle:"寿命与修复",howLifespanP:"每个矿工的寿命以挖矿次数计算。每次成功领取会将寿命计数器减少1。",howLifespanWhenTitle:"📉 寿命归零时",howLifespanWhenItems:"• 矿工停止挖矿\n• 卡片上出现 ⚠️ 图标\n• 修复以恢复完整寿命\n• 或让其永久退役",howLifespanRepairTitle:"🔧 各稀有度修复费用",howLifespanTip:"修复会重置为原始完整寿命。您可以无限次修复 — 矿工永远不会永久死亡，除非您选择不修复它。",
-    howFusionTitle:"合成",howFusionP:"合成允许您牺牲2个相同稀有度的矿工，锻造一个更高阶的更强矿工。两个原始矿工永久销毁，结果矿工保留父矿工的寿命，日收益比两个父矿工合计多20%。",howFusionWarn:(c)=>`费用：${c} DIGCOIN · 仅限相同稀有度 · 两个矿工必须处于空闲状态 · 合成矿工不可再次合成`,howFusionRuleTitle:"⚗️ 合成公式",howFusionTableTitle:"📈 所有可能结果",howFusionColA:"矿工 A",howFusionColB:"矿工 B",howFusionColResult:"结果",howFusionColDaily:"日收益（示例）",howFusionColLifespan:"寿命",howFusionHowTitle:"🔥 如何合成",howFusionSteps:[["前往我的NFT标签","确保要合成的2个矿工均处于空闲状态（未在挖矿）。"],["点击 🔥 合成矿工","出现紫色横幅，仅空闲、相同稀有度、未合成过的矿工可被选择。"],["选择2个相同稀有度矿工","点击2张相同稀有度的卡片 — 它们将以紫色边框高亮。"],["点击 🔥 立即合成（50 DC）","扣除50 DC，两个矿工被销毁，更强的矿工被创建。"],["观看展示动画","特殊的 ⚗️ 合成结果界面将显示您新矿工的强化属性。"]],howFusionTip:"最佳策略：合成日收益高的矿工以最大化加成输出。两个日收益20 DC的普通矿工合成后将产出48 DC/天的非普通矿工——是普通非普通矿工的两倍多。",
+    howLifespanTitle:"寿命与修复",howLifespanP:"每个矿工的寿命以挖矿次数计算。每次成功领取会将寿命计数器减少1。",howLifespanWhenTitle:"📉 寿命归零时",howLifespanWhenItems:"• 矿工停止挖矿\n• 卡片上出现 ⚠️ 图标\n• 修复以恢复完整寿命\n• 或让其永久退役",howLifespanRepairTitle:"🔧 各稀有度修复费用",howLifespanFusedNote:"⚡ 已合成矿工的修复费用为基础价格的2倍。",howLifespanTip:"修复会重置为原始完整寿命并恢复满HP。您可以无限次修复 — 矿工永远不会永久死亡，除非您选择不修复它。",
+    howFusionTitle:"合成",howFusionP:"合成允许您牺牲2个相同稀有度的矿工，锻造一个更高阶的更强矿工。两个原始矿工永久销毁。合成矿工日收益比两个父矿工合计多20%，寿命为两个父矿工剩余次数的平均值——不会重置为满寿命。",howFusionWarn:(c)=>`费用：${c} DIGCOIN · 仅限相同稀有度 · 两个矿工必须处于空闲状态 · 合成矿工不可再次合成`,howFusionRuleTitle:"⚗️ 合成公式",howFusionTableTitle:"📈 所有可能结果",howFusionColA:"矿工 A",howFusionColB:"矿工 B",howFusionColResult:"结果",howFusionColDaily:"日收益（示例）",howFusionColLifespan:"寿命",howFusionHowTitle:"🔥 如何合成",howFusionSteps:[["前往我的NFT标签","确保要合成的2个矿工均处于空闲状态（未在挖矿）。"],["点击 🔥 合成矿工","出现紫色横幅，仅空闲、相同稀有度、未合成过的矿工可被选择。"],["选择2个相同稀有度矿工","点击2张相同稀有度的卡片 — 它们将以紫色边框高亮。"],["点击 🔥 立即合成（50 DC）","扣除50 DC，两个矿工被销毁，更强的矿工被创建。"],["观看展示动画","特殊的 ⚗️ 合成结果界面将显示您新矿工的强化属性。"]],howFusionTip:"最佳策略：合成日收益高的矿工以最大化加成输出。两个日收益20 DC的普通矿工合成后将产出48 DC/天的非普通矿工——是普通非普通矿工的两倍多。",
     howWithdrawTitle:"提现",howWithdrawP:"将您的 DIGCOIN 转换为 pathUSD 并提取到您的钱包。提现由服务器签署，通过 MinerPool 智能合约在链上执行。",howWithdrawExTitle:"💸 示例 — 提现 1000 DIGCOIN",howWithdrawRows:[["您请求","1000 DIGCOIN",false],["换算为","10 pathUSD",false],["6% 协议手续费","−0.60 pathUSD",false],["您收到","9.40 pathUSD",true]],howWithdrawWarn:"规则：提现之间24小时冷却 · 最低100 DIGCOIN（1 pathUSD）· 每次提现6%手续费，手续费留在奖励池中。",
     howReferralTitle:"推荐计划",howReferralP:"分享您的专属推荐链接，赚取每位被推荐好友存款的4% — 即时计入您的 DIGCOIN 余额。",howReferralYourLink:"您的推荐链接",howReferralFindLink:"连接后，在我的账户标签中找到您的个性化链接。",howReferralSteps:[["1","分享您的链接","在社交媒体、群组中发布或直接发给好友"],["2","好友充值","他们连接并向游戏充值 pathUSD"],["3","您赚取4%","自动即时计入您的 DIGCOIN 余额"]],howReferralTip:"推荐无上限。您的被推荐人每次存款都能让您赚取4% — 永久有效，无需额外努力。",
     howRoiTitle:"ROI 与完整数据",howRoiP:"基于单个盲盒价格300 DC，对6种矿工类型的完整收益、回报和ROI分析。",howRoiCols:["矿工","概率","日收益范围","平均/天","ROI","寿命","总回报","修复费"],howRoiTip:"ROI 基于盲盒价格（300 DC）计算。回本后，所有进一步收益均为纯利润，直到矿工退役。",howRoiPortTitle:"📈 示例：10个盲盒投资组合",howRoiPortItems:"平均运气：3普通、3非普通、2稀有、1超级稀有、1传说\n日收益：约255 DC/天 ≈ 2.55 pathUSD\n投资额：2850 DC（批量购买）\n预计回本：约12天\n全寿命利润：约9000–12000 DC",
@@ -339,10 +371,19 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
       <div>• Protective: <b>{miner.protective}</b></div><div>• Damage: <b>{miner.damage}</b></div>
     </div>
     <div style={{padding:"6px 14px",textAlign:"center",borderTop:"1px solid #eee"}}><span style={{fontSize:13,fontWeight:700,color:"#333"}}>{miner.dailyDigcoin} DIGCOIN/day</span></div>
-    <div style={{padding:"0 14px 6px"}}><div style={{height:4,background:"#eee",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:pct>50?r.color:pct>20?"#FFA726":"#EF5350",borderRadius:2,transition:"width .5s"}}/></div></div>
-    <div style={{padding:"6px 14px 12px",display:"flex",gap:6}}>
+    <div style={{padding:"0 14px 4px"}}><div style={{height:4,background:"#eee",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:pct>50?r.color:pct>20?"#FFA726":"#EF5350",borderRadius:2,transition:"width .5s"}}/></div></div>
+    {(()=>{const hp=miner.hp??100;const maxHp=miner.maxHp??100;const hpPct=(hp/maxHp)*100;return(
+    <div style={{padding:"0 14px 6px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
+        <span style={{fontSize:9,color:"#999",fontWeight:600}}>HP</span>
+        <span style={{fontSize:9,fontWeight:700,color:hpPct>50?"#4CAF50":hpPct>20?"#FFA726":"#EF5350"}}>{hp}/{maxHp}</span>
+      </div>
+      <div style={{height:5,background:"#eee",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${hpPct}%`,background:hpPct>50?"#4CAF50":hpPct>20?"#FFA726":"#EF5350",borderRadius:2,transition:"width .5s"}}/></div>
+    </div>
+    );})()}
+    <div style={{padding:"2px 14px 12px",display:"flex",gap:6}}>
       {miner.needsRepair
-        ?<button disabled={loading} onClick={()=>onRepair(miner.id)} style={{flex:1,padding:"7px",background:"#FF9800",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcRepairBtn} ({(RARITIES[miner.rarityId].repair*DIG_RATE).toFixed(0)} DC)</button>
+        ?<button disabled={loading} onClick={()=>onRepair(miner.id)} style={{flex:1,padding:"7px",background:"#FF9800",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcRepairBtn} ({(RARITIES[miner.rarityId].repair*DIG_RATE*(miner.isFused?2:1)).toFixed(0)} DC{miner.isFused?" ⚡":""})</button>
         :!miner.isAlive
           ?<div style={{flex:1,textAlign:"center",color:"#999",fontSize:11,padding:7}}>☠️ DEAD</div>
           :miner.canClaim
@@ -724,6 +765,7 @@ function HowItWorks(){
     {id:"referral",    emoji:"🤝", label:tx.howNavReferral},
     {id:"roi",         emoji:"📊", label:tx.howNavRoi},
     {id:"autopickaxe", emoji:"⛏️", label:tx.howNavAutoPickaxe},
+    {id:"dungeon",     emoji:"⚔️", label:tx.howNavDungeon},
     {id:"faq",         emoji:"❓", label:tx.howNavFaq},
   ];
   const go=(id)=>{setActive(id);document.getElementById("gb-"+id)?.scrollIntoView({behavior:"smooth",block:"start"});};
@@ -844,6 +886,7 @@ function HowItWorks(){
               <span style={{color:"#555"}}>{r.repair} pathUSD ({r.repair*DIG_RATE} DC)</span>
             </div>
           ))}
+          <div style={{marginTop:10,padding:"8px 10px",background:"#fff8e1",borderRadius:6,border:"1px solid #FFD60044",fontSize:11,color:"#7a5020",fontWeight:600}}>{tx.howLifespanFusedNote}</div>
         </div>
       </div>
       <GBCallout type="tip">{tx.howLifespanTip}</GBCallout>
@@ -886,7 +929,7 @@ function HowItWorks(){
       <div style={{background:"linear-gradient(135deg,#4a1060,#2d0040)",borderRadius:12,padding:"18px 22px",marginBottom:22,border:"1px solid #9C27B0"}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,textAlign:"center"}}>
           <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Daily</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>(A + B) × 1.20</div></div>
-          <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Lifespan</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>Parent tier's age</div></div>
+          <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Lifespan</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>Avg of parents' remaining</div></div>
           <div><div style={{color:"#aaa",fontSize:11,marginBottom:4}}>Rarity</div><div style={{color:"#E040FB",fontWeight:800,fontSize:13}}>+1 tier up</div></div>
         </div>
       </div>
@@ -1046,6 +1089,78 @@ function HowItWorks(){
       <GBCallout type="tip">{tx.howAutoPickaxeTip}</GBCallout>
       <GBCallout type="warning">{tx.howAutoPickaxeWarn}</GBCallout>
 
+      <GBSection id="dungeon" emoji="⚔️" title={tx.howDungeonTitle}/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:18}}>{tx.howDungeonP}</p>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12}}>{tx.howDungeonMapsTitle}</h3>
+      <div style={{overflowX:"auto",marginBottom:22}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"linear-gradient(to right,#1a0a2e,#2d0040)"}}>
+              {tx.howDungeonMapCols.map(h=>(
+                <th key={h} style={{padding:"10px 12px",color:"rgba(255,255,255,.7)",fontWeight:600,textAlign:"left",whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tx.howDungeonMaps.map(([map,cost,dungeon,win,prize,hp,box],i)=>(
+              <tr key={i} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
+                <td style={{padding:"10px 12px",fontWeight:700,color:["#4CAF50","#FF9800","#E91E63"][i]}}>{map}</td>
+                <td style={{padding:"10px 12px",fontWeight:700,color:"#FF9800"}}>{cost}</td>
+                <td style={{padding:"10px 12px",color:"#333"}}>{dungeon}</td>
+                <td style={{padding:"10px 12px",fontWeight:600,color:"#4CAF50"}}>{win}</td>
+                <td style={{padding:"10px 12px",fontWeight:700,color:"#2196F3"}}>{prize}</td>
+                <td style={{padding:"10px 12px",color:"#E91E63",fontWeight:600}}>{hp}</td>
+                <td style={{padding:"10px 12px",color:"#9C27B0"}}>{box}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:10}}>{tx.howDungeonHowTitle}</h3>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:22}}>
+        {tx.howDungeonSteps.map(([t,d],i)=>(
+          <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"13px 16px",background:"#f8f9fa",borderRadius:10,border:"1px solid #eee"}}>
+            <div style={{background:"#1a0a2e",color:"#E040FB",borderRadius:"50%",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0}}>{i+1}</div>
+            <div><div style={{fontSize:13,fontWeight:700,color:"#222",marginBottom:3}}>{t}</div><div style={{fontSize:12,color:"#666",lineHeight:1.7}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+        <div style={{background:"#f0f4ff",borderRadius:12,padding:"16px 18px",border:"1px solid #2196F344"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#1565C0",marginBottom:8}}>{tx.howDungeonPoolTitle}</div>
+          <p style={{fontSize:12,color:"#444",lineHeight:1.8,margin:0}}>{tx.howDungeonPoolP}</p>
+        </div>
+        <div style={{background:"#fff3e0",borderRadius:12,padding:"16px 18px",border:"1px solid #FF980044"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#E65100",marginBottom:8}}>⏱️ Cooldown</div>
+          <p style={{fontSize:12,color:"#444",lineHeight:1.8,margin:0}}>{tx.howDungeonCooldownP}</p>
+        </div>
+      </div>
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:10,marginTop:20}}>{tx.howDungeonHPTitle}</h3>
+      <div style={{overflowX:"auto",marginBottom:20}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"linear-gradient(to right,#1a0a2e,#2d0040)"}}>
+              {tx.howDungeonHPCols.map((h,i)=>(
+                <th key={h} style={{padding:"10px 12px",color:i===0?"rgba(255,255,255,.8)":i===1?"#ff6b6b":i===2?"#4CAF50":i===3?"#FF9800":"#E91E63",fontWeight:700,textAlign:"left",whiteSpace:"nowrap",fontSize:11}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tx.howDungeonHPRows.map(([rarity,hp,easy,med,hard],i)=>(
+              <tr key={rarity} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
+                <td style={{padding:"10px 12px",fontWeight:700,color:RARITIES[i]?.color}}>{rarity}</td>
+                <td style={{padding:"10px 12px",fontWeight:800,color:"#E91E63"}}>{hp} HP</td>
+                <td style={{padding:"10px 12px",fontWeight:600,color:"#4CAF50"}}>{easy}x</td>
+                <td style={{padding:"10px 12px",fontWeight:600,color:"#FF9800"}}>{med}x</td>
+                <td style={{padding:"10px 12px",fontWeight:600,color:"#E91E63"}}>{hard}x</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <GBCallout type="tip">{tx.howDungeonTip}</GBCallout>
+      <GBCallout type="warning">{tx.howDungeonWarn}</GBCallout>
+
       <GBSection id="faq" emoji="❓" title={tx.howFaqTitle}/>
       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:36}}>
         {tx.howFaqItems.map(([q,a],i)=>(
@@ -1095,7 +1210,7 @@ function RoadmapModal({onClose}){
     {
       phase:"Phase 3",label:"Game World",status:"soon",color:"#2196F3",
       items:[
-        {done:false, text:"Dungeons — send miners on timed expeditions for rare loot"},
+        {done:true, text:"Dungeons — send miners on timed expeditions for rare loot"},
         {done:false, text:"PVP — pit miners against each other for stakes"},
         {done:false, text:"Guild system — pool miners and share rewards"},
         {done:false, text:"Daily quests & achievement rewards"},
@@ -1222,6 +1337,26 @@ function LandReveal({land,onClose}){
 
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
+  {
+    version:"v1.6",
+    date:"2026-04-20",
+    title:"Dungeon System — Public Launch",
+    tags:["feature","economy"],
+    changes:[
+      "Introduced Dungeons — send miners on combat expeditions to earn DIGCOIN from the prize pool",
+      "3 dungeon tiers: Easy (Goblins), Medium (Spiders), Hard (Miner's Bane) — each requiring a specific Map item",
+      "Maps are purchased with DIGCOIN from the Merchant NPC in the Dungeon tab",
+      "Prize pool is self-sustaining: all map purchases feed the pool, prizes are drawn from it",
+      "HP system added to miners — HP varies by rarity (Common 100 → Mythic 350)",
+      "HP is only lost on defeat — winning a dungeon run costs no HP",
+      "Repair restores full HP in addition to resetting lifespan",
+      "Winning a dungeon grants a small chance to drop a Mystery Box (2% / 5% / 10% by tier)",
+      "Per-dungeon cooldown of 1 minute tracked individually per miner",
+      "Pool guard: dungeon entry is blocked if the pool balance cannot cover the prize",
+      "Fused miners now cost 2× the base repair price",
+      "Fusion lifespan now equals the average of both parents' remaining cycles (not a full reset)",
+    ],
+  },
   {
     version:"v1.5",
     date:"2026-04-18",
@@ -1440,30 +1575,35 @@ export default function DigMinerApp(){
     return()=>clearInterval(interval);
   },[]);
 
-  // Load global stats on mount
-  useEffect(()=>{
-    const loadStats = async () => {
+  // Load global stats
+  const loadStats = useCallback(async () => {
+    try {
+      const d = await fetch("/api/stats").then(r=>r.json());
       try {
-        const d = await fetch("/api/stats").then(r=>r.json());
-        // Read actual on-chain pool balance instead of calculating from DB
-        try {
-          const provider = new ethers.JsonRpcProvider("https://rpc.tempo.xyz");
-          const pool = new ethers.Contract(CONTRACTS.POOL, ["function poolBalance() external view returns (uint256)"], provider);
-          const [bal, dec] = await Promise.all([
-            pool.poolBalance(),
-            new ethers.Contract(CONTRACTS.PATHUSD, ["function decimals() external view returns (uint8)"], provider).decimals(),
-          ]);
-          d.pool_balance = parseFloat(ethers.formatUnits(bal, dec));
-        } catch(_) {}
-        setStats(d);
-        if(d.landSaleStartMs) setLandSaleStartMs(d.landSaleStartMs);
-        if(d.landsMinted!=null) setLandsMinted(d.landsMinted);
-        if(d.landMaxSupply) setLandMaxSupply(d.landMaxSupply);
-        if(d.autoPickaxesMinted!=null) setAutoPickaxesMinted(d.autoPickaxesMinted);
+        const provider = new ethers.JsonRpcProvider("https://rpc.tempo.xyz");
+        const pool = new ethers.Contract(CONTRACTS.POOL, ["function poolBalance() external view returns (uint256)"], provider);
+        const [bal, dec] = await Promise.all([
+          pool.poolBalance(),
+          new ethers.Contract(CONTRACTS.PATHUSD, ["function decimals() external view returns (uint8)"], provider).decimals(),
+        ]);
+        d.pool_balance = parseFloat(ethers.formatUnits(bal, dec));
       } catch(_) {}
-    };
-    loadStats();
+      setStats(d);
+      if(d.landSaleStartMs) setLandSaleStartMs(d.landSaleStartMs);
+      if(d.landsMinted!=null) setLandsMinted(d.landsMinted);
+      if(d.landMaxSupply) setLandMaxSupply(d.landMaxSupply);
+      if(d.autoPickaxesMinted!=null) setAutoPickaxesMinted(d.autoPickaxesMinted);
+    } catch(_) {}
   },[]);
+
+  useEffect(()=>{ loadStats(); },[]);
+
+  // Refresh dungeon pool balance every 10s while on dungeon tab
+  useEffect(()=>{
+    if(tab!=="dungeon") return;
+    const t=setInterval(()=>loadStats(),10000);
+    return()=>clearInterval(t);
+  },[tab,loadStats]);
 
   const getProvider=()=>new ethers.BrowserProvider(window.ethereum);
 
@@ -1818,6 +1958,7 @@ export default function DigMinerApp(){
       setDungeonResult(data);
       await loadPlayer(wallet);
       await loadDungeonInventory(wallet);
+      loadStats();
     }catch(e){notify(e.message,false);}
     finally{setDungeonLoading("");}
   };
@@ -1829,7 +1970,7 @@ export default function DigMinerApp(){
       setTxLoading("box");
       const res=await authFetch("/api/box/buy",{method:"POST",body:JSON.stringify({wallet,quantity:qty})});
       const data=await res.json();
-      if(!res.ok) return notify(data.error,false);
+      if(!res.ok){notify(data.error,false);await loadPlayer(wallet);return;}
       if(qty===1){
         setRevealing(data.miners[0]);
       }else{
@@ -2031,7 +2172,7 @@ export default function DigMinerApp(){
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
   const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=[tx.tabAccount,tx.tabNft,...(isAdmin?[tx.tabDungeon]:[]),tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
+  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
   const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon"};
   const[menuOpen,setMenuOpen]=useState(false);
 
@@ -2486,12 +2627,12 @@ export default function DigMinerApp(){
           {(()=>{
             const LINES=[
               "Psst! A map is all that stands between you and glory... or a grave.",
-              "I've seen a thousand miners enter the DigKing's lair. Three came back.",
+              "I've seen a thousand miners enter the Miner's Bane's lair. Three came back.",
               "Buy a map, friend. The Goblins have been restless lately...",
               "That Spider Queen has eight eyes — and she's watching you RIGHT NOW.",
               "I don't sell courage. But I do sell maps. Same thing, really.",
               "Word of advice: always repair before a Hard dungeon. Always.",
-              "The DigKing hoards more DIGCOIN than the entire pool. Just sayin'...",
+              "The Miner's Bane hoards more DIGCOIN than the entire pool. Just sayin'...",
               "Lost your miner to Goblins? Rookie mistake. Buy the Spider map next time.",
               "Every map I sell comes with a 0% refund policy. Just like life.",
               "You look lucky today. Could be wrong. Usually am.",
