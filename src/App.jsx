@@ -12,6 +12,7 @@ const RARITIES = [
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
 const FUSE_COST=50;
+const DUNGEON_COOLDOWN_MS=60*1000;
 const DUNGEONS={
   easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/mapa1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
   medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/mapa2.png", color:"#FF9800", darkColor:"#3a2a10"},
@@ -1414,6 +1415,7 @@ export default function DigMinerApp(){
   const[selectedMinerForDungeon,setSelectedMinerForDungeon]=useState(null);
   const[merchantMsg,setMerchantMsg]=useState(null);
   const[merchantBounce,setMerchantBounce]=useState(false);
+  const[dungeonTick,setDungeonTick]=useState(0);
   const[seedPoolAmt,setSeedPoolAmt]=useState("");
   const[seedPoolLoading,setSeedPoolLoading]=useState(false);
   const[lang,setLang]=useState(()=>localStorage.getItem("digminer_lang")||"en");
@@ -1422,6 +1424,13 @@ export default function DigMinerApp(){
 
   const notify=(msg,ok=true)=>{setNotif({msg,ok});setTimeout(()=>setNotif(null),4000);};
 
+
+  // Tick every second while on dungeon tab to update cooldown countdowns
+  useEffect(()=>{
+    if(tab!=="dungeon") return;
+    const t=setInterval(()=>setDungeonTick(n=>n+1),1000);
+    return()=>clearInterval(t);
+  },[tab]);
 
   // Check maintenance status on mount and every 30s
   useEffect(()=>{
@@ -2601,10 +2610,15 @@ export default function DigMinerApp(){
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16,marginBottom:16}}>
             {Object.values(DUNGEONS).map(d=>{
               const mapCount=dungeonMaps[d.mapItem]||0;
-              const eligibleMiners=miners.filter(m=>m.isAlive&&!m.needsRepair&&!m.isMining&&!(m.dungeonCooldownRemaining>0));
               const borderColors={easy:"#4CAF50",medium:"#C62828",hard:"#FF6F00"};
               const glowColors={easy:"rgba(76,175,80,.3)",medium:"rgba(198,40,40,.3)",hard:"rgba(255,111,0,.4)"};
               const diffLabels={easy:"EASY",medium:"MEDIUM",hard:"⚠️ HARD"};
+              // Live cooldown from lastDungeonAt (ticks every second via dungeonTick)
+              const liveCooldown=(m)=>m.lastDungeonAt?Math.max(0,DUNGEON_COOLDOWN_MS-(Date.now()-new Date(m.lastDungeonAt).getTime())):0;
+              // Miners in cooldown specifically in THIS dungeon
+              const minersInThisDungeon=miners.filter(m=>liveCooldown(m)>0&&m.lastDungeonType===d.id);
+              // Miners available: alive, not mining, not in any dungeon cooldown
+              const eligibleMiners=miners.filter(m=>m.isAlive&&!m.needsRepair&&!m.isMining&&liveCooldown(m)===0);
               return(
               <div key={d.id} style={{background:"linear-gradient(to bottom,#1a0c00,#120800)",border:`3px solid ${borderColors[d.id]}`,borderRadius:10,boxShadow:`0 0 0 1px #2a1008, 0 8px 24px rgba(0,0,0,.7), 0 0 20px ${glowColors[d.id]}`,overflow:"hidden",display:"flex",flexDirection:"column"}}>
 
@@ -2612,20 +2626,29 @@ export default function DigMinerApp(){
                 <div style={{position:"relative",height:200,overflow:"hidden"}}>
                   <img src={d.img} alt={d.name} style={{width:"100%",height:"100%",objectFit:"cover",imageRendering:"pixelated"}}/>
                   <div style={{position:"absolute",inset:0,background:`linear-gradient(to top, #120800 0%, rgba(0,0,0,0) 50%)`}}/>
-                  {/* Map floats top-right */}
                   <div style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.6)",borderRadius:8,padding:4,border:`2px solid ${borderColors[d.id]}`}}>
                     <img src={d.mapImg} alt="map" style={{height:44,objectFit:"contain",display:"block",filter:"drop-shadow(0 2px 4px rgba(0,0,0,.8))"}}/>
                   </div>
-                  {/* Difficulty badge */}
                   <div style={{position:"absolute",top:10,left:10,background:borderColors[d.id],color:"#fff",padding:"3px 12px",borderRadius:20,fontSize:10,fontWeight:800,letterSpacing:1,boxShadow:"0 2px 6px rgba(0,0,0,.5)"}}>
                     {diffLabels[d.id]}
                   </div>
-                  {/* Name overlay */}
                   <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 14px"}}>
                     <div style={{fontSize:22,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",textShadow:"0 2px 8px rgba(0,0,0,.9)",letterSpacing:1}}>{d.name}</div>
                     <div style={{fontSize:10,color:"rgba(255,255,255,.5)",letterSpacing:2,textTransform:"uppercase"}}>Dungeon · {mapCount} map{mapCount!==1?"s":""} owned</div>
                   </div>
                 </div>
+
+                {/* Miners currently in this dungeon */}
+                {minersInThisDungeon.length>0&&<div style={{background:"rgba(255,214,0,.08)",borderBottom:`1px solid ${borderColors[d.id]}44`,padding:"8px 12px",display:"flex",flexDirection:"column",gap:4}}>
+                  {minersInThisDungeon.map(m=>(
+                    <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                      <span style={{fontSize:11,color:"#FFD600",fontWeight:700}}>⚔️ Miner #{m.id} inside {d.name}...</span>
+                      <span style={{fontSize:11,color:"rgba(255,255,255,.5)",fontFamily:"monospace"}}>
+                        returning in {Math.ceil(liveCooldown(m)/1000)}s
+                      </span>
+                    </div>
+                  ))}
+                </div>}
 
                 {/* Stats */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:`${borderColors[d.id]}33`,margin:"0"}}>
@@ -2647,7 +2670,6 @@ export default function DigMinerApp(){
 
                 {/* Actions */}
                 <div style={{padding:"0 14px 14px",display:"flex",flexDirection:"column",gap:8,marginTop:"auto"}}>
-                  {/* Buy map buttons */}
                   <div style={{display:"flex",gap:6}}>
                     {[1,5].map(qty=>(
                       <button key={qty} disabled={!!dungeonLoading||digcoin<d.mapCost*qty} onClick={()=>buyMap(d.mapItem,qty)}
