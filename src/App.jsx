@@ -2260,6 +2260,7 @@ export default function DigMinerApp(){
         .how-sidebar{width:100%!important;min-width:unset!important;position:static!important;border-radius:0!important}
         .wp{padding:12px 14px!important}
         .wp-dark>.wp-in{padding:12px 14px!important}
+        .merchant-npc{display:none!important}
       }
       @media(max-width:480px){
         .g-miners{grid-template-columns:1fr 1fr!important}
@@ -2659,7 +2660,7 @@ export default function DigMinerApp(){
               setTimeout(()=>setMerchantMsg(null),5000);
             };
             return(
-              <div style={{position:"fixed",bottom:24,right:24,zIndex:900,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,pointerEvents:"none"}}>
+              <div style={{position:"fixed",bottom:24,right:24,zIndex:900,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8,pointerEvents:"none"}} className="merchant-npc">
                 {merchantMsg&&(
                   <div style={{pointerEvents:"none",maxWidth:240,background:"linear-gradient(to bottom,#2a1500,#1a0c00)",border:"2px solid #c8a020",borderRadius:12,padding:"10px 14px",boxShadow:"0 4px 20px rgba(0,0,0,.7)",position:"relative",animation:"fadeIn .2s ease"}}>
                     <div style={{fontSize:12,color:"#e8d8b0",fontFamily:"Georgia,serif",lineHeight:1.5,fontStyle:"italic"}}>"{merchantMsg}"</div>
