@@ -14,9 +14,9 @@ const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL
 const FUSE_COST=50;
 const DUNGEON_COOLDOWN_MS=20*1000;
 const DUNGEONS={
-  easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/mapa1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
-  medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/mapa2.png", color:"#FF9800", darkColor:"#3a2a10"},
-  hard:  {id:"hard",  name:"Miner's Bane",  mapItem:"map_hard",   mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg", mapImg:"/Dungeons/mapa3.png", color:"#E91E63", darkColor:"#3a1a2a"},
+  easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/map1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
+  medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/map2.png", color:"#FF9800", darkColor:"#3a2a10"},
+  hard:  {id:"hard",  name:"Miner's Bane",  mapItem:"map_hard",   mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg", mapImg:"/Dungeons/map3.png", color:"#E91E63", darkColor:"#3a1a2a"},
 };
 const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
 const AUTO_PICKAXE_PRICE=3000; const AUTO_PICKAXE_MAX=500;
@@ -294,12 +294,12 @@ const TEMPO_CHAIN = {
 };
 
 const NFT_IMGS = [
-  "/nftimgs/minerador lvl 1.png",
-  "/nftimgs/minerador lvl 2.png",
-  "/nftimgs/minerador lvl 3.png",
-  "/nftimgs/minerador lvl 4.png",
-  "/nftimgs/minerador lvl 5.png",
-  "/nftimgs/minerador lvl 6.png",
+  "/nftimgs/miner lvl 1.png",
+  "/nftimgs/miner lvl 2.png",
+  "/nftimgs/miner lvl 3.png",
+  "/nftimgs/miner lvl 4.png",
+  "/nftimgs/miner lvl 5.png",
+  "/nftimgs/miner lvl 6.png",
 ];
 
 function MinerSprite({rarityId,size=90}){
@@ -321,7 +321,7 @@ function BoxReveal({miner,onClose,isFuse=false}){
     {phase===0&&<div style={{animation:"shake .6s infinite",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
       {isFuse
         ?<div style={{fontSize:80,animation:"shake .6s infinite"}}>🔥</div>
-        :<img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/>}
+        :<img src="/nftimgs/mystery box.png" alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/>}
       {isFuse&&<div style={{color:"#E040FB",fontSize:14,fontWeight:800,letterSpacing:2}}>{tx.fusingAnim}</div>}
     </div>}
     {phase===1&&<div style={{fontSize:120,animation:"explode .8s forwards"}}>{isFuse?"💥":"✨"}</div>}
@@ -832,7 +832,7 @@ function HowItWorks(){
 
       <GBSection id="boxes" emoji="📦" title={tx.howBoxesTitle}/>
       <div style={{display:"flex",gap:20,alignItems:"center",marginBottom:20,flexWrap:"wrap"}}>
-        <img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:96,height:96,objectFit:"contain",filter:"drop-shadow(0 4px 16px #FFD60055)",flexShrink:0}}/>
+        <img src="/nftimgs/mystery box.png" alt="Mystery Box" style={{width:96,height:96,objectFit:"contain",filter:"drop-shadow(0 4px 16px #FFD60055)",flexShrink:0}}/>
         <div>
           <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:10}}>{tx.howBoxesP1}</p>
           <p style={{fontSize:14,color:"#444",lineHeight:1.9,margin:0}}>{tx.howBoxesP2}</p>
@@ -2548,7 +2548,7 @@ export default function DigMinerApp(){
 
           <div className="g-miners">
             {filtered.length===0
-              ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:"#888",fontSize:13}}><img src="/nftimgs/mistery box.png" alt="box" style={{width:60,height:60,objectFit:"contain",marginBottom:12,opacity:.5}}/><br/>{tx.noMiners}</div>
+              ?<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:"#888",fontSize:13}}><img src="/nftimgs/mystery box.png" alt="box" style={{width:60,height:60,objectFit:"contain",marginBottom:12,opacity:.5}}/><br/>{tx.noMiners}</div>
               :filtered.map(m=>{
                 const isFuseSelected=fuseSelected.find(s=>s.id===m.id);
                 return(
@@ -2945,7 +2945,7 @@ export default function DigMinerApp(){
           {/* ── regular boxes + stats ── */}
           <div className="g2-16">
             <div className="wp" style={{textAlign:"center"}}>
-              <img src="/nftimgs/mistery box.png" alt="Mystery Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #FFD60088)"}}/>
+              <img src="/nftimgs/mystery box.png" alt="Mystery Box" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #FFD60088)"}}/>
               <h3 style={{fontSize:15,fontWeight:800,marginBottom:10}}>{tx.buyBox}</h3>
               <div style={{textAlign:"left",padding:"0 16px",marginBottom:14,fontSize:11,color:"#555",lineHeight:1.8}}>
                 {RARITIES.map(r=><div key={r.id}>• <span style={{color:r.color,fontWeight:700}}>{r.name}:</span> {r.chance}</div>)}
