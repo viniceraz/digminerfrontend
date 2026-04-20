@@ -2889,7 +2889,7 @@ export default function DigMinerApp(){
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
                 <h3 style={{fontSize:14,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",letterSpacing:1,margin:0}}>⚔️ BATTLE HISTORY</h3>
                 <div style={{background:"rgba(0,0,0,.4)",border:`1px solid ${totalPnl>=0?"#4CAF50":"#ef5350"}`,borderRadius:8,padding:"6px 14px",textAlign:"center"}}>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Total PnL (last 20)</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Total PnL (last 100)</div>
                   <div style={{fontSize:15,fontWeight:800,color:totalPnl>=0?"#4CAF50":"#ef5350"}}>{totalPnl>=0?"+":""}{totalPnl} DC</div>
                 </div>
               </div>
