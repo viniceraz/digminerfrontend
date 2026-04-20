@@ -2863,7 +2863,7 @@ export default function DigMinerApp(){
                         style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`2px solid ${borderColors[d.id]}66`,background:"rgba(0,0,0,.4)",fontSize:12,color:"#e8d8b0",fontWeight:600,outline:"none"}}>
                         <option value="">— Select a Miner —</option>
                         {eligibleMiners.map(m=>(
-                          <option key={m.id} value={m.id}>#{m.id} {m.rarityName} · HP {m.hp??100}/100</option>
+                          <option key={m.id} value={m.id}>#{m.id} {m.rarityName} · HP {m.hp??RARITIES[m.rarityId]?.maxHp??100}/{m.maxHp??RARITIES[m.rarityId]?.maxHp??100}</option>
                         ))}
                       </select>
                       <button disabled={!selectedMinerForDungeon||!!dungeonLoading} onClick={()=>runDungeon(d.id,selectedMinerForDungeon)}
