@@ -1358,6 +1358,17 @@ function LandReveal({land,onClose}){
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
   {
+    version:"v1.8",
+    date:"2026-04-21",
+    title:"Land Supply Capped & Season 2 Incoming",
+    tags:["update","feature"],
+    changes:[
+      "Land supply officially capped at 500 total — only 76 remaining before sold out",
+      "Once all 500 Lands are minted, the secondary market opens for free trading",
+      "Season 2 is coming — new Mystery Box, new miners, faster ROI, exclusive skills & buffs in Dungeons",
+    ],
+  },
+  {
     version:"v1.7",
     date:"2026-04-20",
     title:"Fusion & Dungeon Improvements",
