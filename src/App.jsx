@@ -1572,7 +1572,7 @@ export default function DigMinerApp(){
   const[lands,setLands]=useState([]);
   const[landSaleStartMs,setLandSaleStartMs]=useState(null);
   const[landsMinted,setLandsMinted]=useState(0);
-  const[landMaxSupply,setLandMaxSupply]=useState(1000);
+  const[landMaxSupply,setLandMaxSupply]=useState(500);
   const[landLoading,setLandLoading]=useState("");
   const[assigningLandId,setAssigningLandId]=useState(null);
   const[landReveal,setLandReveal]=useState(null);
@@ -1605,11 +1605,11 @@ export default function DigMinerApp(){
     return()=>clearInterval(t);
   },[tab]);
 
-  // Check maintenance status on mount and every 30s
+  // Check maintenance status on mount and every 5min
   useEffect(()=>{
     const check=()=>fetch("/api/maintenance").then(r=>r.json()).then(d=>setMaintenanceMode(!!d.maintenance)).catch(()=>{});
     check();
-    const interval=setInterval(check,30000);
+    const interval=setInterval(check,300000);
     return()=>clearInterval(interval);
   },[]);
 
@@ -2994,7 +2994,7 @@ export default function DigMinerApp(){
                 {LAND_RARITIES.map(r=><div key={r.id}>• <span style={{color:r.color,fontWeight:700}}>{r.name}:</span> {r.chance}</div>)}
               </div>
               {landsMinted>=landMaxSupply?(
-                <div style={{padding:"12px",background:"#ffebee",borderRadius:8,color:"#C62828",fontWeight:700,fontSize:13}}>🔴 Sold Out — All 1,000 Land Boxes Minted</div>
+                <div style={{padding:"12px",background:"#ffebee",borderRadius:8,color:"#C62828",fontWeight:700,fontSize:13}}>🔴 Sold Out — All 500 Land Boxes Minted</div>
               ):landSaleStartMs&&Date.now()<landSaleStartMs?(
                 <LandCountdownButton targetMs={landSaleStartMs} onBuy={buyLandBox} loading={landLoading==="buy"}/>
               ):(
