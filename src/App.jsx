@@ -11,12 +11,25 @@ const RARITIES = [
   { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a", maxHp:350 },
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
+const S2_RARITIES = [
+  { id:0, name:"Common",    chance:"30%", dailyMin:38, dailyMax:42, nftAge:13, repair:0.40, color:"#9E9E9E", bg:"#3a3a3a", maxHp:100 },
+  { id:1, name:"UnCommon",  chance:"30%", dailyMin:43, dailyMax:47, nftAge:12, repair:0.65, color:"#4CAF50", bg:"#1b3a1b", maxHp:125 },
+  { id:2, name:"Rare",      chance:"18%", dailyMin:48, dailyMax:53, nftAge:11, repair:1.00, color:"#2196F3", bg:"#1a2940", maxHp:150 },
+  { id:3, name:"Super Rare",chance:"8%",  dailyMin:55, dailyMax:60, nftAge:10, repair:1.40, color:"#E91E63", bg:"#3a1a2a", maxHp:200 },
+  { id:4, name:"Legendary", chance:"4%",  dailyMin:64, dailyMax:70, nftAge:9,  repair:1.80, color:"#FF9800", bg:"#3a2a10", maxHp:250 },
+  { id:5, name:"Mythic",    chance:"2%",  dailyMin:76, dailyMax:85, nftAge:8,  repair:2.80, color:"#9C27B0", bg:"#2a1a3a", maxHp:350 },
+];
+const S2_BOX_PRICE=400;
+const S2_BOX_10_PRICE=Math.round(400*10*0.95);   // 3800 DC (5% off)
+const S2_BOX_100_PRICE=Math.round(400*100*0.90); // 36000 DC (10% off)
+const S2_BOX_MAX_SUPPLY=1000;
 const FUSE_COST=50;
 const DUNGEON_COOLDOWN_MS=20*1000;
 const DUNGEONS={
-  easy:  {id:"easy",  name:"Goblins",  mapItem:"map_easy",   mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg", mapImg:"/Dungeons/map1.png", color:"#4CAF50", darkColor:"#1b3a1b"},
-  medium:{id:"medium",name:"Spiders",  mapItem:"map_medium", mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg", mapImg:"/Dungeons/map2.png", color:"#FF9800", darkColor:"#3a2a10"},
-  hard:  {id:"hard",  name:"Miner's Bane",  mapItem:"map_hard",   mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg", mapImg:"/Dungeons/map3.png", color:"#E91E63", darkColor:"#3a1a2a"},
+  easy:     {id:"easy",     name:"Goblins",       mapItem:"map_easy",     mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg",       mapImg:"/Dungeons/map1.png",       color:"#4CAF50", darkColor:"#1b3a1b"},
+  medium:   {id:"medium",   name:"Spiders",       mapItem:"map_medium",   mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg",       mapImg:"/Dungeons/map2.png",       color:"#FF9800", darkColor:"#3a2a10"},
+  hard:     {id:"hard",     name:"Miner's Bane",  mapItem:"map_hard",     mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg",       mapImg:"/Dungeons/map3.png",       color:"#E91E63", darkColor:"#3a1a2a"},
+  weremole: {id:"weremole", name:"Weremole Lair", mapItem:"map_weremole", mapCost:400, prize:0,   winChance:10, hpLoss:30, boxDrop:0,  img:"/Dungeons/weremoledungeon.jpeg",mapImg:"/Dungeons/weremolemap.png",color:"#8B4513", darkColor:"#2a1a0a", weremoleDungeon:true},
 };
 const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
 const AUTO_PICKAXE_PRICE=3000; const AUTO_PICKAXE_MAX=500;
@@ -92,7 +105,7 @@ const T = {
     roadmapTitle:"🗺️ DigMiner Roadmap",roadmapSubtitle:"What we've built — and what's coming next.",roadmapDisclaimer:"Roadmap is subject to change. Follow us for updates.",
     howNavIntro:"Introduction",howNavStart:"Quick Start",howNavBoxes:"Mystery Boxes",howNavRarities:"Rarities",
     howNavMining:"Mining Cycle",howNavLifespan:"Lifespan & Repair",howNavFusion:"Fusion",howNavLands:"Lands",
-    howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",howNavAutoPickaxe:"Auto Pickaxe",howNavDungeon:"Dungeons",
+    howNavWithdraw:"Withdrawals",howNavReferral:"Referrals",howNavRoi:"ROI Table",howNavFaq:"FAQ",howNavAutoPickaxe:"Auto Pickaxe",howNavDungeon:"Dungeons",howNavSeason2:"Season 2 & Weremole",
     howIntroTitle:"What is DigMiner?",howIntroP1:"DigMiner is a Click-to-Earn game running on the Tempo Mainnet blockchain. You deposit real pathUSD, buy NFT miners, run 24-hour mining cycles, and withdraw your earnings.",howIntroP2:"The core loop: Deposit → Buy Boxes → Mine → Claim → Withdraw. The rarer your miner, the more it earns and the longer it lasts.",howIntroTip:"You don't pay gas fees to mine or claim. Only deposits and withdrawals touch the blockchain — everything else is instant and free.",
     howStatExchange:"Exchange Rate",howStatBox:"Box Price",howStatBulk:"Bulk (10x)",howStatFee:"Withdraw Fee",howStatRef:"Referral Bonus",howStatBatch:"Batch Fee",
     howStartTitle:"Quick Start Guide",howStartSteps:[["Connect your wallet","Click Connect Wallet and approve in MetaMask or Rabby. No gas needed."],["Switch to Tempo Mainnet","The app will prompt you to add and switch to the Tempo network automatically."],["Sign the auth message","Sign a free off-chain message to prove wallet ownership. Valid for 24 hours."],["Deposit pathUSD","My Account → Deposit. Approve the token and confirm. DIGCOIN appears instantly."],["Buy a Mystery Box","Shop → Buy Box. 300 DC for 1, or 2850 DC for 10 (5% discount)."],["Start Mining","In My NFT tab, click ⛏️ Mine on your miner. Return in 24 hours."],["Claim & Withdraw","Click 💎 Claim after 24h. When ready, withdraw from My Account → Withdraw."]],
@@ -172,6 +185,52 @@ const T = {
     ],
     howDungeonTip:"Higher rarity miners have more HP and survive more runs per repair cycle. A Mythic can do 5 Hard runs before needing repair; a Common dies after just 1. Plan your dungeon runs accordingly.",
     howDungeonWarn:"Box drops only occur on wins. HP is only lost on defeat — winning costs no HP. Prizes come from the pool — always verify the pool has balance before buying expensive maps.",
+
+    howS2Title:"Season 2 & Weremole",
+    howS2Intro:"Season 2 introduces a more powerful Mystery Box, an exclusive new dungeon, and the legendary Weremole miner — a permanent companion that never expires.",
+    howS2BoxTitle:"🎁 Season 2 Mystery Box",
+    howS2BoxP:"The Season 2 box costs 400 DC and contains 1 random S2 miner. S2 miners farm significantly more DC per day than Season 1, with shorter but more profitable lifespans. Supply is capped at 1,000 boxes.",
+    howS2BoxFeatures:[
+      ["💰 Price","400 DC per box (1 pathUSD = 100 DC)"],
+      ["📦 Supply","Limited to 1,000 boxes total — never restocked"],
+      ["🎯 Bulk Discounts","10 boxes = 3,800 DC (5% off) · 100 boxes = 36,000 DC (10% off)"],
+      ["🔥 Fusion","S2 miners cannot be fused"],
+      ["⚔️ Dungeons","S2 miners have exclusive skills & buffs inside dungeons"],
+    ],
+    howS2StatsTitle:"📊 S2 Miner Stats",
+    howS2StatsCols:["Rarity","Daily DC","ROI","Lifespan","Repair","Profit Window"],
+    howS2StatsRows:[
+      ["Common",    "38–42 DC","~10 days","13 days","0.40 pathUSD","~3 days"],
+      ["UnCommon",  "43–47 DC","~9 days", "12 days","0.65 pathUSD","~3 days"],
+      ["Rare",      "48–53 DC","~8 days", "11 days","1.00 pathUSD","~3 days"],
+      ["Super Rare","55–60 DC","~7 days", "10 days","1.40 pathUSD","~3 days"],
+      ["Legendary", "64–70 DC","~6 days", "9 days", "1.80 pathUSD","~3 days"],
+      ["Mythic",    "76–85 DC","~5 days", "8 days", "2.80 pathUSD","~3 days"],
+    ],
+    howS2StatsTip:"Repair resets the lifespan to the full original value — so you can keep running indefinitely. The 3-day profit window is per cycle, before the next repair.",
+    howS2WereTitle:"🐾 Weremole Lair Dungeon",
+    howS2WereP:"The Weremole Lair is a special dungeon unlike the others — the prize is not DIGCOIN, it is the Weremole miner itself. Win the dungeon and a permanent miner joins your crew.",
+    howS2WereStats:[
+      ["🗺️ Map Cost","400 DC"],
+      ["🎯 Win Chance","10%"],
+      ["💔 HP Loss on defeat","30 HP"],
+      ["⏱️ Cooldown","20 seconds"],
+      ["🏆 Prize","1 Permanent Weremole Miner"],
+      ["📦 Box Drop","None"],
+    ],
+    howS2WereReq:"Before entering, you must have at least 1 other idle miner — a companion must stay behind to watch the base.",
+    howS2WereMinerTitle:"♾️ Weremole Miner",
+    howS2WereMinerP:"The Weremole is a one-of-a-kind permanent miner. It farms every day like a normal miner but never expires, never needs repair, and cannot be fused.",
+    howS2WereMinerStats:[
+      ["⛏️ Daily Earnings","30 DC/day"],
+      ["♾️ Lifespan","Infinite — never expires"],
+      ["🔧 Repair","Never needed"],
+      ["🔥 Fusion","Cannot be fused"],
+      ["📦 How to obtain","Win the Weremole Lair dungeon only — not sold in any box"],
+      ["💎 ROI","~14 days · pure prestige after that"],
+    ],
+    howS2WereMinerTip:"The Weremole is a long-term prestige item. Its value grows over time — after 1 year it will have earned ~10,950 DC passively with zero maintenance cost.",
+    howS2WereMinerWarn:"The Weremole Lair has only a 10% win chance. Each failed attempt costs 400 DC (the map) and 30 HP. Repair your miner between attempts if needed.",
   },
   zh:{
     tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",tabDungeon:"⚔️ 地下城",
@@ -233,7 +292,7 @@ const T = {
     roadmapTitle:"🗺️ DigMiner 路线图",roadmapSubtitle:"我们已完成的 — 以及接下来的计划。",roadmapDisclaimer:"路线图可能会有所调整，请关注我们获取最新动态。",
     howNavIntro:"游戏介绍",howNavStart:"快速开始",howNavBoxes:"神秘盒子",howNavRarities:"稀有等级",
     howNavMining:"挖矿循环",howNavLifespan:"寿命与修复",howNavFusion:"合成",howNavLands:"土地",
-    howNavWithdraw:"提现",howNavReferral:"推荐计划",howNavRoi:"ROI 表格",howNavFaq:"常见问题",howNavDungeon:"地下城",
+    howNavWithdraw:"提现",howNavReferral:"推荐计划",howNavRoi:"ROI 表格",howNavFaq:"常见问题",howNavDungeon:"地下城",howNavSeason2:"Season 2 & Weremole",
     howIntroTitle:"什么是 DigMiner？",howIntroP1:"DigMiner 是一款运行在 Tempo 主网区块链上的点击赚钱游戏。您充值真实的 pathUSD，购买 NFT 矿工，开启24小时挖矿循环，并提取收益。",howIntroP2:"核心玩法：充值 → 购买盲盒 → 挖矿 → 领取 → 提现。矿工越稀有，收益越高，寿命越长。",howIntroTip:"挖矿和领取无需支付 Gas 费用。只有充值和提现才会触发区块链交易 — 其他操作即时且免费。",
     howStatExchange:"汇率",howStatBox:"盲盒价格",howStatBulk:"批量 (10个)",howStatFee:"提现手续费",howStatRef:"推荐奖励",howStatBatch:"批量手续费",
     howStartTitle:"快速开始指南",howStartSteps:[["连接钱包","点击连接钱包并在 MetaMask 或 Rabby 中确认，无需 Gas 费用。"],["切换到 Tempo 主网","应用会自动提示您添加并切换到 Tempo 网络。"],["签署验证消息","签署一条免费的链下消息以证明钱包所有权，有效期24小时。"],["充值 pathUSD","我的账户 → 充值。授权代币并确认，DIGCOIN 即时到账。"],["购买神秘盒子","商店 → 购买盲盒。单个300 DC，或10个2850 DC（95折）。"],["开始挖矿","在我的NFT标签中，点击矿工上的 ⛏️ 挖矿。24小时后回来。"],["领取并提现","24小时后点击 💎 领取。准备好后，在我的账户 → 提现。"]],
@@ -282,6 +341,24 @@ const T = {
     ],
     howAutoPickaxeTip:"拥有30个矿工并激活自动镐后，您每天节省300 DC手续费——每月节省9,000 DC回到您的口袋。",
     howAutoPickaxeWarn:"自动镐自动化周期，但不延长矿工寿命。矿工仍会在寿命结束后正常退役。",
+    howS2Title:"Season 2 & Weremole",
+    howS2Intro:"Season 2 introduces a more powerful Mystery Box, an exclusive new dungeon, and the legendary Weremole miner — a permanent companion that never expires.",
+    howS2BoxTitle:"🎁 Season 2 Mystery Box",
+    howS2BoxP:"The Season 2 box costs 400 DC and contains 1 random S2 miner. S2 miners farm significantly more DC per day than Season 1, with shorter but more profitable lifespans. Supply is capped at 1,000 boxes.",
+    howS2BoxFeatures:[["💰 Price","400 DC per box"],["📦 Supply","Limited to 1,000 boxes total"],["🎯 Bulk Discounts","10x = 3,800 DC (5% off) · 100x = 36,000 DC (10% off)"],["🔥 Fusion","S2 miners cannot be fused"],["⚔️ Dungeons","S2 miners have exclusive skills & buffs in dungeons"]],
+    howS2StatsTitle:"📊 S2 Miner Stats",
+    howS2StatsCols:["Rarity","Daily DC","ROI","Lifespan","Repair","Profit Window"],
+    howS2StatsRows:[["Common","38–42 DC","~10 days","13 days","0.40 pathUSD","~3 days"],["UnCommon","43–47 DC","~9 days","12 days","0.65 pathUSD","~3 days"],["Rare","48–53 DC","~8 days","11 days","1.00 pathUSD","~3 days"],["Super Rare","55–60 DC","~7 days","10 days","1.40 pathUSD","~3 days"],["Legendary","64–70 DC","~6 days","9 days","1.80 pathUSD","~3 days"],["Mythic","76–85 DC","~5 days","8 days","2.80 pathUSD","~3 days"]],
+    howS2StatsTip:"Repair resets the lifespan to the full original value — so you can keep running indefinitely. The 3-day profit window is per cycle, before the next repair.",
+    howS2WereTitle:"🐾 Weremole Lair Dungeon",
+    howS2WereP:"The Weremole Lair is a special dungeon unlike the others — the prize is not DIGCOIN, it is the Weremole miner itself. Win the dungeon and a permanent miner joins your crew.",
+    howS2WereStats:[["🗺️ Map Cost","400 DC"],["🎯 Win Chance","10%"],["💔 HP Loss on defeat","30 HP"],["⏱️ Cooldown","20 seconds"],["🏆 Prize","1 Permanent Weremole Miner"],["📦 Box Drop","None"]],
+    howS2WereReq:"Before entering, you must have at least 1 other idle miner — a companion must stay behind to watch the base.",
+    howS2WereMinerTitle:"♾️ Weremole Miner",
+    howS2WereMinerP:"The Weremole is a one-of-a-kind permanent miner. It farms every day like a normal miner but never expires, never needs repair, and cannot be fused.",
+    howS2WereMinerStats:[["⛏️ Daily Earnings","30 DC/day"],["♾️ Lifespan","Infinite — never expires"],["🔧 Repair","Never needed"],["🔥 Fusion","Cannot be fused"],["📦 How to obtain","Win the Weremole Lair dungeon only"],["💎 ROI","~14 days · pure prestige after"]],
+    howS2WereMinerTip:"The Weremole is a long-term prestige item. Its value grows over time — after 1 year it will have earned ~10,950 DC passively with zero maintenance cost.",
+    howS2WereMinerWarn:"The Weremole Lair has only a 10% win chance. Each failed attempt costs 400 DC (the map) and 30 HP. Repair your miner between attempts if needed.",
   }
 };
 
@@ -301,13 +378,26 @@ const NFT_IMGS = [
   "/nftimgs/miner lvl 5.png",
   "/nftimgs/miner lvl 6.png",
 ];
+const S2_IMGS = [
+  "/season2/common.png",
+  "/season2/UnCommon.png",
+  "/season2/Rare.png",
+  "/season2/Super Rare.png",
+  "/season2/Legendary.png",
+  "/season2/Mythic.png",
+];
+const WEREMOLE_RARITY={id:"weremole",name:"Weremole",color:"#8B4513",bg:"#2a1a0a",maxHp:100};
+function getMinerImg(rarityId, season){
+  if(season===3) return "/season2/weremole.png";
+  return season===2 ? S2_IMGS[rarityId] : NFT_IMGS[rarityId];
+}
 
-function MinerSprite({rarityId,size=90}){
-  const r=RARITIES[rarityId];
+function MinerSprite({rarityId,size=90,season=1}){
+  const r=season===3?WEREMOLE_RARITY:(RARITIES[rarityId]||RARITIES[0]);
   return(
     <div style={{width:size,height:size,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
       <div style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle,${r.color}33 0%,transparent 70%)`}}/>
-      <img src={NFT_IMGS[rarityId]} alt={r.name} style={{width:size,height:size,objectFit:"contain",imageRendering:"auto",filter:`drop-shadow(0 0 6px ${r.color}88)`}}/>
+      <img src={getMinerImg(rarityId,season)} alt={r.name} style={{width:size,height:size,objectFit:"contain",imageRendering:"auto",filter:`drop-shadow(0 0 6px ${r.color}88)`}}/>
     </div>
   );
 }
@@ -321,13 +411,13 @@ function BoxReveal({miner,onClose,isFuse=false}){
     {phase===0&&<div style={{animation:"shake .6s infinite",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
       {isFuse
         ?<div style={{fontSize:80,animation:"shake .6s infinite"}}>🔥</div>
-        :<img src="/nftimgs/mystery box.png" alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/>}
+        :<img src={miner.season===2?"/season2/Season2.jpeg":"/nftimgs/mystery box.png"} alt="Mystery Box" style={{width:140,height:140,objectFit:"contain",filter:"drop-shadow(0 0 20px #FFD600)"}}/>}
       {isFuse&&<div style={{color:"#E040FB",fontSize:14,fontWeight:800,letterSpacing:2}}>{tx.fusingAnim}</div>}
     </div>}
     {phase===1&&<div style={{fontSize:120,animation:"explode .8s forwards"}}>{isFuse?"💥":"✨"}</div>}
     {phase===2&&<div style={{textAlign:"center",animation:"popIn .5s ease"}}>
       {isFuse&&<div style={{color:"#E040FB",fontSize:12,fontWeight:800,letterSpacing:2,marginBottom:8}}>{tx.fusionResult}</div>}
-      <div style={{filter:`drop-shadow(0 0 20px ${r.color})`,animation:"float 2s ease-in-out infinite"}}><MinerSprite rarityId={miner.rarityId} size={150}/></div>
+      <div style={{filter:`drop-shadow(0 0 20px ${r.color})`,animation:"float 2s ease-in-out infinite"}}><MinerSprite rarityId={miner.rarityId} size={150} season={miner.season||1}/></div>
       <div style={{color:r.color,fontSize:24,fontWeight:900,marginTop:12,textShadow:`0 0 30px ${r.color}`,fontFamily:"'Press Start 2P',monospace"}}>{r.name}!</div>
       <div style={{color:"#ccc",fontSize:13,marginTop:8}}>{miner.dailyDigcoin} DIGCOIN/day • {isFuse?miner.nftAgeTotal:r.nftAge} {tx.revealCycles} {tx.revealLifespan}</div>
       <div style={{color:"#FFD600",fontSize:12,marginTop:4}}>{isFuse?`Total: ${(miner.dailyDigcoin*(miner.nftAgeTotal||r.nftAge)).toFixed(0)} DIGCOIN`:`ROI: ~${Math.ceil(BOX_PRICE/miner.dailyDigcoin)} days | Total: ${(miner.dailyDigcoin*r.nftAge).toFixed(0)} DIGCOIN`}</div>
@@ -366,29 +456,49 @@ function Timer({targetMs,ms}){
   return<span>{h}h {m}m {s}s</span>;
 }
 
+function LaunchCountdown({launchAtMs,label="Launching in"}){
+  const[,tick]=useState(0);
+  useEffect(()=>{const i=setInterval(()=>tick(x=>x+1),1000);return()=>clearInterval(i);},[]);
+  const rem=Math.max(0,launchAtMs-Date.now());
+  if(!isFinite(rem)||rem===0) return null;
+  const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+  return(
+    <div style={{background:"linear-gradient(135deg,#0a0a1a,#1a0a2e)",border:"2px solid #9C27B0",borderRadius:10,padding:"12px 16px",textAlign:"center",marginBottom:10}}>
+      <div style={{fontSize:10,color:"#CE93D8",fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>{label}</div>
+      <div style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:800,color:"#E040FB",letterSpacing:3,textShadow:"0 0 12px #9C27B088"}}>
+        {String(h).padStart(2,"0")}:{String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}
+      </div>
+    </div>
+  );
+}
+
 function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
   const lang=useContext(LangCtx);const tx=T[lang];
-  const r=RARITIES[miner.rarityId];const pct=(miner.nftAgeRemaining/miner.nftAgeTotal)*100;const dead=!miner.isAlive||miner.needsRepair;
+  const isWeremole=miner.season===3;
+  const r=isWeremole?WEREMOLE_RARITY:(RARITIES[miner.rarityId]||RARITIES[0]);
+  const pct=isWeremole?100:(miner.nftAgeRemaining/miner.nftAgeTotal)*100;
+  const dead=!miner.isAlive||miner.needsRepair;
   return(<div style={{background:"#fff",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)",border:`2px solid ${dead?"#ddd":miner.canClaim?"#FFD600":r.color}`,opacity:dead?.65:1}}>
     <div style={{background:dead?"#f5f5f5":`linear-gradient(135deg,${r.bg},#1a1a2e)`,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <span style={{color:r.color,fontWeight:800,fontSize:11,textTransform:"uppercase",letterSpacing:1}}>
         {r.name}
         {miner.isFused&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#E040FB,#9C27B0)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>{tx.fusedBadge}</span>}
+        {isWeremole&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#8B4513,#5a2d0c)",color:"#FFD600",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>♾️ PERMANENT</span>}
         {inLand&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#388E3C,#4CAF50)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>🌍 LAND</span>}
       </span>
       <span style={{fontSize:9,fontWeight:600,color:miner.canClaim?"#FFD600":miner.isMining?"#4CAF50":dead?"#999":"#aaa"}}>
         {miner.canClaim?`✅ ${tx.mcReady}`:miner.isMining?`⛏️ ${tx.mcMining}`:dead?"":miner.isIdle?`💤 ${tx.mcIdle}`:""}
-        <span style={{color:"#999",marginLeft:4}}>{miner.nftAgeRemaining}/{miner.nftAgeTotal}</span>
+        <span style={{color:"#999",marginLeft:4}}>{isWeremole?"∞":miner.nftAgeRemaining+"/"+miner.nftAgeTotal}</span>
       </span>
     </div>
-    <div style={{display:"flex",justifyContent:"center",padding:"14px 0",background:dead?"#fafafa":r.bg}}><MinerSprite rarityId={miner.rarityId} size={72}/></div>
+    <div style={{display:"flex",justifyContent:"center",padding:"14px 0",background:dead?"#fafafa":r.bg}}><MinerSprite rarityId={miner.rarityId} size={72} season={miner.season||1}/></div>
     <div style={{padding:"8px 14px",fontSize:10,color:"#555",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 10px"}}>
       <div>• Level: <b>{miner.level}</b></div><div>• Power: <b>{miner.power}</b></div>
       <div>• Exp: <b>{miner.exp}</b></div><div>• Energy: <b>{miner.energy}</b></div>
       <div>• Protective: <b>{miner.protective}</b></div><div>• Damage: <b>{miner.damage}</b></div>
     </div>
     <div style={{padding:"6px 14px",textAlign:"center",borderTop:"1px solid #eee"}}><span style={{fontSize:13,fontWeight:700,color:"#333"}}>{miner.dailyDigcoin} DIGCOIN/day</span></div>
-    <div style={{padding:"0 14px 4px"}}><div style={{height:4,background:"#eee",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:pct>50?r.color:pct>20?"#FFA726":"#EF5350",borderRadius:2,transition:"width .5s"}}/></div></div>
+    {!isWeremole&&<div style={{padding:"0 14px 4px"}}><div style={{height:4,background:"#eee",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:pct>50?r.color:pct>20?"#FFA726":"#EF5350",borderRadius:2,transition:"width .5s"}}/></div></div>}
     {(()=>{const hp=miner.hp??r.maxHp??100;const maxHp=miner.maxHp??r.maxHp??100;const hpPct=(hp/maxHp)*100;return(
     <div style={{padding:"0 14px 6px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
@@ -399,15 +509,17 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
     </div>
     );})()}
     <div style={{padding:"2px 14px 12px",display:"flex",gap:6}}>
-      {miner.needsRepair
-        ?<button disabled={loading} onClick={()=>onRepair(miner.id)} style={{flex:1,padding:"7px",background:"#FF9800",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcRepairBtn} ({(RARITIES[miner.rarityId].repair*DIG_RATE*(miner.isFused?2:1)).toFixed(0)} DC{miner.isFused?" ⚡":""})</button>
-        :!miner.isAlive
-          ?<div style={{flex:1,textAlign:"center",color:"#999",fontSize:11,padding:7}}>☠️ DEAD</div>
-          :miner.canClaim
-            ?<button disabled={loading} onClick={()=>onClaim(miner.id)} style={{flex:1,padding:"7px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"none",borderRadius:8,color:"#333",fontSize:11,fontWeight:800,cursor:"pointer"}}>{tx.mcClaim} +{miner.dailyDigcoin} DC</button>
-            :miner.isMining
-              ?<div style={{flex:1,textAlign:"center",color:"#4CAF50",fontSize:10,padding:7}}>{tx.mcMine}… <Timer targetMs={miner.miningEndsAt}/></div>
-              :<button disabled={loading} onClick={()=>onMine(miner.id)} style={{flex:1,padding:"7px",background:`linear-gradient(135deg,${r.color},${r.color}dd)`,border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcMine}</button>}
+      {isWeremole
+        ?<div style={{flex:1,textAlign:"center",fontSize:10,padding:7,color:"#8B4513",fontWeight:700}}>♾️ Permanent — No Repair Needed</div>
+        :miner.needsRepair
+          ?<button disabled={loading} onClick={()=>onRepair(miner.id)} style={{flex:1,padding:"7px",background:"#FF9800",border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcRepairBtn} ({(RARITIES[miner.rarityId].repair*DIG_RATE*(miner.isFused?2:1)).toFixed(0)} DC{miner.isFused?" ⚡":""})</button>
+          :!miner.isAlive
+            ?<div style={{flex:1,textAlign:"center",color:"#999",fontSize:11,padding:7}}>☠️ DEAD</div>
+            :miner.canClaim
+              ?<button disabled={loading} onClick={()=>onClaim(miner.id)} style={{flex:1,padding:"7px",background:"linear-gradient(135deg,#FFD600,#FF9800)",border:"none",borderRadius:8,color:"#333",fontSize:11,fontWeight:800,cursor:"pointer"}}>{tx.mcClaim} +{miner.dailyDigcoin} DC</button>
+              :miner.isMining
+                ?<div style={{flex:1,textAlign:"center",color:"#4CAF50",fontSize:10,padding:7}}>{tx.mcMine}… <Timer targetMs={miner.miningEndsAt}/></div>
+                :<button disabled={loading} onClick={()=>onMine(miner.id)} style={{flex:1,padding:"7px",background:`linear-gradient(135deg,${r.color},${r.color}dd)`,border:"none",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tx.mcMine}</button>}
     </div>
   </div>);
 }
@@ -505,13 +617,13 @@ function FarmCalculator({miners, lands=[]}){
                 ))}
               </tr></thead>
               <tbody>{alive.map(m=>{
-                const r=RARITIES[m.rarityId];
+                const r=m.season===3?WEREMOLE_RARITY:(RARITIES[m.rarityId]||RARITIES[0]);
                 const lb=minerLandBoost[m.id];
                 const eff=effectiveDaily(m);
                 const monthDC=eff*30;
-                const remaining=eff*m.nftAgeRemaining;
+                const remaining=m.season===3?Infinity:eff*m.nftAgeRemaining;
                 return(<tr key={m.id} style={{borderBottom:"1px solid #f0f0f0"}}>
-                  <td style={{padding:"8px 10px"}}><img src={NFT_IMGS[m.rarityId]} alt={r.name} style={{width:28,height:28,objectFit:"contain",verticalAlign:"middle",marginRight:6}}/><span style={{fontWeight:600,fontSize:10}}>#{m.id}</span></td>
+                  <td style={{padding:"8px 10px"}}><img src={getMinerImg(m.rarityId,m.season)} alt={r.name} style={{width:28,height:28,objectFit:"contain",verticalAlign:"middle",marginRight:6}}/><span style={{fontWeight:600,fontSize:10}}>#{m.id}</span></td>
                   <td style={{padding:"8px 10px",fontWeight:700,color:r.color}}>{r.name}</td>
                   {(hasFused||hasLandBoosts)&&<td style={{padding:"8px 10px"}}>
                     <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
@@ -527,8 +639,8 @@ function FarmCalculator({miners, lands=[]}){
                   <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(eff/DIG_RATE).toFixed(4)}</td>
                   <td style={{padding:"8px 10px"}}>{monthDC.toFixed(1)}</td>
                   <td style={{padding:"8px 10px",color:"#4CAF50"}}>${(monthDC/DIG_RATE).toFixed(3)}</td>
-                  <td style={{padding:"8px 10px"}}>{m.nftAgeRemaining} days</td>
-                  <td style={{padding:"8px 10px",fontWeight:600,color:"#2196F3"}}>{remaining.toFixed(0)} DC</td>
+                  <td style={{padding:"8px 10px"}}>{m.season===3?"∞":m.nftAgeRemaining+" days"}</td>
+                  <td style={{padding:"8px 10px",fontWeight:600,color:"#2196F3"}}>{remaining===Infinity?"∞":remaining.toFixed(0)+" DC"}</td>
                 </tr>);
               })}</tbody>
               <tfoot><tr style={{background:"#FFF8E1",fontWeight:800}}>
@@ -783,6 +895,7 @@ function HowItWorks(){
     {id:"roi",         emoji:"📊", label:tx.howNavRoi},
     {id:"autopickaxe", emoji:"⛏️", label:tx.howNavAutoPickaxe},
     {id:"dungeon",     emoji:"⚔️", label:tx.howNavDungeon},
+    {id:"season2",     emoji:"🌟", label:tx.howNavSeason2},
     {id:"faq",         emoji:"❓", label:tx.howNavFaq},
   ];
   const go=(id)=>{setActive(id);document.getElementById("gb-"+id)?.scrollIntoView({behavior:"smooth",block:"start"});};
@@ -1180,6 +1293,91 @@ function HowItWorks(){
       </div>
       <GBCallout type="tip">{tx.howDungeonTip}</GBCallout>
       <GBCallout type="warning">{tx.howDungeonWarn}</GBCallout>
+
+      {/* SEASON 2 & WEREMOLE */}
+      <GBSection id="season2" emoji="🌟" title={tx.howS2Title}/>
+      <p style={{fontSize:14,color:"#444",lineHeight:1.9,marginBottom:20}}>{tx.howS2Intro}</p>
+
+      {/* S2 Box */}
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12}}>{tx.howS2BoxTitle}</h3>
+      <p style={{fontSize:13,color:"#555",lineHeight:1.8,marginBottom:14}}>{tx.howS2BoxP}</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:22}}>
+        {tx.howS2BoxFeatures.map(([label,val],i)=>(
+          <div key={i} style={{background:"linear-gradient(135deg,#0a1628,#1a2a4a)",borderRadius:10,padding:"12px 16px",border:"1px solid #2196F344"}}>
+            <div style={{fontSize:11,color:"#90caf9",fontWeight:700,marginBottom:4}}>{label}</div>
+            <div style={{fontSize:12,color:"#e3f2fd",lineHeight:1.6}}>{val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* S2 Stats table */}
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12}}>{tx.howS2StatsTitle}</h3>
+      <div style={{overflowX:"auto",marginBottom:10}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"#1a1a2e"}}>
+              {tx.howRoiCols.map(h=>(
+                <th key={h} style={{padding:"11px 12px",color:"rgba(255,255,255,.65)",fontWeight:600,textAlign:"left",whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {S2_RARITIES.map((r,i)=>{
+              const avg=(r.dailyMin+r.dailyMax)/2;
+              return(
+                <tr key={r.id} style={{background:i%2===0?"#f8f9fa":"#fff",borderBottom:"1px solid #eee"}}>
+                  <td style={{padding:"12px 12px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <img src={S2_IMGS[i]} alt={r.name} style={{width:30,height:30,objectFit:"contain",flexShrink:0}}/>
+                      <span style={{fontWeight:700,color:r.color}}>{r.name}</span>
+                    </div>
+                  </td>
+                  <td style={{padding:"12px 12px",color:"#666"}}>{r.chance}%</td>
+                  <td style={{padding:"12px 12px",color:"#555"}}>{r.dailyMin}–{r.dailyMax} DC</td>
+                  <td style={{padding:"12px 12px",fontWeight:600,color:"#333"}}>{avg} DC</td>
+                  <td style={{padding:"12px 12px",fontWeight:700,color:"#4CAF50"}}>~{Math.ceil(S2_BOX_PRICE/avg)}d</td>
+                  <td style={{padding:"12px 12px",color:"#555"}}>{r.nftAge}d</td>
+                  <td style={{padding:"12px 12px",fontWeight:700,color:"#FF9800"}}>{(avg*r.nftAge).toFixed(0)} DC</td>
+                  <td style={{padding:"12px 12px",color:"#555"}}>{r.repair} USD</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <GBCallout type="tip">{tx.howS2StatsTip}</GBCallout>
+
+      {/* Weremole Dungeon */}
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>{tx.howS2WereTitle}</h3>
+      <p style={{fontSize:13,color:"#555",lineHeight:1.8,marginBottom:16}}>{tx.howS2WereP}</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+        {tx.howS2WereStats.map(([label,val],i)=>(
+          <div key={i} style={{background:"linear-gradient(135deg,#1a0a00,#2a1200)",borderRadius:10,padding:"12px 16px",border:"1px solid #8B451344"}}>
+            <div style={{fontSize:11,color:"#ffcc80",fontWeight:700,marginBottom:4}}>{label}</div>
+            <div style={{fontSize:13,color:"#ffe0b2",fontWeight:700}}>{val}</div>
+          </div>
+        ))}
+      </div>
+      <GBCallout type="warning">{tx.howS2WereReq}</GBCallout>
+
+      {/* Weremole Miner */}
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>{tx.howS2WereMinerTitle}</h3>
+      <div style={{display:"flex",gap:20,alignItems:"flex-start",marginBottom:18,flexWrap:"wrap"}}>
+        <img src="/season2/weremole.png" alt="Weremole" style={{height:110,objectFit:"contain",filter:"drop-shadow(0 0 14px #8B4513)",flexShrink:0}}/>
+        <div style={{flex:1,minWidth:220}}>
+          <p style={{fontSize:13,color:"#555",lineHeight:1.8,marginBottom:14}}>{tx.howS2WereMinerP}</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {tx.howS2WereMinerStats.map(([label,val],i)=>(
+              <div key={i} style={{background:"linear-gradient(135deg,#1a0a00,#2a1200)",borderRadius:10,padding:"11px 14px",border:"1px solid #8B451344"}}>
+                <div style={{fontSize:10,color:"#ffcc80",fontWeight:700,marginBottom:3}}>{label}</div>
+                <div style={{fontSize:12,color:"#ffe0b2",fontWeight:700,lineHeight:1.4}}>{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <GBCallout type="tip">{tx.howS2WereMinerTip}</GBCallout>
+      <GBCallout type="warning">{tx.howS2WereMinerWarn}</GBCallout>
 
       <GBSection id="faq" emoji="❓" title={tx.howFaqTitle}/>
       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:36}}>
@@ -1585,6 +1783,10 @@ export default function DigMinerApp(){
   const[landsMinted,setLandsMinted]=useState(0);
   const[landMaxSupply,setLandMaxSupply]=useState(500);
   const[landLoading,setLandLoading]=useState("");
+  const[s2BoxesMinted,setS2BoxesMinted]=useState(0);
+  const[s2MaxSupply,setS2MaxSupply]=useState(S2_BOX_MAX_SUPPLY);
+  const[s2LaunchAtMs,setS2LaunchAtMs]=useState(Infinity);
+  const[s2Loading,setS2Loading]=useState("");
   const[assigningLandId,setAssigningLandId]=useState(null);
   const[landReveal,setLandReveal]=useState(null);
   const[autoPickaxe,setAutoPickaxe]=useState({owned:false,active:false});
@@ -1642,6 +1844,9 @@ export default function DigMinerApp(){
       if(d.landsMinted!=null) setLandsMinted(d.landsMinted);
       if(d.landMaxSupply) setLandMaxSupply(d.landMaxSupply);
       if(d.autoPickaxesMinted!=null) setAutoPickaxesMinted(d.autoPickaxesMinted);
+      if(d.s2BoxesMinted!=null) setS2BoxesMinted(d.s2BoxesMinted);
+      if(d.s2BoxMaxSupply) setS2MaxSupply(d.s2BoxMaxSupply);
+      if(d.s2LaunchAtMs) setS2LaunchAtMs(d.s2LaunchAtMs);
     } catch(_) {}
   },[]);
 
@@ -2018,6 +2223,7 @@ export default function DigMinerApp(){
       setDungeonResult(data);
       await loadPlayer(wallet);
       await loadDungeonInventory(wallet);
+      if(data.weremoleMiner) await loadPlayer(wallet);
       loadStats();
     }catch(e){notify(e.message,false);}
     finally{setDungeonLoading("");}
@@ -2042,6 +2248,26 @@ export default function DigMinerApp(){
     finally{setTxLoading("");}
   };
 
+
+  const buyBoxS2=async(qty)=>{
+    const cost=qty===100?S2_BOX_100_PRICE:qty===10?S2_BOX_10_PRICE:S2_BOX_PRICE*qty;
+    if(digcoin<cost) return notify(`Need ${cost} DIGCOIN. Deposit pathUSD first!`,false);
+    try{
+      setS2Loading("box");
+      const res=await authFetch("/api/box/buy-s2",{method:"POST",body:JSON.stringify({wallet,quantity:qty})});
+      const data=await res.json();
+      if(!res.ok){notify(data.error,false);await loadPlayer(wallet);return;}
+      if(qty===1){
+        setRevealing(data.miners[0]);
+      }else{
+        setMiners(p=>[...data.miners,...p]);
+        notify(`${qty} S2 boxes opened! Check My NFT tab.`);
+      }
+      await loadStats();
+      await loadPlayer(wallet);
+    }catch(e){notify(e.message,false);}
+    finally{setS2Loading("");}
+  };
 
   const closeReveal=async()=>{
     setRevealing(null);
@@ -2230,8 +2456,8 @@ export default function DigMinerApp(){
   const canPlayAny=canClaimAny; // backward compat
   const playableCount=readyMiners.length;
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
-  const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):miners.filter(m=>m.rarityName===filter);
-  const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
+  const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):filter==="Season 2"?miners.filter(m=>m.season===2):filter==="Weremole"?miners.filter(m=>m.season===3):miners.filter(m=>m.rarityName===filter);
+  const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length,"Season 2":miners.filter(m=>m.season===2).length,"Weremole":miners.filter(m=>m.season===3).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name&&m.season!==2&&m.season!==3).length;});
   const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
   const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon"};
   const[menuOpen,setMenuOpen]=useState(false);
@@ -2500,12 +2726,16 @@ export default function DigMinerApp(){
         {/* MY NFT */}
         {tab==="nft"&&<div style={{animation:"fadeIn .3s ease"}}>
           <div style={{display:"flex",gap:4,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
-            {["All",...RARITIES.map(r=>r.name),"In Land"].map(f=>{
+            {["All",...RARITIES.map(r=>r.name),"Season 2","Weremole","In Land"].map(f=>{
               const isLand=f==="In Land";
+              const isS2=f==="Season 2";
+              const isWeremole=f==="Weremole";
               const active=filter===f;
-              const color=isLand?"#4CAF50":RARITIES.find(r=>r.name===f)?.color||"#333";
-              return(<button key={f} onClick={()=>setFilter(f)} style={{padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${active?(isLand?"#4CAF50":"#FFD600"):"#ccc"}`,background:active?(isLand?"#4CAF50":"#FFD600"):"#fff",color:active?"#fff":(f==="All"?"#333":color)}}>
-                {isLand?"🌍 ":""}{f} ({fc[f]||0})
+              const color=isLand?"#4CAF50":isS2?"#2196F3":isWeremole?"#8B4513":RARITIES.find(r=>r.name===f)?.color||"#333";
+              const activeBg=isLand?"#4CAF50":isS2?"#2196F3":isWeremole?"#8B4513":"#FFD600";
+              const activeBorder=isLand?"#4CAF50":isS2?"#2196F3":isWeremole?"#8B4513":"#FFD600";
+              return(<button key={f} onClick={()=>setFilter(f)} style={{padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:600,cursor:"pointer",border:`1px solid ${active?activeBorder:"#ccc"}`,background:active?activeBg:"#fff",color:active?"#fff":(f==="All"?"#333":color)}}>
+                {isLand?"🌍 ":isS2?"✨ ":isWeremole?"🐾 ":""}{f} ({fc[f]||0})
               </button>);
             })}
             <div style={{marginLeft:"auto",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
@@ -2618,7 +2848,7 @@ export default function DigMinerApp(){
                               return(
                                 <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.07)",borderRadius:8,padding:"6px 10px",border:`1px solid ${slotR.color}33`}}>
                                   <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                    <img src={NFT_IMGS[asgn.rarityId||0]} alt={asgn.rarityName} style={{width:24,height:24,objectFit:"contain"}}/>
+                                    <img src={getMinerImg(asgn.rarityId||0,asgn.season||1)} alt={asgn.rarityName} style={{width:24,height:24,objectFit:"contain"}}/>
                                     <div>
                                       <div style={{color:slotR.color,fontWeight:700,fontSize:10}}>{asgn.rarityName} #{asgn.minerId}</div>
                                       <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>{asgn.dailyDigcoin} → <span style={{color:"#4CAF50"}}>{(asgn.dailyDigcoin*(1+land.boostPercent/100)).toFixed(1)} DC/day</span></div>
@@ -2659,7 +2889,7 @@ export default function DigMinerApp(){
                                   return(
                                     <button key={m.id} disabled={!!landLoading} onClick={()=>doAssignMiner(land.id,m.id)}
                                       style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:"rgba(255,255,255,.06)",border:`1px solid ${mr.color}44`,borderRadius:6,cursor:"pointer",textAlign:"left",width:"100%"}}>
-                                      <img src={NFT_IMGS[m.rarityId||0]} alt={m.rarityName} style={{width:20,height:20,objectFit:"contain"}}/>
+                                      <img src={getMinerImg(m.rarityId||0,m.season||1)} alt={m.rarityName} style={{width:20,height:20,objectFit:"contain"}}/>
                                       <div style={{flex:1}}>
                                         <div style={{color:mr.color,fontWeight:700,fontSize:10}}>{m.rarityName} #{m.id}</div>
                                         <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>{m.dailyDigcoin} DC/day</div>
@@ -2736,7 +2966,13 @@ export default function DigMinerApp(){
                 <p style={{color:"rgba(255,255,255,.7)",fontSize:12,margin:"4px 0 0"}}>— {dungeonResult.dungeonName} Dungeon —</p>
               </div>
               <div style={{padding:"20px 24px"}}>
-                {dungeonResult.result==="win"&&<div style={{background:"rgba(46,125,50,.15)",border:"2px solid #2E7D32",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
+                {dungeonResult.result==="win"&&dungeonResult.weremoleMiner&&<div style={{background:"rgba(139,69,19,.2)",border:"2px solid #8B4513",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
+                  <img src="/season2/weremole.png" alt="Weremole" style={{height:72,objectFit:"contain",filter:"drop-shadow(0 0 12px #8B4513)",display:"block",margin:"0 auto 8px"}}/>
+                  <div style={{fontSize:20,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif"}}>🐾 WEREMOLE TAMED!</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:4}}>A permanent Weremole miner has joined your crew!</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:2}}>30 DC/day · ♾️ Never expires · Never needs repair</div>
+                </div>}
+                {dungeonResult.result==="win"&&!dungeonResult.weremoleMiner&&<div style={{background:"rgba(46,125,50,.15)",border:"2px solid #2E7D32",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
                   <div style={{fontSize:28,fontWeight:800,color:"#4CAF50",fontFamily:"Georgia,serif"}}>+{dungeonResult.rewardDigcoin} DC</div>
                   <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>DIGCOIN added to your balance</div>
                 </div>}
@@ -2815,9 +3051,9 @@ export default function DigMinerApp(){
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16,marginBottom:16}}>
             {Object.values(DUNGEONS).map(d=>{
               const mapCount=dungeonMaps[d.mapItem]||0;
-              const borderColors={easy:"#4CAF50",medium:"#C62828",hard:"#FF6F00"};
-              const glowColors={easy:"rgba(76,175,80,.3)",medium:"rgba(198,40,40,.3)",hard:"rgba(255,111,0,.4)"};
-              const diffLabels={easy:"EASY",medium:"MEDIUM",hard:"⚠️ HARD"};
+              const borderColors={easy:"#4CAF50",medium:"#C62828",hard:"#FF6F00",weremole:"#8B4513"};
+              const glowColors={easy:"rgba(76,175,80,.3)",medium:"rgba(198,40,40,.3)",hard:"rgba(255,111,0,.4)",weremole:"rgba(139,69,19,.4)"};
+              const diffLabels={easy:"EASY",medium:"MEDIUM",hard:"⚠️ HARD",weremole:"🐾 SPECIAL"};
               // Live cooldown from lastDungeonAt (ticks every second via dungeonTick)
               const liveCooldown=(m)=>m.lastDungeonAt?Math.max(0,DUNGEON_COOLDOWN_MS-(Date.now()-new Date(m.lastDungeonAt).getTime())):0;
               // Miners in cooldown specifically in THIS dungeon
@@ -2857,15 +3093,15 @@ export default function DigMinerApp(){
 
                 {/* Stats */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:`${borderColors[d.id]}33`,margin:"0"}}>
-                  {[["💰 Prize",`${d.prize} DC`,"#FFD600"],["🎯 Win",`${d.winChance}%`,"#4fc3f7"],["💔 HP Loss",`-${d.hpLoss}`,"#ef9a9a"]].map(([l,v,c],i)=>(
+                  {[["💰 Prize",d.weremoleDungeon?"🐾 Miner":`${d.prize} DC`,"#FFD600"],["🎯 Win",`${d.winChance}%`,"#4fc3f7"],["💔 HP Loss",`-${d.hpLoss}`,"#ef9a9a"]].map(([l,v,c],i)=>(
                     <div key={i} style={{padding:"8px 6px",textAlign:"center",background:"rgba(0,0,0,.4)"}}>
                       <div style={{fontSize:9,color:"rgba(255,255,255,.45)",fontWeight:700,marginBottom:2}}>{l}</div>
                       <div style={{fontSize:14,fontWeight:800,color:c,fontFamily:"Georgia,serif"}}>{v}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:`${borderColors[d.id]}22`,marginBottom:12}}>
-                  {[["🗺️ Map Cost",`${d.mapCost} DC`,"#c8a870"],["🎁 Box Drop",`${d.boxDrop}% on win`,"#ba68c8"]].map(([l,v,c],i)=>(
+                <div style={{display:"grid",gridTemplateColumns:d.weremoleDungeon?"1fr":"1fr 1fr",gap:1,background:`${borderColors[d.id]}22`,marginBottom:12}}>
+                  {(d.weremoleDungeon?[["🗺️ Map Cost",`${d.mapCost} DC`,"#c8a870"]]:[ ["🗺️ Map Cost",`${d.mapCost} DC`,"#c8a870"],["🎁 Box Drop",`${d.boxDrop}% on win`,"#ba68c8"] ]).map(([l,v,c],i)=>(
                     <div key={i} style={{padding:"6px 6px",textAlign:"center",background:"rgba(0,0,0,.3)"}}>
                       <div style={{fontSize:9,color:"rgba(255,255,255,.4)",fontWeight:700,marginBottom:1}}>{l}</div>
                       <div style={{fontSize:12,fontWeight:800,color:c}}>{v}</div>
@@ -2875,9 +3111,10 @@ export default function DigMinerApp(){
 
                 {/* Actions */}
                 <div style={{padding:"0 14px 14px",display:"flex",flexDirection:"column",gap:8,marginTop:"auto"}}>
+                  {d.weremoleDungeon&&isFinite(s2LaunchAtMs)&&Date.now()<s2LaunchAtMs&&<LaunchCountdown launchAtMs={s2LaunchAtMs} label="Weremole Lair opens in"/>}
                   <div style={{display:"flex",gap:6}}>
                     {[1,5].map(qty=>(
-                      <button key={qty} disabled={!!dungeonLoading||digcoin<d.mapCost*qty} onClick={()=>buyMap(d.mapItem,qty)}
+                      <button key={qty} disabled={!!dungeonLoading||digcoin<d.mapCost*qty||(d.weremoleDungeon&&isFinite(s2LaunchAtMs)&&Date.now()<s2LaunchAtMs)} onClick={()=>buyMap(d.mapItem,qty)}
                         style={{flex:1,padding:"7px 6px",background:digcoin>=d.mapCost*qty?"linear-gradient(to bottom,#3d2b08,#1e1200)":"rgba(255,255,255,.05)",border:`1px solid ${digcoin>=d.mapCost*qty?"#8B6914":"rgba(255,255,255,.1)"}`,borderRadius:6,color:digcoin>=d.mapCost*qty?"#FFD600":"rgba(255,255,255,.25)",fontSize:11,fontWeight:700,cursor:digcoin>=d.mapCost*qty?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
                         {dungeonLoading==="buy_"+d.mapItem?"Buying...":`Buy ${qty>1?qty+"x ":""}Map — ${d.mapCost*qty} DC`}
                       </button>
@@ -2983,6 +3220,61 @@ export default function DigMinerApp(){
                   <td style={{padding:7}}>{r.repair} pathUSD</td>
                 </tr>)}</tbody>
               </table>
+            </div>
+          </div>
+
+          {/* ── Season 2 Box + stats ── */}
+          <div className="g2-16">
+            <div className="wp" style={{textAlign:"center",border:"2px solid #9C27B0",position:"relative"}}>
+              <div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:"#9C27B0",color:"#fff",fontSize:10,fontWeight:900,padding:"2px 14px",borderRadius:12,letterSpacing:1}}>⚡ SEASON 2 LIMITED</div>
+              <img src="/season2/Season2.jpeg" alt="Mystery Box S2" style={{width:100,height:100,objectFit:"contain",marginBottom:10,filter:"drop-shadow(0 0 12px #9C27B088)",borderRadius:8}}/>
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:6}}>Mystery Box S2 Limited</h3>
+              {(()=>{const remaining=s2MaxSupply-s2BoxesMinted;const pct=Math.max(0,(remaining/s2MaxSupply)*100);const sold=s2BoxesMinted>=s2MaxSupply;return(<div style={{margin:"0 0 12px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:sold?"#EF5350":"#666",marginBottom:4}}>
+                  <span style={{fontWeight:700}}>{sold?"🔴 SOLD OUT":`🟢 ${remaining} / ${s2MaxSupply} remaining`}</span>
+                  <span style={{color:"#1a0800",fontWeight:600}}>{s2BoxesMinted} minted</span>
+                </div>
+                <div style={{height:6,background:"#eee",borderRadius:3,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${100-pct}%`,background:sold?"#EF5350":pct<20?"#FF9800":"#9C27B0",borderRadius:3,transition:"width .5s"}}/>
+                </div>
+              </div>);})()}
+              <div style={{textAlign:"left",padding:"0 16px",marginBottom:14,fontSize:11,color:"#555",lineHeight:1.8}}>
+                {S2_RARITIES.map(r=><div key={r.id}>• <span style={{color:r.color,fontWeight:700}}>{r.name}:</span> {r.chance}</div>)}
+              </div>
+              {s2BoxesMinted>=s2MaxSupply?(
+                <div style={{padding:"12px",background:"#f3e5f5",borderRadius:8,color:"#6A1B9A",fontWeight:700,fontSize:13}}>🔴 Sold Out — All 1,000 S2 Boxes Minted</div>
+              ):isFinite(s2LaunchAtMs)&&Date.now()<s2LaunchAtMs?(
+                <LaunchCountdown launchAtMs={s2LaunchAtMs} label="Season 2 Box launches in"/>
+              ):(
+                <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                  <button disabled={!!s2Loading||!wallet} onClick={()=>buyBoxS2(1)} style={{padding:"9px 18px",background:"#9C27B0",border:"2px solid #6A1B9A",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#fff"}}>
+                    {s2Loading==="box"?tx.opening:`1 Box = ${S2_BOX_PRICE} DC`}
+                  </button>
+                  <button disabled={!!s2Loading||!wallet} onClick={()=>buyBoxS2(10)} style={{padding:"9px 18px",background:"linear-gradient(135deg,#6A1B9A,#9C27B0)",border:"2px solid #4A148C",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#fff"}}>
+                    {s2Loading==="box"?tx.opening:`10 Box = ${S2_BOX_10_PRICE} DC`} <span style={{fontSize:9,color:"#CE93D8"}}>(5% OFF)</span>
+                  </button>
+                  <button disabled={!!s2Loading||!wallet} onClick={()=>buyBoxS2(100)} style={{padding:"9px 18px",background:"linear-gradient(135deg,#4A148C,#6A1B9A)",border:"2px solid #311B92",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",color:"#fff"}}>
+                    {s2Loading==="box"?tx.opening:`100 Box = ${S2_BOX_100_PRICE} DC`} <span style={{fontSize:9,color:"#CE93D8"}}>(10% OFF)</span>
+                  </button>
+                </div>
+              )}
+              <p style={{fontSize:10,color:"#aaa",marginTop:12}}>{tx.balance} {digcoin.toFixed(0)} DIGCOIN</p>
+            </div>
+            <div className="wp">
+              <h3 style={{fontSize:15,fontWeight:800,marginBottom:14}}>⚡ S2 NFT Stats</h3>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
+                <thead><tr style={{background:"#f9f9f9"}}>{[tx.colNft,tx.colDaily,tx.colRoi,tx.colAge,tx.colRepair].map(h=><th key={h} style={{padding:7,borderBottom:"2px solid #ddd",textAlign:"left"}}>{h}</th>)}</tr></thead>
+                <tbody>{S2_RARITIES.map(r=><tr key={r.id} style={{borderBottom:"1px solid #f0f0f0"}}>
+                  <td style={{padding:7,fontWeight:600,color:r.color}}>{r.name}</td>
+                  <td style={{padding:7}}>{r.dailyMin}-{r.dailyMax} DC</td>
+                  <td style={{padding:7}}>{Math.ceil(S2_BOX_PRICE/((r.dailyMin+r.dailyMax)/2))} {tx.colDays}</td>
+                  <td style={{padding:7}}>{r.nftAge} {tx.colDays}</td>
+                  <td style={{padding:7}}>{r.repair} pathUSD</td>
+                </tr>)}</tbody>
+              </table>
+              <div style={{marginTop:10,fontSize:10,color:"#9C27B0",fontWeight:700,padding:"8px 10px",background:"#f3e5f5",borderRadius:6}}>
+                ⚡ S2 miners have exclusive skills & buffs in Dungeons — and cannot be fused.
+              </div>
             </div>
           </div>
 
