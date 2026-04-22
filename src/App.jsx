@@ -3057,8 +3057,8 @@ export default function DigMinerApp(){
               const liveCooldown=(m)=>m.lastDungeonAt?Math.max(0,DUNGEON_COOLDOWN_MS-(Date.now()-new Date(m.lastDungeonAt).getTime())):0;
               // Miners in cooldown specifically in THIS dungeon
               const minersInThisDungeon=miners.filter(m=>liveCooldown(m)>0&&m.lastDungeonType===d.id);
-              // Miners available: alive, not mining, not in any dungeon cooldown
-              const eligibleMiners=miners.filter(m=>m.isAlive&&!m.needsRepair&&!m.isMining&&liveCooldown(m)===0);
+              // Miners available: alive, not mining, not in any dungeon cooldown; Weremole requires S2 only
+              const eligibleMiners=miners.filter(m=>m.isAlive&&!m.needsRepair&&!m.isMining&&liveCooldown(m)===0&&(!d.weremoleDungeon||m.season===2));
               return(
               <div key={d.id} style={{background:"linear-gradient(to bottom,#1a0c00,#120800)",border:`3px solid ${borderColors[d.id]}`,borderRadius:10,boxShadow:`0 0 0 1px #2a1008, 0 8px 24px rgba(0,0,0,.7), 0 0 20px ${glowColors[d.id]}`,overflow:"hidden",display:"flex",flexDirection:"column"}}>
 
@@ -3123,8 +3123,13 @@ export default function DigMinerApp(){
                   {/* Miner select + enter */}
                   {mapCount>0?(
                     <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      {d.weremoleDungeon&&eligibleMiners.length===0&&(
+                        <div style={{textAlign:"center",padding:"8px",background:"rgba(139,69,19,.15)",border:"1px dashed rgba(139,69,19,.5)",borderRadius:8,fontSize:11,color:"rgba(255,180,100,.8)",fontWeight:700}}>
+                          🐾 Requires a Season 2 idle miner
+                        </div>
+                      )}
                       <select value={selectedMinerForDungeon||""} onChange={e=>setSelectedMinerForDungeon(e.target.value?parseInt(e.target.value):null)}
-                        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`2px solid ${borderColors[d.id]}66`,background:"rgba(0,0,0,.4)",fontSize:12,color:"#e8d8b0",fontWeight:600,outline:"none"}}>
+                        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`2px solid ${borderColors[d.id]}66`,background:"rgba(0,0,0,.4)",fontSize:12,color:"#e8d8b0",fontWeight:600,outline:"none",display:d.weremoleDungeon&&eligibleMiners.length===0?"none":"block"}}>
                         <option value="">— Select a Miner —</option>
                         {eligibleMiners.map(m=>(
                           <option key={m.id} value={m.id}>#{m.id} {m.rarityName} · HP {m.hp??RARITIES[m.rarityId]?.maxHp??100}/{m.maxHp??RARITIES[m.rarityId]?.maxHp??100}</option>
