@@ -2848,7 +2848,7 @@ export default function DigMinerApp(){
                               return(
                                 <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.07)",borderRadius:8,padding:"6px 10px",border:`1px solid ${slotR.color}33`}}>
                                   <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                    <img src={getMinerImg(asgn.rarityId||0,asgn.season||1)} alt={asgn.rarityName} style={{width:24,height:24,objectFit:"contain"}}/>
+                                    <img src={getMinerImg(asgn.rarityId||0,asgn.season??1)} alt={asgn.rarityName} style={{width:24,height:24,objectFit:"contain"}}/>
                                     <div>
                                       <div style={{color:slotR.color,fontWeight:700,fontSize:10}}>{asgn.rarityName} #{asgn.minerId}</div>
                                       <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>{asgn.dailyDigcoin} → <span style={{color:"#4CAF50"}}>{(asgn.dailyDigcoin*(1+land.boostPercent/100)).toFixed(1)} DC/day</span></div>
@@ -2889,7 +2889,7 @@ export default function DigMinerApp(){
                                   return(
                                     <button key={m.id} disabled={!!landLoading} onClick={()=>doAssignMiner(land.id,m.id)}
                                       style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:"rgba(255,255,255,.06)",border:`1px solid ${mr.color}44`,borderRadius:6,cursor:"pointer",textAlign:"left",width:"100%"}}>
-                                      <img src={getMinerImg(m.rarityId||0,m.season||1)} alt={m.rarityName} style={{width:20,height:20,objectFit:"contain"}}/>
+                                      <img src={getMinerImg(m.rarityId||0,m.season??1)} alt={m.rarityName} style={{width:20,height:20,objectFit:"contain"}}/>
                                       <div style={{flex:1}}>
                                         <div style={{color:mr.color,fontWeight:700,fontSize:10}}>{m.rarityName} #{m.id}</div>
                                         <div style={{color:"rgba(255,255,255,.35)",fontSize:9}}>{m.dailyDigcoin} DC/day</div>
