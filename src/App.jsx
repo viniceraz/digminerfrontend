@@ -1738,6 +1738,7 @@ export default function DigMinerApp(){
   const[authToken,setAuthToken]=useState(()=>localStorage.getItem(AUTH_KEY)||null);
   const[tab,setTab]=useState("account");
   const[digcoin,setDigcoin]=useState(0);
+  const[totalSpentDigcoin,setTotalSpentDigcoin]=useState(0);
   const[pathUSDBalance,setPathUSDBalance]=useState("0.0000");
   const[miners,setMiners]=useState([]);
   const[revealing,setRevealing]=useState(null);
@@ -1787,6 +1788,7 @@ export default function DigMinerApp(){
   const[s2LaunchAtMs,setS2LaunchAtMs]=useState(Infinity);
   const[s2Loading,setS2Loading]=useState("");
   const[assigningLandId,setAssigningLandId]=useState(null);
+  const[landFilter,setLandFilter]=useState("All");
   const[landReveal,setLandReveal]=useState(null);
   const[autoPickaxe,setAutoPickaxe]=useState({owned:false,active:false});
   const[autoPickaxesMinted,setAutoPickaxesMinted]=useState(0);
@@ -1886,6 +1888,7 @@ export default function DigMinerApp(){
       if(!res.ok) return; // player not registered yet or invalid address — silently skip
       const data=await res.json();
       setDigcoin(data.player.digcoinBalance);
+      if(data.player.totalSpentDigcoin!=null) setTotalSpentDigcoin(data.player.totalSpentDigcoin);
       setMiners(data.miners);
       if(data.autoPickaxe) setAutoPickaxe(data.autoPickaxe);
       setReferralLink(`${window.location.origin}?ref=${address}`);
@@ -2642,6 +2645,7 @@ export default function DigMinerApp(){
           </div>
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.pathUSDBalance}</div><div style={{fontSize:13,fontWeight:700}}>{pathUSDBalance} pathUSD</div></div>
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.digcoinBalance}</div><div style={{fontSize:13,fontWeight:700,color:"#8B0000"}}>{digcoin.toFixed(2)} DC [{(digcoin/DIG_RATE).toFixed(4)} pathUSD]</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>Total Spent</div><div style={{fontSize:13,fontWeight:700,color:"#555"}}>{totalSpentDigcoin.toLocaleString()} DC [{(totalSpentDigcoin/DIG_RATE).toFixed(4)} pathUSD]</div></div>
           <div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#888"}}>{tx.miners}</div><div style={{fontSize:11,fontWeight:700}}>{idleMiners.length} {tx.idle} · {miningMiners.length} {tx.mining} · {readyMiners.length} {tx.ready}</div></div>
           {canMineAny&&<button disabled={!!txLoading} onClick={playAll} style={{padding:"6px 14px",background:"linear-gradient(135deg,#2196F3,#42A5F5)",border:"2px solid #1565C0",borderRadius:8,color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer"}}>
             {txLoading==="playall"?tx.starting:`${tx.mineAllBtn(idleMiners.length)} fee: ${PLAY_ALL_FEE*idleMiners.length} DC)`}
@@ -2802,10 +2806,22 @@ export default function DigMinerApp(){
 
           {/* MY LANDS */}
           <div style={{marginTop:24}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}>
               <span style={{fontSize:18}}>🌍</span>
               <h3 style={{fontSize:15,fontWeight:800,color:"#fff"}}>{tx.myLands}</h3>
               <span style={{fontSize:10,color:"rgba(255,255,255,.35)",background:"rgba(255,255,255,.08)",padding:"2px 8px",borderRadius:10}}>{lands.length}</span>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap",marginLeft:"auto"}}>
+                {["All",...LAND_RARITIES.map(r=>r.name)].map(f=>{
+                  const lr=LAND_RARITIES.find(r=>r.name===f);
+                  const active=landFilter===f;
+                  const count=f==="All"?lands.length:lands.filter(l=>LAND_RARITIES[l.rarityId]?.name===f).length;
+                  return(
+                    <button key={f} onClick={()=>setLandFilter(f)} style={{padding:"3px 10px",borderRadius:20,border:`1px solid ${active?(lr?.color||"#FFD600"):"rgba(255,255,255,.15)"}`,background:active?`${lr?.color||"#FFD600"}22`:"transparent",color:active?(lr?.color||"#FFD600"):"rgba(255,255,255,.4)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                      {f} {count>0&&<span style={{opacity:.7}}>({count})</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             {lands.length===0?(
               <div style={{textAlign:"center",padding:32,background:"rgba(255,255,255,.05)",borderRadius:12,border:"1px dashed rgba(255,255,255,.12)"}}>
@@ -2814,7 +2830,7 @@ export default function DigMinerApp(){
               </div>
             ):(
               <div className="g-lands">
-                {lands.map(land=>{
+                {lands.filter(land=>landFilter==="All"||LAND_RARITIES[land.rarityId]?.name===landFilter).map(land=>{
                   const lr=LAND_RARITIES[land.rarityId]||LAND_RARITIES[0];
                   const assignedIds=new Set(land.assignedMiners.map(a=>a.minerId));
                   const idleUnassigned=miners.filter(m=>m.isIdle&&m.isAlive&&!m.needsRepair&&!lands.some(l=>l.assignedMiners.some(a=>a.minerId===m.id)));
