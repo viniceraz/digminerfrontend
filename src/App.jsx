@@ -218,7 +218,7 @@ const T = {
       ["🏆 Prize","1 Permanent Weremole Miner"],
       ["📦 Box Drop","None"],
     ],
-    howS2WereReq:"Before entering, you must have at least 1 other idle miner — a companion must stay behind to watch the base.",
+    howS2WereReq:"",
     howS2WereMinerTitle:"♾️ Weremole Miner",
     howS2WereMinerP:"The Weremole is a one-of-a-kind permanent miner. It farms every day like a normal miner but never expires, never needs repair, and cannot be fused.",
     howS2WereMinerStats:[
@@ -353,7 +353,7 @@ const T = {
     howS2WereTitle:"🐾 Weremole Lair Dungeon",
     howS2WereP:"The Weremole Lair is a special dungeon unlike the others — the prize is not DIGCOIN, it is the Weremole miner itself. Win the dungeon and a permanent miner joins your crew.",
     howS2WereStats:[["🗺️ Map Cost","400 DC"],["🎯 Win Chance","10%"],["💔 HP Loss on defeat","30 HP"],["⏱️ Cooldown","20 seconds"],["🏆 Prize","1 Permanent Weremole Miner"],["📦 Box Drop","None"]],
-    howS2WereReq:"Before entering, you must have at least 1 other idle miner — a companion must stay behind to watch the base.",
+    howS2WereReq:"",
     howS2WereMinerTitle:"♾️ Weremole Miner",
     howS2WereMinerP:"The Weremole is a one-of-a-kind permanent miner. It farms every day like a normal miner but never expires, never needs repair, and cannot be fused.",
     howS2WereMinerStats:[["⛏️ Daily Earnings","30 DC/day"],["♾️ Lifespan","Infinite — never expires"],["🔧 Repair","Never needed"],["🔥 Fusion","Cannot be fused"],["📦 How to obtain","Win the Weremole Lair dungeon only"],["💎 ROI","~14 days · pure prestige after"]],
@@ -1358,7 +1358,6 @@ function HowItWorks(){
           </div>
         ))}
       </div>
-      <GBCallout type="warning">{tx.howS2WereReq}</GBCallout>
 
       {/* Weremole Miner */}
       <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>{tx.howS2WereMinerTitle}</h3>
