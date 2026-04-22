@@ -26,8 +26,8 @@ const S2_BOX_MAX_SUPPLY=1000;
 const FUSE_COST=50;
 const DUNGEON_COOLDOWN_MS=20*1000;
 const DUNGEONS={
-  easy:     {id:"easy",     name:"Goblins",       mapItem:"map_easy",     mapCost:50,  prize:80,  winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg",       mapImg:"/Dungeons/map1.png",       color:"#4CAF50", darkColor:"#1b3a1b"},
-  medium:   {id:"medium",   name:"Spiders",       mapItem:"map_medium",   mapCost:150, prize:280, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg",       mapImg:"/Dungeons/map2.png",       color:"#FF9800", darkColor:"#3a2a10"},
+  easy:     {id:"easy",     name:"Goblins",       mapItem:"map_easy",     mapCost:50,  prize:100, winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg",       mapImg:"/Dungeons/map1.png",       color:"#4CAF50", darkColor:"#1b3a1b"},
+  medium:   {id:"medium",   name:"Spiders",       mapItem:"map_medium",   mapCost:150, prize:300, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg",       mapImg:"/Dungeons/map2.png",       color:"#FF9800", darkColor:"#3a2a10"},
   hard:     {id:"hard",     name:"Miner's Bane",  mapItem:"map_hard",     mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg",       mapImg:"/Dungeons/map3.png",       color:"#E91E63", darkColor:"#3a1a2a"},
   weremole: {id:"weremole", name:"Weremole Lair", mapItem:"map_weremole", mapCost:400, prize:0,   winChance:10, hpLoss:30, boxDrop:0,  img:"/Dungeons/weremoledungeon.jpeg",mapImg:"/Dungeons/weremolemap.png",color:"#8B4513", darkColor:"#2a1a0a", weremoleDungeon:true},
 };
@@ -3069,6 +3069,7 @@ export default function DigMinerApp(){
               const borderColors={easy:"#4CAF50",medium:"#C62828",hard:"#FF6F00",weremole:"#8B4513"};
               const glowColors={easy:"rgba(76,175,80,.3)",medium:"rgba(198,40,40,.3)",hard:"rgba(255,111,0,.4)",weremole:"rgba(139,69,19,.4)"};
               const diffLabels={easy:"EASY",medium:"MEDIUM",hard:"⚠️ HARD",weremole:"🐾 SPECIAL"};
+              const multiplier=d.weremoleDungeon?null:(d.prize/d.mapCost).toFixed(2)+"x";
               // Live cooldown from lastDungeonAt (ticks every second via dungeonTick)
               const liveCooldown=(m)=>m.lastDungeonAt?Math.max(0,DUNGEON_COOLDOWN_MS-(Date.now()-new Date(m.lastDungeonAt).getTime())):0;
               // Miners in cooldown specifically in THIS dungeon
@@ -3085,8 +3086,15 @@ export default function DigMinerApp(){
                   <div style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.6)",borderRadius:8,padding:4,border:`2px solid ${borderColors[d.id]}`}}>
                     <img src={d.mapImg} alt="map" style={{height:44,objectFit:"contain",display:"block",filter:"drop-shadow(0 2px 4px rgba(0,0,0,.8))"}}/>
                   </div>
-                  <div style={{position:"absolute",top:10,left:10,background:borderColors[d.id],color:"#fff",padding:"3px 12px",borderRadius:20,fontSize:10,fontWeight:800,letterSpacing:1,boxShadow:"0 2px 6px rgba(0,0,0,.5)"}}>
-                    {diffLabels[d.id]}
+                  <div style={{position:"absolute",top:10,left:10,display:"flex",flexDirection:"column",gap:4}}>
+                    <div style={{background:borderColors[d.id],color:"#fff",padding:"3px 12px",borderRadius:20,fontSize:10,fontWeight:800,letterSpacing:1,boxShadow:"0 2px 6px rgba(0,0,0,.5)"}}>
+                      {diffLabels[d.id]}
+                    </div>
+                    {multiplier&&(
+                      <div style={{background:"rgba(0,0,0,.75)",border:"1px solid #FFD600",color:"#FFD600",padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:800,letterSpacing:1,boxShadow:"0 2px 6px rgba(0,0,0,.5)",backdropFilter:"blur(4px)"}}>
+                        💰 {multiplier} Return
+                      </div>
+                    )}
                   </div>
                   <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 14px"}}>
                     <div style={{fontSize:22,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif",textShadow:"0 2px 8px rgba(0,0,0,.9)",letterSpacing:1}}>{d.name}</div>
