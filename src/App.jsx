@@ -2459,7 +2459,7 @@ export default function DigMinerApp(){
   const playableCount=readyMiners.length;
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
   const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):filter==="Season 2"?miners.filter(m=>m.season===2):filter==="Weremole"?miners.filter(m=>m.season===3):miners.filter(m=>m.rarityName===filter);
-  const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length,"Season 2":miners.filter(m=>m.season===2).length,"Weremole":miners.filter(m=>m.season===3).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name&&m.season!==2&&m.season!==3).length;});
+  const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length,"Season 2":miners.filter(m=>m.season===2).length,"Weremole":miners.filter(m=>m.season===3).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
   const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
   const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon"};
   const[menuOpen,setMenuOpen]=useState(false);
