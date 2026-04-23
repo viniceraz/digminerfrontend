@@ -1556,6 +1556,33 @@ function LandReveal({land,onClose}){
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
   {
+    version:"v2.1",
+    date:"2026-04-23",
+    title:"Land Marketplace & Season 2 Launch",
+    tags:["feature","update"],
+    changes:[
+      "🏪 Land Marketplace is live — buy and sell lands with other players",
+      "10% marketplace fee on each sale (deducted from seller)",
+      "Marketplace filters: filter by rarity, sort cheapest/most expensive",
+      "My Inventory in Market tab — list lands directly without going to My NFT",
+      "Confirmation modal before Buy and List for Sale actions",
+      "Listed badge on My NFT tab for lands currently on the marketplace",
+      "Volume stats in marketplace header: total DC traded, number of sales, active listings",
+      "Land rarity filter buttons in My Lands section",
+      "Total Spent field added to account header (boxes, repairs, maps, fees)",
+      "🌟 Season 2 Mystery Box is live — 400 DC, 1,000 supply (limited edition)",
+      "6 new S2 miners with 2x stronger stats vs Season 1",
+      "S2 miner nftAge: Common 13 days → Mythic 8 days (3-day profit window after ROI)",
+      "🐾 Weremole Lair dungeon — exclusive S2-only dungeon, win to earn a permanent Weremole miner",
+      "Weremole miner: season=3, 30 DC/day, infinite lifespan, never needs repair",
+      "Dungeon prizes increased: Easy 80→100 DC (2x), Medium 280→300 DC (2x)",
+      "Multiplier badge on each dungeon card (2x, 2.25x return)",
+      "S2 & Weremole filter buttons in My NFT tab",
+      "Persistent S2/Weremole launch countdown via Supabase (survives Railway restarts)",
+      "Auto Pickaxe now works for S2 miners",
+    ],
+  },
+  {
     version:"v1.8",
     date:"2026-04-21",
     title:"Land Supply Capped & Season 2 Incoming",
