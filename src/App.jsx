@@ -46,8 +46,8 @@ const LAND_IMGS=["/landsimgs/land1.png","/landsimgs/land2.png","/landsimgs/land3
 const LangCtx = createContext('en');
 const T = {
   en:{
-    tabAccount:"My Account",tabNft:"My NFT",tabShop:"Shop",tabCalc:"Calculator",tabHow:"How It Works",tabAdmin:"⚙️ Admin",tabDungeon:"⚔️ Dungeons",
-    marketplace:"🏪 Marketplace",marketplaceSoon:"SOON",marketplaceNotify:"Marketplace coming soon! Stay tuned.",
+    tabAccount:"My Account",tabNft:"My NFT",tabShop:"Shop",tabCalc:"Calculator",tabHow:"How It Works",tabAdmin:"⚙️",tabDungeon:"⚔️ Dungeons",tabMarket:"🏪 Market",
+    mktTitle:"Land Marketplace",mktFilterAll:"All",mktSortCheap:"Cheapest First",mktSortExp:"Most Expensive",mktBuy:"Buy",mktBuying:"Buying...",mktList:"List for Sale",mktListing:"Listing...",mktCancel:"Cancel",mktCancelling:"Cancelling...",mktPrice:"Price (DC)",mktFee:"10% marketplace fee",mktListTitle:"List Land for Sale",mktNoListings:"No lands listed for sale.",mktOwnListing:"Your listing",mktSold:"Sold",mktUnassignFirst:"Unassign all miners before listing.",mktAlreadyListed:"Already listed",
     connect:"Connect",connecting:"Connecting...",connectWallet:"CONNECT WALLET",connectingWallet:"CONNECTING...",
     connectSubtitle:"Mine. Earn. Withdraw. Powered by Tempo.",connectRequires:"Requires MetaMask + Tempo Mainnet",disconnectTitle:"Disconnect wallet",
     langBtn:"🇨🇳 中文",
@@ -233,8 +233,9 @@ const T = {
     howS2WereMinerWarn:"The Weremole Lair has only a 10% win chance. Each failed attempt costs 400 DC (the map) and 30 HP. Repair your miner between attempts if needed.",
   },
   zh:{
-    tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️ 管理",tabDungeon:"⚔️ 地下城",
+    tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️",tabDungeon:"⚔️ 地下城",tabMarket:"🏪 Market",
     marketplace:"🏪 市场",marketplaceSoon:"即将上线",marketplaceNotify:"市场即将上线！敬请期待。",
+    mktTitle:"土地市场",mktFilterAll:"全部",mktSortCheap:"最便宜",mktSortExp:"最贵",mktBuy:"购买",mktBuying:"购买中...",mktList:"出售",mktListing:"挂单中...",mktCancel:"取消",mktCancelling:"取消中...",mktPrice:"价格 (DC)",mktFee:"10% 手续费",mktListTitle:"挂单出售",mktNoListings:"暂无土地出售。",mktOwnListing:"我的挂单",mktSold:"已售出",mktUnassignFirst:"请先移除所有矿工。",mktAlreadyListed:"已挂单",
     connect:"连接钱包",connecting:"连接中...",connectWallet:"连接钱包",connectingWallet:"连接中...",
     connectSubtitle:"挖矿。赚取。提现。由 Tempo 驱动。",connectRequires:"需要 MetaMask + Tempo 主网",disconnectTitle:"断开钱包",
     langBtn:"🇺🇸 EN",
@@ -1789,6 +1790,15 @@ export default function DigMinerApp(){
   const[s2Loading,setS2Loading]=useState("");
   const[assigningLandId,setAssigningLandId]=useState(null);
   const[landFilter,setLandFilter]=useState("All");
+  const[mktListings,setMktListings]=useState([]);
+  const[mktFilter,setMktFilter]=useState("All");
+  const[mktSort,setMktSort]=useState("asc");
+  const[mktLoading,setMktLoading]=useState("");
+  const[mktListPrice,setMktListPrice]=useState("");
+  const[mktListLandId,setMktListLandId]=useState(null);
+  const[mktInvOpen,setMktInvOpen]=useState(true);
+  const[mktListingsOpen,setMktListingsOpen]=useState(true);
+  const[mktConfirm,setMktConfirm]=useState(null); // {type:'buy'|'list', label, onConfirm}
   const[landReveal,setLandReveal]=useState(null);
   const[autoPickaxe,setAutoPickaxe]=useState({owned:false,active:false});
   const[autoPickaxesMinted,setAutoPickaxesMinted]=useState(0);
@@ -1869,6 +1879,70 @@ export default function DigMinerApp(){
       const[bal,dec]=await Promise.all([token.balanceOf(address),token.decimals()]);
       setPathUSDBalance(parseFloat(ethers.formatUnits(bal,dec)).toFixed(4));
     }catch(e){console.error("pathUSD balance error:",e.message);}
+  };
+
+  const loadMarketplace=useCallback(async()=>{
+    try{
+      const rarityParam=mktFilter==="All"?"":LAND_RARITIES.findIndex(r=>r.name===mktFilter);
+      const url=`/api/marketplace/listings?sort=${mktSort}${mktFilter!=="All"?`&rarity=${rarityParam}`:""}`;
+      const [mktRes, landRes]=await Promise.all([
+        fetch(url),
+        wallet?fetch(`/api/land/${wallet}`):Promise.resolve(null),
+      ]);
+      if(mktRes.ok){const d=await mktRes.json();setMktListings(d.listings||[]);}
+      if(landRes?.ok){const d=await landRes.json();setLands(d.lands||[]);}
+    }catch(_){}
+  },[mktFilter,mktSort,wallet]);
+
+  // Load marketplace when market or nft tab opens (nft needs isListed badge)
+  useEffect(()=>{
+    if(tab==="market"||tab==="nft") loadMarketplace();
+  },[tab,loadMarketplace]);
+
+  const doListLand=async(landId,price)=>{
+    if(!price||price<1) return notify("Enter a valid price.",false);
+    setMktLoading("list_"+landId);
+    try{
+      const res=await authFetch("/api/marketplace/list",{method:"POST",body:JSON.stringify({wallet,landId,priceDigcoin:parseInt(price)})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify("Land listed for sale!");
+      setMktListLandId(null);setMktListPrice("");
+      const ld=await fetch(`/api/land/${wallet}`).then(r=>r.ok?r.json():{lands:[]});
+      setLands(ld.lands||[]);
+      loadMarketplace();
+    }catch(_){notify("Error listing land.",false);}
+    finally{setMktLoading("");}
+  };
+
+  const doCancelListing=async(listingId)=>{
+    setMktLoading("cancel_"+listingId);
+    try{
+      const res=await authFetch(`/api/marketplace/cancel/${listingId}`,{method:"DELETE",body:JSON.stringify({wallet})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify("Listing cancelled.");
+      loadMarketplace();
+      const ld=await fetch(`/api/land/${wallet}`).then(r=>r.ok?r.json():{lands:[]});
+      setLands(ld.lands||[]);
+    }catch(_){notify("Error cancelling.",false);}
+    finally{setMktLoading("");}
+  };
+
+  const doBuyLand=async(listingId)=>{
+    setMktLoading("buy_"+listingId);
+    try{
+      const res=await authFetch(`/api/marketplace/buy/${listingId}`,{method:"POST",body:JSON.stringify({wallet})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify(`Land purchased! Paid ${d.price} DC (fee: ${d.fee} DC)`);
+      loadMarketplace();
+      const ld=await fetch(`/api/land/${wallet}`).then(r=>r.ok?r.json():{lands:[]});
+      setLands(ld.lands||[]);
+      const pd=await fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{});
+      if(pd.player) setDigcoin(pd.player.digcoinBalance);
+    }catch(_){notify("Error buying land.",false);}
+    finally{setMktLoading("");}
   };
 
   const loadDungeonInventory=async(address)=>{
@@ -2460,8 +2534,8 @@ export default function DigMinerApp(){
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
   const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):filter==="Season 2"?miners.filter(m=>m.season===2):filter==="Weremole"?miners.filter(m=>m.season===3):miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length,"Season 2":miners.filter(m=>m.season===2).length,"Weremole":miners.filter(m=>m.season===3).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
-  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon"};
+  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabMarket,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
+  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon",[tx.tabMarket]:"market"};
   const[menuOpen,setMenuOpen]=useState(false);
 
   if(window.location.pathname==='/patchnotes') return <PatchNotes/>;
@@ -2570,6 +2644,23 @@ export default function DigMinerApp(){
     {revealing&&<BoxReveal miner={revealing} onClose={closeReveal}/>}
     {fuseReveal&&<BoxReveal miner={fuseReveal} onClose={closeFuseReveal} isFuse/>}
     {mapReveal&&<MapReveal qty={mapReveal.qty} dungeon={mapReveal.dungeon} onClose={()=>setMapReveal(null)}/>}
+    {mktConfirm&&(
+      <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setMktConfirm(null)}>
+        <div style={{background:"linear-gradient(135deg,#1a1200,#0d0900)",border:"2px solid #FFD600",borderRadius:12,padding:"28px 24px",maxWidth:340,width:"100%",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+          <div style={{fontSize:28,marginBottom:12}}>{mktConfirm.type==="buy"?"🛒":"🏷️"}</div>
+          <div style={{fontSize:15,fontWeight:800,color:"#FFD600",marginBottom:8}}>{mktConfirm.label}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginBottom:20}}>{mktConfirm.sublabel}</div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setMktConfirm(null)} style={{flex:1,padding:"10px",background:"transparent",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,color:"rgba(255,255,255,.5)",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              Cancel
+            </button>
+            <button onClick={()=>{const fn=mktConfirm.onConfirm;setMktConfirm(null);fn();}} style={{flex:1,padding:"10px",background:"linear-gradient(to bottom,#3d3000,#1e1800)",border:"2px solid #FFD600",borderRadius:8,color:"#FFD600",fontSize:12,fontWeight:800,cursor:"pointer"}}>
+              {mktConfirm.type==="buy"?"✅ Confirm Buy":"✅ Confirm List"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     {showRoadmap&&<RoadmapModal onClose={()=>setShowRoadmap(false)}/>}
 
     {/* HEADER */}
@@ -2584,7 +2675,6 @@ export default function DigMinerApp(){
       <div className="nav-tabs">
         {TABS.map(n=><button key={n} onClick={()=>setTab(tabMap[n])} className={"osrs-btn"+(tab===tabMap[n]?" active":"")}>{n}</button>)}
         <a href="/patchnotes" className="osrs-btn">📋 Patch Notes</a>
-        <button onClick={()=>notify(tx.marketplaceNotify,true)} className="osrs-btn" style={{color:"rgba(255,214,0,.4)",borderStyle:"dashed",borderColor:"#5a4008"}}>{tx.marketplace} <span style={{fontSize:8,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 4px",marginLeft:4,fontWeight:700}}>{tx.marketplaceSoon}</span></button>
       </div>
 
       {/* Right: wallet + hamburger */}
@@ -2606,7 +2696,6 @@ export default function DigMinerApp(){
     <div className={"mobile-menu"+(menuOpen?" open":"")}>
       {TABS.map(n=><button key={n} onClick={()=>{setTab(tabMap[n]);setMenuOpen(false);}} className={"osrs-btn"+(tab===tabMap[n]?" active":"")}>{n}</button>)}
       <a href="/patchnotes" className="osrs-btn">📋 Patch Notes</a>
-      <button onClick={()=>{notify(tx.marketplaceNotify,true);setMenuOpen(false);}} className="osrs-btn" style={{color:"rgba(255,214,0,.5)",borderStyle:"dashed"}}>{tx.marketplace} <span style={{fontSize:9,background:"#FF9800",color:"#fff",borderRadius:3,padding:"1px 5px",marginLeft:4}}>{tx.marketplaceSoon}</span></button>
       <button onClick={toggleLang} className="osrs-btn" style={{marginTop:4}}>{tx.langBtn}</button>
     </div>
 
@@ -2919,12 +3008,210 @@ export default function DigMinerApp(){
                           </div>
                         )}
                       </div>
+                      {/* List for Sale */}
+                      <div style={{padding:"0 12px 12px"}}>
+                        {mktListings.some(l=>l.landId===land.id&&l.seller?.toLowerCase()===wallet?.toLowerCase())?(
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 8px",background:"rgba(255,214,0,.08)",border:"1px solid rgba(255,214,0,.3)",borderRadius:6}}>
+                            <span style={{fontSize:10,color:"#FFD600",fontWeight:700}}>🏷️ Listed for sale</span>
+                            <button onClick={()=>setTab("market")} style={{fontSize:9,padding:"2px 8px",background:"transparent",border:"1px solid rgba(255,214,0,.4)",borderRadius:4,color:"#FFD600",cursor:"pointer"}}>View →</button>
+                          </div>
+                        ):mktListLandId===land.id?(
+                          <div style={{display:"flex",flexDirection:"column",gap:6,background:"rgba(0,0,0,.3)",borderRadius:8,padding:10,border:"1px solid rgba(255,214,0,.3)"}}>
+                            <div style={{fontSize:10,color:"#FFD600",fontWeight:700}}>{tx.mktListTitle}</div>
+                            <div style={{fontSize:9,color:"rgba(255,255,255,.4)"}}>{tx.mktFee}</div>
+                            <input type="number" min="1" value={mktListPrice} onChange={e=>setMktListPrice(e.target.value)} placeholder={tx.mktPrice} style={{padding:"6px 8px",borderRadius:6,border:"1px solid rgba(255,214,0,.4)",background:"rgba(0,0,0,.4)",color:"#FFD600",fontSize:12,fontWeight:700,outline:"none"}}/>
+                            <div style={{display:"flex",gap:6}}>
+                              <button disabled={!!mktLoading} onClick={()=>setMktConfirm({type:"list",label:`List this land for ${parseInt(mktListPrice)||0} DC?`,sublabel:"10% marketplace fee applies on sale.",onConfirm:()=>doListLand(land.id,mktListPrice)})} style={{flex:1,padding:"6px",background:"linear-gradient(to bottom,#3d3000,#1e1800)",border:"1px solid #FFD600",borderRadius:6,color:"#FFD600",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                                {mktLoading==="list_"+land.id?tx.mktListing:tx.mktList}
+                              </button>
+                              <button onClick={()=>{setMktListLandId(null);setMktListPrice("");}} style={{padding:"6px 10px",background:"transparent",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,color:"rgba(255,255,255,.4)",fontSize:11,cursor:"pointer"}}>✕</button>
+                            </div>
+                          </div>
+                        ):(
+                          <button disabled={land.assignedMiners.length>0||!!mktLoading} onClick={()=>{setMktListLandId(land.id);setMktListPrice("");}}
+                            style={{width:"100%",padding:"6px",background:land.assignedMiners.length>0?"rgba(255,255,255,.03)":"rgba(255,214,0,.08)",border:`1px solid ${land.assignedMiners.length>0?"rgba(255,255,255,.1)":"rgba(255,214,0,.3)"}`,borderRadius:6,color:land.assignedMiners.length>0?"rgba(255,255,255,.2)":"#FFD600",fontSize:10,fontWeight:700,cursor:land.assignedMiners.length>0?"not-allowed":"pointer"}}
+                            title={land.assignedMiners.length>0?tx.mktUnassignFirst:""}>
+                            🏷️ {tx.mktList}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
           </div>
+        </div>}
+
+
+        {/* MARKETPLACE */}
+        {tab==="market"&&<div style={{animation:"fadeIn .3s ease"}}>
+          <div style={{background:"linear-gradient(to bottom,#1a1200,#0d0900)",borderRadius:12,overflow:"hidden",marginBottom:16}}>
+            <img src="/Dungeons/dungeonpfp.jpeg" alt="Marketplace" style={{width:"100%",height:140,objectFit:"cover",objectPosition:"center 20%",opacity:.5}}/>
+            <div style={{padding:"16px 20px 0",marginTop:-60,position:"relative"}}>
+              <div style={{fontSize:24,fontWeight:900,color:"#FFD600",fontFamily:"Georgia,serif",textShadow:"0 2px 12px rgba(0,0,0,.9)"}}>{tx.mktTitle}</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginBottom:12}}>Buy and sell lands • 10% fee on each sale</div>
+              <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:16}}>
+                {[
+                  ["💰 Volume","mktVol",(stats.marketplaceVolume||0).toLocaleString()+" DC"],
+                  ["🤝 Sales","mktSales",(stats.marketplaceSales||0)+" trades"],
+                  ["🏷️ Listed","mktActive",mktListings.length+" lands"],
+                ].map(([emoji,key,val])=>(
+                  <div key={key} style={{background:"rgba(0,0,0,.3)",borderRadius:8,padding:"8px 14px",border:"1px solid rgba(255,214,0,.15)"}}>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:3}}>{emoji}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:"#FFD600",fontFamily:"Georgia,serif"}}>{val}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16,alignItems:"center"}}>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+              {["All",...LAND_RARITIES.map(r=>r.name)].map(f=>{
+                const lr=LAND_RARITIES.find(r=>r.name===f);
+                const active=mktFilter===f;
+                return(
+                  <button key={f} onClick={()=>setMktFilter(f)} style={{padding:"4px 12px",borderRadius:20,border:`1px solid ${active?(lr?.color||"#FFD600"):"rgba(255,255,255,.15)"}`,background:active?`${lr?.color||"#FFD600"}22`:"transparent",color:active?(lr?.color||"#FFD600"):"rgba(255,255,255,.4)",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{marginLeft:"auto",display:"flex",gap:4}}>
+              {[["asc",tx.mktSortCheap],["desc",tx.mktSortExp]].map(([v,l])=>(
+                <button key={v} onClick={()=>setMktSort(v)} style={{padding:"4px 12px",borderRadius:20,border:`1px solid ${mktSort===v?"#FFD600":"rgba(255,255,255,.15)"}`,background:mktSort===v?"rgba(255,214,0,.15)":"transparent",color:mktSort===v?"#FFD600":"rgba(255,255,255,.4)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{l}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* My Inventory */}
+          {wallet&&lands.length>0&&(
+            <div style={{marginBottom:24}}>
+              <div onClick={()=>setMktInvOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:8,marginBottom:mktInvOpen?10:0,cursor:"pointer",userSelect:"none"}}>
+                <span style={{fontSize:14}}>🌍</span>
+                <span style={{fontSize:13,fontWeight:800,color:"#fff"}}>My Inventory</span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,.35)",background:"rgba(255,255,255,.08)",padding:"2px 8px",borderRadius:10}}>{lands.length}</span>
+                <span style={{marginLeft:"auto",fontSize:11,color:"rgba(255,255,255,.4)"}}>{mktInvOpen?"▲":"▼"}</span>
+              </div>
+              {mktInvOpen&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+                {lands.map(land=>{
+                  const lr=LAND_RARITIES[land.rarityId]||LAND_RARITIES[0];
+                  const hasMiners=land.assignedMiners?.length>0;
+                  const myActiveListing=mktListings.find(l=>l.landId===land.id&&l.seller?.toLowerCase()===wallet?.toLowerCase());
+                  const isListed=!!myActiveListing;
+                  const isListingThis=mktListLandId===land.id;
+                  return(
+                    <div key={land.id} style={{background:`linear-gradient(135deg,${lr.bg},#0d0d1a)`,borderRadius:10,border:`2px solid ${isListed?"#FFD600":lr.color+"44"}`,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+                      <div style={{background:`${lr.color}22`,padding:"8px 12px",borderBottom:`1px solid ${lr.color}22`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <div style={{color:lr.color,fontWeight:800,fontSize:11}}>{lr.name} Land</div>
+                          <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>#{land.id}</div>
+                        </div>
+                        {isListed&&<span style={{fontSize:9,background:"rgba(255,214,0,.2)",color:"#FFD600",padding:"2px 7px",borderRadius:10,fontWeight:700,border:"1px solid rgba(255,214,0,.4)"}}>Listed</span>}
+                      </div>
+                      <div style={{padding:"8px 12px",display:"flex",gap:12,fontSize:10}}>
+                        <span style={{color:"#4CAF50",fontWeight:700}}>+{land.boostPercent}%</span>
+                        <span style={{color:"rgba(255,255,255,.4)"}}>{land.minerSlots} slots</span>
+                        <span style={{color:"rgba(255,255,255,.4)"}}>{land.assignedMiners?.length||0} miners</span>
+                      </div>
+                      <div style={{padding:"0 10px 10px",marginTop:"auto"}}>
+                        {isListed?(
+                          <button disabled={!!mktLoading} onClick={()=>doCancelListing(myActiveListing.id)} style={{width:"100%",padding:"6px",background:"rgba(239,83,80,.1)",border:"1px solid #EF5350",borderRadius:6,color:"#EF5350",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                            {mktLoading===`cancel_${myActiveListing.id}`?tx.mktCancelling:tx.mktCancel}
+                          </button>
+                        ):isListingThis?(
+                          <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                            <input type="number" min="1" value={mktListPrice} onChange={e=>setMktListPrice(e.target.value)} placeholder="Price in DC" style={{padding:"5px 8px",borderRadius:6,border:"1px solid rgba(255,214,0,.4)",background:"rgba(0,0,0,.4)",color:"#FFD600",fontSize:11,fontWeight:700,outline:"none",width:"100%"}}/>
+                            <div style={{fontSize:9,color:"rgba(255,255,255,.3)",textAlign:"center"}}>{tx.mktFee}</div>
+                            <div style={{display:"flex",gap:5}}>
+                              <button disabled={!!mktLoading} onClick={()=>setMktConfirm({type:"list",label:`List this land for ${parseInt(mktListPrice)||0} DC?`,sublabel:"10% marketplace fee applies on sale.",onConfirm:()=>doListLand(land.id,mktListPrice)})} style={{flex:1,padding:"5px",background:"linear-gradient(to bottom,#3d3000,#1e1800)",border:"1px solid #FFD600",borderRadius:6,color:"#FFD600",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                                {mktLoading==="list_"+land.id?tx.mktListing:"Confirm"}
+                              </button>
+                              <button onClick={()=>{setMktListLandId(null);setMktListPrice("");}} style={{padding:"5px 8px",background:"transparent",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,color:"rgba(255,255,255,.4)",fontSize:10,cursor:"pointer"}}>✕</button>
+                            </div>
+                          </div>
+                        ):(
+                          <button disabled={hasMiners||!!mktLoading} onClick={()=>{setMktListLandId(land.id);setMktListPrice("");}}
+                            title={hasMiners?tx.mktUnassignFirst:""}
+                            style={{width:"100%",padding:"6px",background:hasMiners?"rgba(255,255,255,.03)":"rgba(255,214,0,.08)",border:`1px solid ${hasMiners?"rgba(255,255,255,.1)":"rgba(255,214,0,.3)"}`,borderRadius:6,color:hasMiners?"rgba(255,255,255,.2)":"#FFD600",fontSize:10,fontWeight:700,cursor:hasMiners?"not-allowed":"pointer"}}>
+                            🏷️ {hasMiners?"Unassign miners first":tx.mktList}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>}
+              <div style={{height:1,background:"rgba(255,255,255,.08)",margin:`${mktInvOpen?20:10}px 0`}}/>
+            </div>
+          )}
+
+          {/* Listings grid */}
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:mktListingsOpen?14:0}}>
+            <div onClick={()=>setMktListingsOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:8,flex:1,cursor:"pointer",userSelect:"none"}}>
+              <span style={{fontSize:14}}>🏷️</span>
+              <span style={{fontSize:13,fontWeight:800,color:"#fff"}}>Listings</span>
+              <span style={{fontSize:10,color:"rgba(255,255,255,.35)",background:"rgba(255,255,255,.08)",padding:"2px 8px",borderRadius:10}}>{mktListings.length}</span>
+              <span style={{marginLeft:"auto",fontSize:11,color:"rgba(255,255,255,.4)"}}>{mktListingsOpen?"▲":"▼"}</span>
+            </div>
+            <button onClick={e=>{e.stopPropagation();loadMarketplace();}} disabled={!!mktLoading} style={{padding:"4px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,color:"rgba(255,255,255,.5)",fontSize:10,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+              🔄 Refresh
+            </button>
+          </div>
+          {mktListingsOpen&&(mktListings.length===0?(
+            <div style={{textAlign:"center",padding:40,background:"rgba(255,255,255,.04)",borderRadius:12,border:"1px dashed rgba(255,255,255,.1)"}}>
+              <div style={{fontSize:32,marginBottom:8}}>🏷️</div>
+              <div style={{color:"rgba(255,255,255,.35)",fontSize:12}}>{tx.mktNoListings}</div>
+            </div>
+          ):(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12}}>
+              {mktListings.map(l=>{
+                const lr=LAND_RARITIES[l.rarityId]||LAND_RARITIES[0];
+                const isOwn=l.seller?.toLowerCase()===wallet?.toLowerCase();
+                const isBuying=mktLoading==="buy_"+l.id;
+                const isCancelling=mktLoading==="cancel_"+l.id;
+                return(
+                  <div key={l.id} style={{background:`linear-gradient(135deg,${lr.bg},#0d0d1a)`,borderRadius:10,border:`2px solid ${lr.color}44`,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+                    <div style={{background:`${lr.color}22`,padding:"10px 12px",borderBottom:`1px solid ${lr.color}33`}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <div style={{color:lr.color,fontWeight:800,fontSize:12}}>{l.rarityName} Land</div>
+                        {isOwn&&<span style={{fontSize:9,background:`${lr.color}33`,color:lr.color,padding:"2px 6px",borderRadius:10,fontWeight:700}}>{tx.mktOwnListing}</span>}
+                      </div>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,.35)",marginTop:2}}>#{l.landId}</div>
+                    </div>
+                    <div style={{padding:"10px 12px",display:"flex",flexDirection:"column",gap:4,flex:1}}>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>Boost</span>
+                        <span style={{fontSize:10,fontWeight:700,color:"#4CAF50"}}>+{l.boostPercent}%</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>Miner Slots</span>
+                        <span style={{fontSize:10,fontWeight:700,color:"#e8d8b0"}}>{l.minerSlots}</span>
+                      </div>
+                      <div style={{marginTop:6,padding:"8px",background:"rgba(0,0,0,.3)",borderRadius:6,textAlign:"center"}}>
+                        <div style={{fontSize:18,fontWeight:900,color:"#FFD600",fontFamily:"Georgia,serif"}}>{l.priceDigcoin.toLocaleString()} DC</div>
+                        <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>≈ {(l.priceDigcoin/DIG_RATE).toFixed(2)} pathUSD</div>
+                      </div>
+                    </div>
+                    <div style={{padding:"0 12px 12px"}}>
+                      {isOwn?(
+                        <button disabled={!!mktLoading} onClick={()=>doCancelListing(l.id)} style={{width:"100%",padding:"7px",background:"rgba(239,83,80,.1)",border:"1px solid #EF5350",borderRadius:6,color:"#EF5350",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          {isCancelling?tx.mktCancelling:tx.mktCancel}
+                        </button>
+                      ):(
+                        <button disabled={!!mktLoading||digcoin<l.priceDigcoin} onClick={()=>setMktConfirm({type:"buy",label:`Buy this ${l.rarityName} Land for ${l.priceDigcoin.toLocaleString()} DC?`,sublabel:`+${l.boostPercent}% boost · ${l.minerSlots} slots`,onConfirm:()=>doBuyLand(l.id)})}
+                          style={{width:"100%",padding:"7px",background:digcoin>=l.priceDigcoin?"linear-gradient(to bottom,#3d3000,#1e1800)":"rgba(255,255,255,.04)",border:`1px solid ${digcoin>=l.priceDigcoin?"#FFD600":"rgba(255,255,255,.1)"}`,borderRadius:6,color:digcoin>=l.priceDigcoin?"#FFD600":"rgba(255,255,255,.2)",fontSize:11,fontWeight:700,cursor:digcoin>=l.priceDigcoin?"pointer":"not-allowed"}}>
+                          {isBuying?tx.mktBuying:`${tx.mktBuy} — ${l.priceDigcoin.toLocaleString()} DC`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>}
 
         {/* DUNGEONS */}
