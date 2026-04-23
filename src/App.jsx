@@ -11,6 +11,7 @@ const RARITIES = [
   { id:5, name:"Mythic",    chance:"2%",  dailyMin:36, dailyMax:42, nftAge:11, repair:1.50, color:"#9C27B0", bg:"#2a1a3a", maxHp:350 },
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
+const STAKE_TIERS=[{lockDays:15,apy:50},{lockDays:30,apy:120},{lockDays:90,apy:300}];
 const S2_RARITIES = [
   { id:0, name:"Common",    chance:"30%", dailyMin:38, dailyMax:42, nftAge:13, repair:0.40, color:"#9E9E9E", bg:"#3a3a3a", maxHp:100 },
   { id:1, name:"UnCommon",  chance:"30%", dailyMin:43, dailyMax:47, nftAge:12, repair:0.65, color:"#4CAF50", bg:"#1b3a1b", maxHp:125 },
@@ -46,7 +47,8 @@ const LAND_IMGS=["/landsimgs/land1.png","/landsimgs/land2.png","/landsimgs/land3
 const LangCtx = createContext('en');
 const T = {
   en:{
-    tabAccount:"My Account",tabNft:"My NFT",tabShop:"Shop",tabCalc:"Calculator",tabHow:"How It Works",tabAdmin:"⚙️",tabDungeon:"⚔️ Dungeons",tabMarket:"🏪 Market",
+    tabAccount:"My Account",tabNft:"My NFT",tabShop:"Shop",tabCalc:"Calculator",tabHow:"How It Works",tabAdmin:"⚙️",tabDungeon:"⚔️ Dungeons",tabMarket:"🏪 Market",tabStake:"💎 Stake",
+    stakeTitle:"Staking",stakeLock:"Lock DC",stakeUnlocked:"✅ Unlocked",stakeClaim:"Claim",stakeUnstake:"Unstake",stakeLocking:"Locking...",stakeTotalLocked:"Total Locked",stakeLeaderboard:"🏆 Leaderboard",stakeNoActive:"No active stakes yet.",stakeRank:"Rank",stakeWallet:"Wallet",stakeAmountCol:"Total Staked",
     mktTitle:"Land Marketplace",mktFilterAll:"All",mktSortCheap:"Cheapest First",mktSortExp:"Most Expensive",mktBuy:"Buy",mktBuying:"Buying...",mktList:"List for Sale",mktListing:"Listing...",mktCancel:"Cancel",mktCancelling:"Cancelling...",mktPrice:"Price (DC)",mktFee:"10% marketplace fee",mktListTitle:"List Land for Sale",mktNoListings:"No lands listed for sale.",mktOwnListing:"Your listing",mktSold:"Sold",mktUnassignFirst:"Unassign all miners before listing.",mktAlreadyListed:"Already listed",
     connect:"Connect",connecting:"Connecting...",connectWallet:"CONNECT WALLET",connectingWallet:"CONNECTING...",
     connectSubtitle:"Mine. Earn. Withdraw. Powered by Tempo.",connectRequires:"Requires MetaMask + Tempo Mainnet",disconnectTitle:"Disconnect wallet",
@@ -233,7 +235,8 @@ const T = {
     howS2WereMinerWarn:"The Weremole Lair has only a 10% win chance. Each failed attempt costs 400 DC (the map) and 30 HP. Repair your miner between attempts if needed.",
   },
   zh:{
-    tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️",tabDungeon:"⚔️ 地下城",tabMarket:"🏪 Market",
+    tabAccount:"我的账户",tabNft:"我的NFT",tabShop:"商店",tabCalc:"计算器",tabHow:"玩法说明",tabAdmin:"⚙️",tabDungeon:"⚔️ 地下城",tabMarket:"🏪 Market",tabStake:"💎 质押",
+    stakeTitle:"质押",stakeLock:"锁定DC",stakeUnlocked:"✅ 已解锁",stakeClaim:"领取",stakeUnstake:"解除质押",stakeLocking:"锁定中...",stakeTotalLocked:"总锁定",stakeLeaderboard:"🏆 排行榜",stakeNoActive:"暂无质押。",stakeRank:"排名",stakeWallet:"钱包",stakeAmountCol:"质押总量",
     marketplace:"🏪 市场",marketplaceSoon:"即将上线",marketplaceNotify:"市场即将上线！敬请期待。",
     mktTitle:"土地市场",mktFilterAll:"全部",mktSortCheap:"最便宜",mktSortExp:"最贵",mktBuy:"购买",mktBuying:"购买中...",mktList:"出售",mktListing:"挂单中...",mktCancel:"取消",mktCancelling:"取消中...",mktPrice:"价格 (DC)",mktFee:"10% 手续费",mktListTitle:"挂单出售",mktNoListings:"暂无土地出售。",mktOwnListing:"我的挂单",mktSold:"已售出",mktUnassignFirst:"请先移除所有矿工。",mktAlreadyListed:"已挂单",
     connect:"连接钱包",connecting:"连接中...",connectWallet:"连接钱包",connectingWallet:"连接中...",
@@ -1422,7 +1425,7 @@ function RoadmapModal({onClose}){
         {done:true, text:"New Miner designs & exclusive seasonal rarities"},
         {done:true, text:"Marketplace"},
         {done:true, text:"Lands — own a plot to boost your daily DIGCOIN production"},
-        {done:false, text:"Leaderboard — top earners & top fusers"},
+        {done:true, text:"Stake system — airdrop points"},
       ]
     },
     {
@@ -1807,6 +1810,12 @@ export default function DigMinerApp(){
   const[fuseReveal,setFuseReveal]=useState(null);
   const[showRoadmap,setShowRoadmap]=useState(false);
   const[lands,setLands]=useState([]);
+  const[stakes,setStakes]=useState([]);
+  const[stakeLoading,setStakeLoading]=useState("");
+  const[stakeAmount,setStakeAmount]=useState("");
+  const[stakeLockDays,setStakeLockDays]=useState(15);
+  const[stakeLeaderboard,setStakeLeaderboard]=useState([]);
+  const[stakeTotalPoints,setStakeTotalPoints]=useState(0);
   const[landSaleStartMs,setLandSaleStartMs]=useState(null);
   const[landsMinted,setLandsMinted]=useState(0);
   const[landMaxSupply,setLandMaxSupply]=useState(500);
@@ -1926,6 +1935,79 @@ export default function DigMinerApp(){
     if(tab==="market"||tab==="nft") loadMarketplace();
   },[tab,loadMarketplace]);
 
+  const loadStakes=useCallback(async()=>{
+    try{
+      const [stakeRes, lbRes] = await Promise.all([
+        wallet ? fetch(`/api/stake/${wallet}`) : Promise.resolve(null),
+        fetch('/api/stake/leaderboard'),
+      ]);
+      if(stakeRes?.ok){const d=await stakeRes.json();setStakes(d.stakes||[]);setStakeTotalPoints(d.totalPoints||0);}
+      if(lbRes.ok){const d=await lbRes.json();setStakeLeaderboard(d.leaderboard||[]);}
+    }catch(_){}
+  },[wallet]);
+
+  useEffect(()=>{
+    if(tab==="stake") loadStakes();
+  },[tab,loadStakes]);
+
+  const doStakeDeposit=async()=>{
+    const amount=parseInt(stakeAmount);
+    if(!amount||amount<100) return notify("Minimum stake is 100 DC.",false);
+    setStakeLoading("deposit");
+    try{
+      const res=await authFetch("/api/stake/deposit",{method:"POST",body:JSON.stringify({wallet,amountDigcoin:amount,lockDays:stakeLockDays})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify(`${amount} DC locked for ${stakeLockDays} days!`);
+      setStakeAmount("");
+      const [sd, pd, lb] = await Promise.all([
+        fetch(`/api/stake/${wallet}`).then(r=>r.ok?r.json():{stakes:[]}),
+        fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}),
+        fetch('/api/stake/leaderboard').then(r=>r.ok?r.json():{leaderboard:[]}),
+      ]);
+      setStakes(sd.stakes||[]);setStakeTotalPoints(sd.totalPoints||0);
+      setStakeLeaderboard(lb.leaderboard||[]);
+      if(pd.player) setDigcoin(pd.player.digcoinBalance);
+    }catch(_){notify("Error staking.",false);}
+    finally{setStakeLoading("");}
+  };
+
+  const doStakeClaim=async(stakeId)=>{
+    setStakeLoading("claim_"+stakeId);
+    try{
+      const res=await authFetch(`/api/stake/claim/${stakeId}`,{method:"POST",body:JSON.stringify({wallet})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify(`+${d.rewardClaimed} DC claimed from stake!`);
+      const [sd, pd] = await Promise.all([
+        fetch(`/api/stake/${wallet}`).then(r=>r.ok?r.json():{stakes:[]}),
+        fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}),
+      ]);
+      setStakes(sd.stakes||[]);setStakeTotalPoints(sd.totalPoints||0);
+      if(pd.player) setDigcoin(pd.player.digcoinBalance);
+    }catch(_){notify("Error claiming.",false);}
+    finally{setStakeLoading("");}
+  };
+
+  const doStakeWithdraw=async(stakeId)=>{
+    setStakeLoading("withdraw_"+stakeId);
+    try{
+      const res=await authFetch(`/api/stake/withdraw/${stakeId}`,{method:"POST",body:JSON.stringify({wallet})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify(`Unstaked! Got ${d.principalReturned} DC + ${d.rewardClaimed} DC rewards.`);
+      const [sd, pd, lb] = await Promise.all([
+        fetch(`/api/stake/${wallet}`).then(r=>r.ok?r.json():{stakes:[]}),
+        fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}),
+        fetch('/api/stake/leaderboard').then(r=>r.ok?r.json():{leaderboard:[]}),
+      ]);
+      setStakes(sd.stakes||[]);setStakeTotalPoints(sd.totalPoints||0);
+      setStakeLeaderboard(lb.leaderboard||[]);
+      if(pd.player) setDigcoin(pd.player.digcoinBalance);
+    }catch(_){notify("Error withdrawing.",false);}
+    finally{setStakeLoading("");}
+  };
+
   const doListLand=async(landId,price)=>{
     if(!price||price<1) return notify("Enter a valid price.",false);
     setMktLoading("list_"+landId);
@@ -1994,6 +2076,7 @@ export default function DigMinerApp(){
       if(data.autoPickaxe) setAutoPickaxe(data.autoPickaxe);
       setReferralLink(`${window.location.origin}?ref=${address}`);
       try{const ld=await fetch(`/api/land/${address}`).then(r=>r.ok?r.json():{lands:[]});setLands(ld.lands||[]);}catch(_){}
+      try{const sd=await fetch(`/api/stake/${address}`).then(r=>r.ok?r.json():{stakes:[]});setStakes(sd.stakes||[]);}catch(_){}
       await loadDungeonInventory(address);
       await loadPathUSDBalance(address);
       // Check withdraw cooldown — use stored token directly (history endpoint requires auth)
@@ -2561,8 +2644,8 @@ export default function DigMinerApp(){
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
   const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):filter==="Season 2"?miners.filter(m=>m.season===2):filter==="Weremole"?miners.filter(m=>m.season===3):miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length,"Season 2":miners.filter(m=>m.season===2).length,"Weremole":miners.filter(m=>m.season===3).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabMarket,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
-  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon",[tx.tabMarket]:"market"};
+  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabMarket,tx.tabStake,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
+  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon",[tx.tabMarket]:"market",[tx.tabStake]:"stake"};
   const[menuOpen,setMenuOpen]=useState(false);
 
   if(window.location.pathname==='/patchnotes') return <PatchNotes/>;
@@ -2840,6 +2923,80 @@ export default function DigMinerApp(){
                 ))}</tbody>
               </table>}
           </div>
+
+          {/* STAKING MOVED TO STAKE TAB */}
+          <div className="wp-dark" style={{marginTop:16,display:"none"}}>
+          <div className="wp-in">
+            <h3 style={{fontSize:13,fontWeight:800,color:"#1a0800",marginBottom:14}}>💎 Staking</h3>
+
+            {/* New stake form */}
+            <div style={{background:"rgba(255,255,255,.5)",borderRadius:10,padding:"14px 16px",border:"1px solid #c8a870",marginBottom:16}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#3a1a00",marginBottom:10}}>Lock DC and earn rewards</div>
+              <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                {STAKE_TIERS.map(t=>(
+                  <button key={t.lockDays} onClick={()=>setStakeLockDays(t.lockDays)}
+                    style={{flex:1,minWidth:80,padding:"8px 4px",borderRadius:8,border:`2px solid ${stakeLockDays===t.lockDays?"#FF9800":"#c8a870"}`,background:stakeLockDays===t.lockDays?"linear-gradient(135deg,#3a2000,#1e1000)":"rgba(255,255,255,.3)",color:stakeLockDays===t.lockDays?"#FFD600":"#5a3a10",cursor:"pointer",textAlign:"center"}}>
+                    <div style={{fontSize:11,fontWeight:800}}>{t.lockDays}d</div>
+                    <div style={{fontSize:10,color:stakeLockDays===t.lockDays?"#FF9800":"#8a6030",fontWeight:700}}>{t.apy}% APY</div>
+                  </button>
+                ))}
+              </div>
+              <div style={{fontSize:10,color:"#8a6030",marginBottom:8}}>
+                {(()=>{const t=STAKE_TIERS.find(t=>t.lockDays===stakeLockDays);const amt=parseInt(stakeAmount)||0;const daily=amt*(t.apy/100/365);return amt>0?`~${daily.toFixed(2)} DC/day on ${amt.toLocaleString()} DC`:null;})()}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <input type="number" min="100" value={stakeAmount} onChange={e=>setStakeAmount(e.target.value)} placeholder="Amount (min 100 DC)"
+                  style={{flex:1,padding:"8px 10px",border:"1px solid #c8a870",borderRadius:6,fontSize:12,color:"#3a1a00",background:"rgba(255,255,255,.7)",outline:"none"}}/>
+                <button disabled={!!stakeLoading||!stakeAmount} onClick={doStakeDeposit}
+                  style={{padding:"8px 16px",background:"linear-gradient(135deg,#3a2000,#1e1000)",border:"2px solid #FF9800",borderRadius:6,color:"#FFD600",fontSize:11,fontWeight:800,cursor:"pointer"}}>
+                  {stakeLoading==="deposit"?"Locking...":"Lock DC"}
+                </button>
+              </div>
+            </div>
+
+            {/* Active stakes */}
+            {stakes.length===0?(
+              <div style={{textAlign:"center",padding:20,color:"#8a6030",fontSize:12}}>No active stakes. Lock some DC to start earning.</div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {stakes.map(s=>{
+                  const unlocked=s.unlocked;
+                  const msLeft=Math.max(0,new Date(s.unlocksAt).getTime()-Date.now());
+                  const daysLeft=Math.ceil(msLeft/86400000);
+                  const dailyRate=s.amountDigcoin*(s.apyPercent/100/365);
+                  return(
+                    <div key={s.id} style={{background:"rgba(255,255,255,.4)",borderRadius:10,padding:"12px 14px",border:`1px solid ${unlocked?"#4CAF50":"#c8a870"}`}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                        <div>
+                          <span style={{fontWeight:800,color:"#3a1a00",fontSize:12}}>{s.amountDigcoin.toLocaleString()} DC</span>
+                          <span style={{marginLeft:8,fontSize:10,background:unlocked?"#E8F5E9":"#FFF3E0",color:unlocked?"#2E7D32":"#E65100",padding:"2px 7px",borderRadius:10,fontWeight:700}}>{unlocked?"✅ Unlocked":`🔒 ${daysLeft}d left`}</span>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:700,color:"#FF9800"}}>{s.apyPercent}% APY · {s.lockDays}d</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <div style={{fontSize:10,color:"#8a6030"}}>~{dailyRate.toFixed(2)} DC/day</div>
+                          <div style={{fontSize:11,fontWeight:800,color:"#2E7D32"}}>+{s.pendingRewards.toFixed(4)} DC pending</div>
+                        </div>
+                        <div style={{display:"flex",gap:6}}>
+                          <button disabled={!!stakeLoading||s.pendingRewards<0.01} onClick={()=>doStakeClaim(s.id)}
+                            style={{padding:"5px 10px",background:"rgba(46,125,50,.1)",border:"1px solid #4CAF50",borderRadius:6,color:"#2E7D32",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                            {stakeLoading===`claim_${s.id}`?"...":"Claim"}
+                          </button>
+                          {unlocked&&(
+                            <button disabled={!!stakeLoading} onClick={()=>doStakeWithdraw(s.id)}
+                              style={{padding:"5px 10px",background:"rgba(255,152,0,.1)",border:"1px solid #FF9800",borderRadius:6,color:"#E65100",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                              {stakeLoading===`withdraw_${s.id}`?"...":"Unstake"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div></div>
         </div>}
 
         {/* MY NFT */}
@@ -3239,6 +3396,169 @@ export default function DigMinerApp(){
               })}
             </div>
           ))}
+        </div>}
+
+        {/* STAKE TAB */}
+        {tab==="stake"&&<div style={{animation:"fadeIn .3s ease",fontFamily:"'Courier New',monospace"}}>
+
+          {/* RS/Win98 title bar */}
+          <div style={{background:"linear-gradient(to right,#1a3a6b,#4a7ac8)",padding:"3px 6px",display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+            <span style={{fontSize:11,color:"#fff",fontWeight:700,fontFamily:"'Courier New',monospace",letterSpacing:.5}}>💎 DIGCOIN STAKING VAULT</span>
+            <div style={{marginLeft:"auto",display:"flex",gap:2}}>
+              {["_","□","✕"].map(c=><div key={c} style={{width:16,height:14,background:"#c0c0c0",border:"1px solid #fff",borderBottomColor:"#555",borderRightColor:"#555",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,cursor:"pointer",color:"#000"}}>{c}</div>)}
+            </div>
+          </div>
+
+          {/* Main win98 window */}
+          <div style={{background:"#c0c0c0",border:"2px solid #fff",borderBottomColor:"#555",borderRightColor:"#555",padding:4,marginBottom:4}}>
+
+            {/* Airdrop notice */}
+            <div style={{background:"#ffffe0",border:"1px solid #808080",borderTopColor:"#fff",borderLeftColor:"#fff",padding:"6px 10px",marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>🪂</span>
+              <span style={{fontSize:11,color:"#000",fontFamily:"'Courier New',monospace"}}>Every 1 DC staked = 1 point toward <b>Phase 3 on-chain token airdrop</b>. More stake = more points!</span>
+            </div>
+
+            {/* Stats row */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:3,marginBottom:6}}>
+              {[
+                ["Your Staked",`${stakes.reduce((s,x)=>s+x.amountDigcoin,0).toLocaleString()} DC`,"#000080"],
+                ["Pending",`${stakes.reduce((s,x)=>s+x.pendingRewards,0).toFixed(2)} DC`,"#006400"],
+                ["Your Points",`${stakeTotalPoints.toLocaleString()} pts`,"#800080"],
+                ["Top Staker",stakeLeaderboard[0]?`${stakeLeaderboard[0].totalStaked.toLocaleString()} DC`:"—","#8B0000"],
+              ].map(([label,val,color])=>(
+                <div key={label} style={{background:"#fff",border:"1px solid #808080",borderTopColor:"#555",borderLeftColor:"#555",padding:"5px 8px"}}>
+                  <div style={{fontSize:9,color:"#555",fontWeight:700,textTransform:"uppercase",marginBottom:2}}>{label}</div>
+                  <div style={{fontSize:13,fontWeight:700,color,fontFamily:"'Courier New',monospace"}}>{val}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+
+              {/* Left panel */}
+              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+
+                {/* New Stake */}
+                <div style={{border:"1px solid #808080",borderTopColor:"#fff",borderLeftColor:"#fff",background:"#d4d0c8"}}>
+                  <div style={{background:"linear-gradient(to right,#1a3a6b,#4a7ac8)",padding:"2px 6px"}}>
+                    <span style={{fontSize:10,color:"#fff",fontWeight:700}}>🔒 New Stake</span>
+                  </div>
+                  <div style={{padding:"8px"}}>
+                    <div style={{fontSize:10,color:"#000",marginBottom:4,fontWeight:700}}>Select lock period:</div>
+                    <div style={{display:"flex",gap:3,marginBottom:8}}>
+                      {STAKE_TIERS.map(t=>(
+                        <button key={t.lockDays} onClick={()=>setStakeLockDays(t.lockDays)}
+                          style={{flex:1,padding:"5px 2px",border:"2px solid",borderTopColor:stakeLockDays===t.lockDays?"#555":"#fff",borderLeftColor:stakeLockDays===t.lockDays?"#555":"#fff",borderBottomColor:stakeLockDays===t.lockDays?"#fff":"#555",borderRightColor:stakeLockDays===t.lockDays?"#fff":"#555",background:stakeLockDays===t.lockDays?"#a0a0a0":"#d4d0c8",cursor:"pointer",textAlign:"center",fontFamily:"'Courier New',monospace"}}>
+                          <div style={{fontSize:11,fontWeight:700,color:"#000"}}>{t.lockDays}d</div>
+                          <div style={{fontSize:9,color:"#000080",fontWeight:700}}>{t.apy}% APY</div>
+                        </button>
+                      ))}
+                    </div>
+                    {(()=>{const t=STAKE_TIERS.find(t=>t.lockDays===stakeLockDays);const amt=parseInt(stakeAmount)||0;const daily=amt>0?(amt*(t.apy/100/365)).toFixed(2):null;return daily&&(
+                      <div style={{fontSize:10,color:"#006400",marginBottom:6,fontFamily:"'Courier New',monospace",background:"#fff",border:"1px inset #808080",padding:"3px 6px"}}>~{daily} DC/day · {(amt*(t.apy/100/365)*stakeLockDays).toFixed(0)} DC at unlock</div>
+                    );})()}
+                    <div style={{fontSize:10,color:"#000",marginBottom:3,fontWeight:700}}>Amount (DC):</div>
+                    <input type="number" min="100" value={stakeAmount} onChange={e=>setStakeAmount(e.target.value)} placeholder="min 100 DC"
+                      style={{width:"100%",padding:"3px 5px",border:"2px inset #808080",background:"#fff",color:"#000",fontSize:11,fontFamily:"'Courier New',monospace",outline:"none",marginBottom:8,boxSizing:"border-box"}}/>
+                    <button disabled={!!stakeLoading||!stakeAmount||parseInt(stakeAmount)<100} onClick={doStakeDeposit}
+                      style={{width:"100%",padding:"4px",border:"2px solid",borderTopColor:"#fff",borderLeftColor:"#fff",borderBottomColor:"#555",borderRightColor:"#555",background:"#d4d0c8",color:"#000",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Courier New',monospace",active:{borderTopColor:"#555"}}}>
+                      {stakeLoading==="deposit"?tx.stakeLocking:"🔒 Lock DC"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* My Stakes */}
+                <div style={{border:"1px solid #808080",borderTopColor:"#fff",borderLeftColor:"#fff",background:"#d4d0c8"}}>
+                  <div style={{background:"linear-gradient(to right,#1a3a6b,#4a7ac8)",padding:"2px 6px"}}>
+                    <span style={{fontSize:10,color:"#fff",fontWeight:700}}>📦 My Stakes</span>
+                  </div>
+                  <div style={{padding:"6px"}}>
+                    {stakes.length===0?(
+                      <div style={{background:"#fff",border:"1px inset #808080",padding:"12px",textAlign:"center",fontSize:10,color:"#555",fontFamily:"'Courier New',monospace"}}>No active stakes.</div>
+                    ):(
+                      <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                        {stakes.map(s=>{
+                          const msLeft=Math.max(0,new Date(s.unlocksAt).getTime()-Date.now());
+                          const daysLeft=Math.ceil(msLeft/86400000);
+                          const dailyRate=(s.amountDigcoin*(s.apyPercent/100/365)).toFixed(2);
+                          return(
+                            <div key={s.id} style={{background:"#fff",border:"1px inset #808080",padding:"7px 8px"}}>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                                <span style={{fontWeight:700,color:"#000080",fontSize:12,fontFamily:"'Courier New',monospace"}}>{s.amountDigcoin.toLocaleString()} DC</span>
+                                <span style={{fontSize:9,background:s.unlocked?"#90EE90":"#fffacd",color:s.unlocked?"#006400":"#8B4513",padding:"1px 6px",border:"1px solid",borderColor:s.unlocked?"#006400":"#daa520",fontWeight:700,fontFamily:"'Courier New',monospace"}}>
+                                  {s.unlocked?"UNLOCKED":`LOCKED ${daysLeft}d`}
+                                </span>
+                              </div>
+                              <div style={{fontSize:9,color:"#555",marginBottom:2,fontFamily:"'Courier New',monospace"}}>{s.apyPercent}% APY · {s.lockDays}d · ~{dailyRate} DC/day</div>
+                              <div style={{fontSize:9,color:"#800080",fontWeight:700,marginBottom:4,fontFamily:"'Courier New',monospace"}}>🪂 {s.points.toLocaleString()} airdrop pts</div>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                <span style={{fontSize:10,fontWeight:700,color:"#006400",fontFamily:"'Courier New',monospace"}}>+{s.pendingRewards.toFixed(4)} DC</span>
+                                <div style={{display:"flex",gap:4}}>
+                                  <button disabled={!!stakeLoading||s.pendingRewards<0.01} onClick={()=>doStakeClaim(s.id)}
+                                    style={{padding:"2px 8px",border:"2px solid",borderTopColor:"#fff",borderLeftColor:"#fff",borderBottomColor:"#555",borderRightColor:"#555",background:"#d4d0c8",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"'Courier New',monospace"}}>
+                                    {stakeLoading===`claim_${s.id}`?"...":"Claim"}
+                                  </button>
+                                  {s.unlocked&&(
+                                    <button disabled={!!stakeLoading} onClick={()=>doStakeWithdraw(s.id)}
+                                      style={{padding:"2px 8px",border:"2px solid",borderTopColor:"#fff",borderLeftColor:"#fff",borderBottomColor:"#555",borderRightColor:"#555",background:"#d4d0c8",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"'Courier New',monospace"}}>
+                                      {stakeLoading===`withdraw_${s.id}`?"...":"Unstake"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Leaderboard */}
+              <div style={{border:"1px solid #808080",borderTopColor:"#fff",borderLeftColor:"#fff",background:"#d4d0c8"}}>
+                <div style={{background:"linear-gradient(to right,#1a3a6b,#4a7ac8)",padding:"2px 6px"}}>
+                  <span style={{fontSize:10,color:"#fff",fontWeight:700}}>🏆 Staking Leaderboard</span>
+                </div>
+                <div style={{padding:"6px"}}>
+                  {/* Column headers */}
+                  <div style={{display:"grid",gridTemplateColumns:"28px 1fr 80px 60px",gap:2,padding:"3px 4px",background:"#a0a0a0",marginBottom:3,borderBottom:"1px solid #555"}}>
+                    {["#","Wallet","Staked","Points"].map(h=>(
+                      <div key={h} style={{fontSize:9,fontWeight:700,color:"#000",fontFamily:"'Courier New',monospace"}}>{h}</div>
+                    ))}
+                  </div>
+                  {stakeLeaderboard.length===0?(
+                    <div style={{background:"#fff",border:"1px inset #808080",padding:"12px",textAlign:"center",fontSize:10,color:"#555",fontFamily:"'Courier New',monospace"}}>No stakers yet.</div>
+                  ):(
+                    <div style={{display:"flex",flexDirection:"column",gap:1}}>
+                      {stakeLeaderboard.map((entry,i)=>{
+                        const medals=["🥇","🥈","🥉"];
+                        const isMe=wallet&&entry.wallet.startsWith(wallet.slice(0,6));
+                        return(
+                          <div key={i} style={{display:"grid",gridTemplateColumns:"28px 1fr 80px 60px",gap:2,padding:"4px",background:isMe?"#dce8ff":i%2===0?"#fff":"#f0f0f0",border:isMe?"1px solid #1a3a6b":"1px solid transparent"}}>
+                            <span style={{fontSize:11,textAlign:"center"}}>{medals[i]||`#${entry.rank}`}</span>
+                            <span style={{fontSize:9,color:isMe?"#000080":"#333",fontFamily:"'Courier New',monospace",fontWeight:isMe?700:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.wallet}{isMe?" ◄":""}</span>
+                            <span style={{fontSize:9,fontWeight:700,color:"#8B0000",fontFamily:"'Courier New',monospace",textAlign:"right"}}>{entry.totalStaked.toLocaleString()}</span>
+                            <span style={{fontSize:9,fontWeight:700,color:"#800080",fontFamily:"'Courier New',monospace",textAlign:"right"}}>{entry.points.toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Win98 status bar */}
+          <div style={{background:"#c0c0c0",border:"1px solid #808080",borderTopColor:"#555",padding:"2px 8px",display:"flex",gap:12}}>
+            <span style={{fontSize:9,color:"#000",fontFamily:"'Courier New',monospace"}}>Stakes: {stakes.length}</span>
+            <span style={{fontSize:9,color:"#000",fontFamily:"'Courier New',monospace"}}>|</span>
+            <span style={{fontSize:9,color:"#000",fontFamily:"'Courier New',monospace"}}>Total locked: {stakes.reduce((s,x)=>s+x.amountDigcoin,0).toLocaleString()} DC</span>
+            <span style={{fontSize:9,color:"#000",fontFamily:"'Courier New',monospace"}}>|</span>
+            <span style={{fontSize:9,color:"#800080",fontFamily:"'Courier New',monospace"}}>Airdrop points: {stakeTotalPoints.toLocaleString()} pts</span>
+          </div>
         </div>}
 
         {/* DUNGEONS */}
