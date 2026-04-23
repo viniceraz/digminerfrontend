@@ -1419,8 +1419,8 @@ function RoadmapModal({onClose}){
     {
       phase:"Phase 2",label:"Expansion",status:"active",color:"#FF9800",
       items:[
-        {done:false, text:"New Miner designs & exclusive seasonal rarities"},
-        {done:false, text:"Marketplace — trade miners between players"},
+        {done:true, text:"New Miner designs & exclusive seasonal rarities"},
+        {done:true, text:"Marketplace"},
         {done:true, text:"Lands — own a plot to boost your daily DIGCOIN production"},
         {done:false, text:"Leaderboard — top earners & top fusers"},
       ]
