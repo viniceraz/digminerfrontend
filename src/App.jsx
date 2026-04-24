@@ -1836,6 +1836,8 @@ export default function DigMinerApp(){
   const[mktListLandId,setMktListLandId]=useState(null);
   const[mktInvOpen,setMktInvOpen]=useState(true);
   const[mktListingsOpen,setMktListingsOpen]=useState(true);
+  const[mktHistory,setMktHistory]=useState([]);
+  const[mktHistoryOpen,setMktHistoryOpen]=useState(true);
   const[mktConfirm,setMktConfirm]=useState(null); // {type:'buy'|'list', label, onConfirm}
   const[landReveal,setLandReveal]=useState(null);
   const[autoPickaxe,setAutoPickaxe]=useState({owned:false,active:false});
@@ -1923,12 +1925,14 @@ export default function DigMinerApp(){
     try{
       const rarityParam=mktFilter==="All"?"":LAND_RARITIES.findIndex(r=>r.name===mktFilter);
       const url=`/api/marketplace/listings?sort=${mktSort}${mktFilter!=="All"?`&rarity=${rarityParam}`:""}`;
-      const [mktRes, landRes]=await Promise.all([
+      const [mktRes, landRes, histRes]=await Promise.all([
         fetch(url),
         wallet?fetch(`/api/land/${wallet}`):Promise.resolve(null),
+        fetch('/api/marketplace/history'),
       ]);
       if(mktRes.ok){const d=await mktRes.json();setMktListings(d.listings||[]);}
       if(landRes?.ok){const d=await landRes.json();setLands(d.lands||[]);}
+      if(histRes.ok){const d=await histRes.json();setMktHistory(d.history||[]);}
     }catch(_){}
   },[mktFilter,mktSort,wallet]);
 
@@ -3398,6 +3402,42 @@ export default function DigMinerApp(){
               })}
             </div>
           ))}
+
+          {/* Transaction History */}
+          <div style={{marginTop:20}}>
+            <div onClick={()=>setMktHistoryOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:8,marginBottom:mktHistoryOpen?14:0,cursor:"pointer",userSelect:"none"}}>
+              <span style={{fontSize:14}}>📋</span>
+              <span style={{fontSize:13,fontWeight:800,color:"#fff"}}>Transaction History</span>
+              <span style={{fontSize:10,color:"rgba(255,255,255,.35)",background:"rgba(255,255,255,.08)",padding:"2px 8px",borderRadius:10}}>{mktHistory.length}</span>
+              <span style={{marginLeft:"auto",fontSize:11,color:"rgba(255,255,255,.4)"}}>{mktHistoryOpen?"▲":"▼"}</span>
+            </div>
+            {mktHistoryOpen&&(mktHistory.length===0?(
+              <div style={{textAlign:"center",padding:24,background:"rgba(255,255,255,.04)",borderRadius:10,border:"1px dashed rgba(255,255,255,.1)",fontSize:11,color:"rgba(255,255,255,.3)"}}>No sales yet.</div>
+            ):(
+              <div style={{background:"rgba(0,0,0,.3)",borderRadius:10,border:"1px solid rgba(255,255,255,.08)",overflow:"hidden"}}>
+                <div style={{display:"grid",gridTemplateColumns:"80px 1fr 100px 120px 120px 100px",padding:"8px 14px",background:"rgba(255,255,255,.05)",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+                  {["Land","Rarity","Price","Seller","Buyer","Date"].map(h=>(
+                    <div key={h} style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:1}}>{h}</div>
+                  ))}
+                </div>
+                {mktHistory.map((h,i)=>{
+                  const lr=LAND_RARITIES[h.rarityId]||LAND_RARITIES[0];
+                  const isMyBuy=wallet&&h.buyer&&h.buyer.startsWith(wallet.slice(0,6).toLowerCase());
+                  const isMySell=wallet&&h.seller&&h.seller.startsWith(wallet.slice(0,6).toLowerCase());
+                  return(
+                    <div key={h.id} style={{display:"grid",gridTemplateColumns:"80px 1fr 100px 120px 120px 100px",padding:"9px 14px",borderBottom:"1px solid rgba(255,255,255,.05)",background:i%2===0?"transparent":"rgba(255,255,255,.02)"}}>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,.4)",fontFamily:"monospace"}}>#{h.landId}</div>
+                      <div style={{fontSize:10,fontWeight:700,color:lr.color}}>{h.rarityName}</div>
+                      <div style={{fontSize:10,fontWeight:800,color:"#FFD600"}}>{h.priceDigcoin.toLocaleString()} DC</div>
+                      <div style={{fontSize:10,color:isMySell?"#E040FB":"rgba(255,255,255,.4)",fontFamily:"monospace",fontWeight:isMySell?700:400}}>{h.seller}{isMySell?" (you)":""}</div>
+                      <div style={{fontSize:10,color:isMyBuy?"#4CAF50":"rgba(255,255,255,.4)",fontFamily:"monospace",fontWeight:isMyBuy?700:400}}>{h.buyer}{isMyBuy?" (you)":""}</div>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>{new Date(h.soldAt).toLocaleDateString()}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>}
 
         {/* STAKE TAB */}
