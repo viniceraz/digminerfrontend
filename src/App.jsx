@@ -409,7 +409,9 @@ function MinerSprite({rarityId,size=90,season=1}){
 function BoxReveal({miner,onClose,isFuse=false}){
   const lang=useContext(LangCtx);const tx=T[lang];
   const[phase,setPhase]=useState(0);
-  const r=RARITIES[miner.rarityId];
+  const isS2=miner.season===2;
+  const r=isS2?(S2_RARITIES[miner.rarityId]||S2_RARITIES[0]):(RARITIES[miner.rarityId]||RARITIES[0]);
+  const boxPrice=isS2?S2_BOX_PRICE:BOX_PRICE;
   useEffect(()=>{const t1=setTimeout(()=>setPhase(1),1200);const t2=setTimeout(()=>setPhase(2),2200);return()=>{clearTimeout(t1);clearTimeout(t2)};},[]);
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.92)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
     {phase===0&&<div style={{animation:"shake .6s infinite",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
@@ -424,7 +426,7 @@ function BoxReveal({miner,onClose,isFuse=false}){
       <div style={{filter:`drop-shadow(0 0 20px ${r.color})`,animation:"float 2s ease-in-out infinite"}}><MinerSprite rarityId={miner.rarityId} size={150} season={miner.season||1}/></div>
       <div style={{color:r.color,fontSize:24,fontWeight:900,marginTop:12,textShadow:`0 0 30px ${r.color}`,fontFamily:"'Press Start 2P',monospace"}}>{r.name}!</div>
       <div style={{color:"#ccc",fontSize:13,marginTop:8}}>{miner.dailyDigcoin} DIGCOIN/day • {isFuse?miner.nftAgeTotal:r.nftAge} {tx.revealCycles} {tx.revealLifespan}</div>
-      <div style={{color:"#FFD600",fontSize:12,marginTop:4}}>{isFuse?`Total: ${(miner.dailyDigcoin*(miner.nftAgeTotal||r.nftAge)).toFixed(0)} DIGCOIN`:`ROI: ~${Math.ceil(BOX_PRICE/miner.dailyDigcoin)} days | Total: ${(miner.dailyDigcoin*r.nftAge).toFixed(0)} DIGCOIN`}</div>
+      <div style={{color:"#FFD600",fontSize:12,marginTop:4}}>{isFuse?`Total: ${(miner.dailyDigcoin*(miner.nftAgeTotal||r.nftAge)).toFixed(0)} DIGCOIN`:`ROI: ~${Math.ceil(boxPrice/miner.dailyDigcoin)} days | Total: ${(miner.dailyDigcoin*r.nftAge).toFixed(0)} DIGCOIN`}</div>
       <div style={{display:"flex",gap:6,justifyContent:"center",marginTop:8,flexWrap:"wrap"}}>
         {[["⚔️ PWR",miner.power],["⚡ NRG",miner.energy],["🛡️ DEF",miner.protective],["💥 DMG",miner.damage]].map(([l,v])=>(<span key={l} style={{background:"#1a1a2e",padding:"3px 8px",borderRadius:5,fontSize:10,color:"#aaa"}}>{l}: <b style={{color:"#fff"}}>{v}</b></span>))}
       </div>
