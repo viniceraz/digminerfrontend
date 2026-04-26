@@ -1358,6 +1358,24 @@ function HowItWorks(){
       </div>
       <GBCallout type="tip">{tx.howS2StatsTip}</GBCallout>
 
+      {/* S2 Dungeon Buffs */}
+      <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>⚔️ S2 Dungeon Buffs</h3>
+      <p style={{fontSize:13,color:"#555",lineHeight:1.8,marginBottom:14}}>Every S2 miner has an exclusive passive buff that activates automatically in dungeons. Higher rarity = higher profit impact.</p>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+        {Object.entries(S2_BUFFS).map(([id,buff])=>{
+          const r=S2_RARITIES[parseInt(id)];
+          return(
+            <div key={id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#fafafa",borderRadius:10,border:`1px solid ${r?.color||"#eee"}33`}}>
+              <img src={S2_IMGS[parseInt(id)]} alt={r?.name} style={{width:32,height:32,objectFit:"contain",flexShrink:0}}/>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:800,fontSize:12,color:r?.color||"#333"}}>{r?.name} — {buff.icon} {buff.name}</div>
+                <div style={{fontSize:11,color:"#666",marginTop:2}}>{buff.desc}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Weremole Dungeon */}
       <h3 style={{fontSize:15,fontWeight:700,color:"#222",marginBottom:12,marginTop:24}}>{tx.howS2WereTitle}</h3>
       <p style={{fontSize:13,color:"#555",lineHeight:1.8,marginBottom:16}}>{tx.howS2WereP}</p>
@@ -1568,16 +1586,17 @@ const PATCHES = [
   {
     version:"v2.2",
     date:"2026-04-26",
-    title:"S2 Dungeon Buffs, Staking & Marketplace Upgrades",
+    title:"S2 Dungeon Buffs, ThiefCat Airdrop, Staking & Marketplace",
     tags:["feature","update","fix"],
     changes:[
+      "🐱 ThiefCat airdrop — free miner for FarmCats rug victims (30 DC/day, 7-day lifespan)",
       "⚔️ S2 miners now have exclusive dungeon buffs by rarity:",
-      "  · Common (Resilient): -25% HP lost on defeat",
-      "  · UnCommon (Swift): dungeon cooldown reduced from 20s → 10s",
-      "  · Rare (Looter): 2× Mystery Box drop chance on win",
-      "  · Super Rare (Lucky): +10% win chance in all dungeons",
-      "  · Legendary (Scavenger): 15% chance to recover map on win",
-      "  · Mythic (Dominator): +10% win + 2× box drop + 15% map recovery",
+      "  · Common (🛡️ Resilient): -25% HP lost on defeat",
+      "  · UnCommon (⚡ Swift): dungeon cooldown reduced from 20s → 10s",
+      "  · Rare (📦 Looter): 2× Mystery Box drop chance on win",
+      "  · Super Rare (🍀 Lucky): +10% win chance in all dungeons",
+      "  · Legendary (🗺️ Scavenger): 15% chance to recover map on win",
+      "  · Mythic (👑 Dominator): +10% win + 2× box drop + 15% map recovery",
       "🗺️ Weremole Lair map cost reduced from 400 DC → 200 DC",
       "💎 Staking system launched — lock DC for 15/30/90 days at 50/120/300% APY",
       "🪂 1 DC staked = 1 airdrop point toward Phase 3 on-chain token",
