@@ -31,7 +31,7 @@ const DUNGEONS={
   easy:     {id:"easy",     name:"Goblins",       mapItem:"map_easy",     mapCost:50,  prize:100, winChance:45, hpLoss:25, boxDrop:2,  img:"/Dungeons/dungeon1.jpeg",       mapImg:"/Dungeons/map1.png",       color:"#4CAF50", darkColor:"#1b3a1b"},
   medium:   {id:"medium",   name:"Spiders",       mapItem:"map_medium",   mapCost:150, prize:300, winChance:40, hpLoss:40, boxDrop:5,  img:"/Dungeons/dungeon2.jpeg",       mapImg:"/Dungeons/map2.png",       color:"#FF9800", darkColor:"#3a2a10"},
   hard:     {id:"hard",     name:"Miner's Bane",  mapItem:"map_hard",     mapCost:400, prize:900, winChance:35, hpLoss:60, boxDrop:10, img:"/Dungeons/dungeon3.jpeg",       mapImg:"/Dungeons/map3.png",       color:"#E91E63", darkColor:"#3a1a2a"},
-  weremole: {id:"weremole", name:"Weremole Lair", mapItem:"map_weremole", mapCost:400, prize:0,   winChance:10, hpLoss:30, boxDrop:0,  img:"/Dungeons/weremoledungeon.jpeg",mapImg:"/Dungeons/weremolemap.png",color:"#8B4513", darkColor:"#2a1a0a", weremoleDungeon:true},
+  weremole: {id:"weremole", name:"Weremole Lair", mapItem:"map_weremole", mapCost:200, prize:0,   winChance:10, hpLoss:30, boxDrop:0,  img:"/Dungeons/weremoledungeon.jpeg",mapImg:"/Dungeons/weremolemap.png",color:"#8B4513", darkColor:"#2a1a0a", weremoleDungeon:true},
 };
 const LAND_BOX_PRICE=300; const LAND_BOX_10_PRICE=2550;
 const AUTO_PICKAXE_PRICE=3000; const AUTO_PICKAXE_MAX=500;
@@ -1561,6 +1561,29 @@ function LandReveal({land,onClose}){
 
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
+  {
+    version:"v2.2",
+    date:"2026-04-26",
+    title:"S2 Dungeon Buffs, Staking & Marketplace Upgrades",
+    tags:["feature","update","fix"],
+    changes:[
+      "⚔️ S2 miners now have exclusive dungeon buffs by rarity:",
+      "  · Common (Resilient): -25% HP lost on defeat",
+      "  · UnCommon (Swift): dungeon cooldown reduced from 20s → 10s",
+      "  · Rare (Looter): 2× Mystery Box drop chance on win",
+      "  · Super Rare (Lucky): +10% win chance in all dungeons",
+      "  · Legendary (Scavenger): 15% chance to recover map on win",
+      "  · Mythic (Dominator): +10% win + 2× box drop + 15% map recovery",
+      "🗺️ Weremole Lair map cost reduced from 400 DC → 200 DC",
+      "💎 Staking system launched — lock DC for 15/30/90 days at 50/120/300% APY",
+      "🪂 1 DC staked = 1 airdrop point toward Phase 3 on-chain token",
+      "🏪 Land Marketplace transaction history added (public)",
+      "🏪 Marketplace volume stats: total DC traded, number of sales",
+      "📦 S2 box reveal now shows correct lifespan and ROI (was showing S1 values)",
+      "🌍 Land rarity filter buttons added to My Lands section",
+      "💰 Total Spent field added to account header",
+    ],
+  },
   {
     version:"v2.1",
     date:"2026-04-23",
