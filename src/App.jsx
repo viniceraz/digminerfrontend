@@ -392,13 +392,15 @@ const S2_IMGS = [
   "/season2/Mythic.png",
 ];
 const WEREMOLE_RARITY={id:"weremole",name:"Weremole",color:"#8B4513",bg:"#2a1a0a",maxHp:100};
+const THIEFCAT_RARITY={id:"thiefcat",name:"ThiefCat",color:"#FF6B35",bg:"#2a1000",maxHp:100};
 function getMinerImg(rarityId, season){
+  if(season===4) return "/season2/thiefminer.png";
   if(season===3) return "/season2/weremole.png";
   return season===2 ? S2_IMGS[rarityId] : NFT_IMGS[rarityId];
 }
 
 function MinerSprite({rarityId,size=90,season=1}){
-  const r=season===3?WEREMOLE_RARITY:(RARITIES[rarityId]||RARITIES[0]);
+  const r=season===4?THIEFCAT_RARITY:season===3?WEREMOLE_RARITY:(RARITIES[rarityId]||RARITIES[0]);
   return(
     <div style={{width:size,height:size,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
       <div style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle,${r.color}33 0%,transparent 70%)`}}/>
@@ -482,7 +484,8 @@ function LaunchCountdown({launchAtMs,label="Launching in"}){
 function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
   const lang=useContext(LangCtx);const tx=T[lang];
   const isWeremole=miner.season===3;
-  const r=isWeremole?WEREMOLE_RARITY:(RARITIES[miner.rarityId]||RARITIES[0]);
+  const isThiefCat=miner.season===4;
+  const r=isThiefCat?THIEFCAT_RARITY:isWeremole?WEREMOLE_RARITY:(RARITIES[miner.rarityId]||RARITIES[0]);
   const pct=isWeremole?100:(miner.nftAgeRemaining/miner.nftAgeTotal)*100;
   const dead=!miner.isAlive||miner.needsRepair;
   return(<div style={{background:"#fff",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.08)",border:`2px solid ${dead?"#ddd":miner.canClaim?"#FFD600":r.color}`,opacity:dead?.65:1}}>
@@ -491,6 +494,7 @@ function MinerCard({miner,onMine,onClaim,onRepair,loading,inLand=false}){
         {r.name}
         {miner.isFused&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#E040FB,#9C27B0)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>{tx.fusedBadge}</span>}
         {isWeremole&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#8B4513,#5a2d0c)",color:"#FFD600",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>♾️ PERMANENT</span>}
+        {isThiefCat&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#FF6B35,#c94a1a)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>🐱 AIRDROP</span>}
         {inLand&&<span style={{marginLeft:5,background:"linear-gradient(135deg,#388E3C,#4CAF50)",color:"#fff",fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:4,letterSpacing:.5,verticalAlign:"middle"}}>🌍 LAND</span>}
       </span>
       <span style={{fontSize:9,fontWeight:600,color:miner.canClaim?"#FFD600":miner.isMining?"#4CAF50":dead?"#999":"#aaa"}}>
@@ -1831,6 +1835,8 @@ export default function DigMinerApp(){
   const[adminLoading,setAdminLoading]=useState("");
   const[giftWallets,setGiftWallets]=useState("");
   const[giftResults,setGiftResults]=useState(null);
+  const[thiefCatWallets,setThiefCatWallets]=useState("");
+  const[thiefCatResults,setThiefCatResults]=useState(null);
   const[fuseMode,setFuseMode]=useState(false);
   const[fuseSelected,setFuseSelected]=useState([]);
   const[fuseReveal,setFuseReveal]=useState(null);
@@ -2299,6 +2305,21 @@ export default function DigMinerApp(){
       if(!res.ok) return notify(d.error,false);
       setGiftResults(d);
       notify(`🎁 Done: ${d.sent} sent, ${d.failed} failed`);
+    }catch(e){notify(e.message,false);}
+    finally{setAdminLoading("");}
+  };
+
+  const adminAirdropThiefCat=async()=>{
+    const wallets=thiefCatWallets.split(/[\n,]+/).map(w=>w.trim()).filter(w=>w.length>0);
+    if(!wallets.length) return notify("Paste at least one wallet address",false);
+    if(wallets.length>100) return notify("Max 100 wallets per batch",false);
+    try{
+      setAdminLoading("thiefcat");setThiefCatResults(null);
+      const res=await authFetch("/api/admin/airdrop-thiefcat",{method:"POST",body:JSON.stringify({wallets})});
+      const d=await res.json();
+      if(!res.ok) return notify(d.error,false);
+      setThiefCatResults(d);
+      notify(`🐱 ThiefCat airdrop: ${d.sent} sent, ${d.failed} failed`);
     }catch(e){notify(e.message,false);}
     finally{setAdminLoading("");}
   };
@@ -4250,6 +4271,46 @@ export default function DigMinerApp(){
                   </tr>
                 ))}</tbody>
               </table>
+            </div>}
+          </div>
+
+          {/* ThiefCat Airdrop */}
+          <div style={{background:"rgba(255,255,255,.97)",borderRadius:16,padding:24,border:"2px solid #FF6B35"}}>
+            <h2 style={{fontSize:18,fontWeight:800,color:"#FF6B35",marginBottom:4}}>🐱 ThiefCat Airdrop</h2>
+            <p style={{fontSize:12,color:"#888",marginBottom:4}}>Send 1 ThiefCat miner to each FarmCats rug victim. Max 100 wallets per batch.</p>
+            <div style={{display:"flex",gap:12,marginBottom:12,padding:"8px 12px",background:"#fff8f5",borderRadius:8,border:"1px solid #FF6B3533"}}>
+              {[["⛏️ Daily","30 DC/day"],["📅 Lifespan","7 days"],["🔧 Repair","30 DC"],["🌟 Season","4 (Airdrop)"]].map(([l,v])=>(
+                <div key={l}><div style={{fontSize:9,color:"#aaa",fontWeight:700}}>{l}</div><div style={{fontSize:12,fontWeight:800,color:"#FF6B35"}}>{v}</div></div>
+              ))}
+            </div>
+            <textarea value={thiefCatWallets} onChange={e=>setThiefCatWallets(e.target.value)}
+              placeholder={"0xABC...\n0xDEF...\n0x123..."}
+              rows={6}
+              style={{width:"100%",padding:"10px 12px",border:"1px solid #FF6B3566",borderRadius:8,fontSize:11,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box"}}
+            />
+            <div style={{display:"flex",alignItems:"center",gap:12,marginTop:10}}>
+              <span style={{fontSize:11,color:"#888"}}>{thiefCatWallets.split(/[\n,]+/).filter(w=>w.trim()).length} wallets</span>
+              <button disabled={adminLoading==="thiefcat"} onClick={adminAirdropThiefCat} style={{padding:"9px 24px",background:"linear-gradient(135deg,#FF6B35,#c94a1a)",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                {adminLoading==="thiefcat"?"Sending...":"🐱 Send ThiefCat"}
+              </button>
+              {thiefCatResults&&<span style={{fontSize:11,color:"#4CAF50",fontWeight:700}}>✅ {thiefCatResults.sent} sent {thiefCatResults.failed>0&&<span style={{color:"#EF5350"}}>/ {thiefCatResults.failed} failed</span>}</span>}
+            </div>
+            {thiefCatResults?.results?.success?.length>0&&<div style={{marginTop:14,maxHeight:200,overflowY:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
+                <thead><tr style={{background:"#fff8f5"}}>
+                  {["Wallet","Miner ID"].map(h=><th key={h} style={{padding:"5px 8px",borderBottom:"1px solid #eee",textAlign:"left",color:"#888"}}>{h}</th>)}
+                </tr></thead>
+                <tbody>{thiefCatResults.results.success.map((r,i)=>(
+                  <tr key={i} style={{borderBottom:"1px solid #f5f5f5"}}>
+                    <td style={{padding:"5px 8px",fontFamily:"monospace",color:"#333"}}>{r.wallet.slice(0,10)}...{r.wallet.slice(-6)}</td>
+                    <td style={{padding:"5px 8px",fontWeight:700,color:"#FF6B35"}}>#{r.minerId}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>}
+            {thiefCatResults?.results?.failed?.length>0&&<div style={{marginTop:8}}>
+              <div style={{fontSize:11,color:"#EF5350",fontWeight:700}}>Failed:</div>
+              {thiefCatResults.results.failed.map((r,i)=><div key={i} style={{fontSize:10,color:"#EF5350",fontFamily:"monospace"}}>{r.wallet}: {r.error}</div>)}
             </div>}
           </div>
 
