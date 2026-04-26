@@ -3561,7 +3561,7 @@ export default function DigMinerApp(){
                       ))}
                     </div>
                     {(()=>{const t=STAKE_TIERS.find(t=>t.lockDays===stakeLockDays);const amt=parseInt(stakeAmount)||0;const daily=amt>0?(amt*(t.apy/100/365)).toFixed(2):null;return daily&&(
-                      <div style={{fontSize:10,color:"#006400",marginBottom:6,fontFamily:"'Courier New',monospace",background:"#fff",border:"1px inset #808080",padding:"3px 6px"}}>~{daily} DC/day · {(amt*(t.apy/100/365)*stakeLockDays).toFixed(0)} DC at unlock</div>
+                      <div style={{fontSize:10,color:"#006400",marginBottom:6,fontFamily:"'Courier New',monospace",background:"#fff",border:"1px inset #808080",padding:"3px 6px"}}>~{daily} DC/day · {(amt+(amt*(t.apy/100/365)*stakeLockDays)).toFixed(0)} DC at unlock ({(amt*(t.apy/100/365)*stakeLockDays).toFixed(0)} reward)</div>
                     );})()}
                     <div style={{fontSize:10,color:"#000",marginBottom:3,fontWeight:700}}>Amount (DC):</div>
                     <input type="number" min="100" value={stakeAmount} onChange={e=>setStakeAmount(e.target.value)} placeholder="min 100 DC"
