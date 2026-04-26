@@ -12,6 +12,7 @@ const RARITIES = [
 ];
 const BOX_PRICE=300; const BOX_10_PRICE=2850; const DIG_RATE=100; const PLAY_ALL_FEE=5;
 const STAKE_TIERS=[{lockDays:15,apy:50},{lockDays:30,apy:120},{lockDays:90,apy:300}];
+const S2_BUFFS={0:{name:"Resilient",icon:"🛡️",desc:"-25% HP lost on defeat"},1:{name:"Swift",icon:"⚡",desc:"Cooldown 10s instead of 20s"},2:{name:"Looter",icon:"📦",desc:"2× Mystery Box drop chance"},3:{name:"Lucky",icon:"🍀",desc:"+10% win chance"},4:{name:"Scavenger",icon:"🗺️",desc:"15% chance to recover map on win"},5:{name:"Dominator",icon:"👑",desc:"+10% win · 2× box drop · 15% map recovery"}};
 const S2_RARITIES = [
   { id:0, name:"Common",    chance:"30%", dailyMin:38, dailyMax:42, nftAge:13, repair:0.40, color:"#9E9E9E", bg:"#3a3a3a", maxHp:100 },
   { id:1, name:"UnCommon",  chance:"30%", dailyMin:43, dailyMax:47, nftAge:12, repair:0.65, color:"#4CAF50", bg:"#1b3a1b", maxHp:125 },
@@ -3671,6 +3672,15 @@ export default function DigMinerApp(){
                   <div style={{fontSize:15,fontWeight:800,color:"#FFD600"}}>🎁 BONUS DROP!</div>
                   <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2}}>A Mystery Box was added to your miners!</div>
                 </div>}
+                {dungeonResult.mapRecovered&&<div style={{background:"rgba(76,175,80,.15)",border:"2px solid #4CAF50",borderRadius:10,padding:"10px",marginBottom:12,textAlign:"center"}}>
+                  <div style={{fontSize:13,fontWeight:800,color:"#4CAF50"}}>🗺️ MAP RECOVERED!</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>Scavenger buff returned your map!</div>
+                </div>}
+                {dungeonResult.s2Buff&&(()=>{const b=Object.values(S2_BUFFS).find(x=>x.name===dungeonResult.s2Buff);return(
+                  <div style={{background:"rgba(156,39,176,.1)",border:"1px solid rgba(156,39,176,.4)",borderRadius:8,padding:"6px 12px",marginBottom:12,textAlign:"center"}}>
+                    <span style={{fontSize:10,color:"#CE93D8",fontWeight:700}}>{b?.icon||"✨"} S2 Buff: {dungeonResult.s2Buff} — {b?.desc}</span>
+                  </div>
+                );})()}
                 {dungeonResult.result==="loss"&&<div style={{background:"rgba(139,0,0,.15)",border:"2px solid #8B0000",borderRadius:10,padding:"14px",marginBottom:12,textAlign:"center"}}>
                   <div style={{fontSize:14,fontWeight:700,color:"#ff6b6b"}}>💔 Miner HP: {dungeonResult.newHp}/{dungeonResult.maxHp??100}</div>
                   {dungeonResult.needsRepair&&<div style={{fontSize:12,color:"#ff4444",fontWeight:700,marginTop:4}}>⚠️ NEEDS REPAIR!</div>}
@@ -3831,9 +3841,10 @@ export default function DigMinerApp(){
                       <select value={selectedMinerForDungeon||""} onChange={e=>setSelectedMinerForDungeon(e.target.value?parseInt(e.target.value):null)}
                         style={{width:"100%",padding:"7px 10px",borderRadius:6,border:`2px solid ${borderColors[d.id]}66`,background:"rgba(0,0,0,.4)",fontSize:12,color:"#e8d8b0",fontWeight:600,outline:"none",display:d.weremoleDungeon&&eligibleMiners.length===0?"none":"block"}}>
                         <option value="">— Select a Miner —</option>
-                        {eligibleMiners.map(m=>(
-                          <option key={m.id} value={m.id}>#{m.id} {m.rarityName} · HP {m.hp??RARITIES[m.rarityId]?.maxHp??100}/{m.maxHp??RARITIES[m.rarityId]?.maxHp??100}</option>
-                        ))}
+                        {eligibleMiners.map(m=>{
+                          const buff=m.season===2?S2_BUFFS[m.rarityId]:null;
+                          return(<option key={m.id} value={m.id}>#{m.id} {m.rarityName}{buff?` ${buff.icon}${buff.name}`:""} · HP {m.hp??RARITIES[m.rarityId]?.maxHp??100}/{m.maxHp??RARITIES[m.rarityId]?.maxHp??100}</option>);
+                        })}
                       </select>
                       <button disabled={!selectedMinerForDungeon||!!dungeonLoading} onClick={()=>runDungeon(d.id,selectedMinerForDungeon)}
                         style={{width:"100%",padding:"10px",background:selectedMinerForDungeon?`linear-gradient(to bottom,${borderColors[d.id]},${d.darkColor})`:"rgba(255,255,255,.05)",border:`2px solid ${selectedMinerForDungeon?borderColors[d.id]:"rgba(255,255,255,.1)"}`,borderRadius:8,color:selectedMinerForDungeon?"#FFD600":"rgba(255,255,255,.2)",fontSize:14,fontWeight:800,cursor:selectedMinerForDungeon?"pointer":"not-allowed",fontFamily:"Georgia,serif",letterSpacing:1,textShadow:selectedMinerForDungeon?"0 1px 4px rgba(0,0,0,.8)":"none",transition:"all .2s"}}>
