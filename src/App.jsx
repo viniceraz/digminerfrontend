@@ -1457,7 +1457,7 @@ function RoadmapModal({onClose}){
       phase:"Phase 3",label:"Game World",status:"soon",color:"#2196F3",
       items:[
         {done:true, text:"Dungeons — send miners on timed expeditions for rare loot"},
-        {done:false, text:"PVP — pit miners against each other for stakes"},
+        {done:true, text:"PVP — pit miners against each other for stakes"},
         {done:false, text:"Guild system — pool miners and share rewards"},
         {done:false, text:"Daily quests & achievement rewards"},
       ]
@@ -1583,6 +1583,22 @@ function LandReveal({land,onClose}){
 
 // ══════════ PATCH NOTES ══════════
 const PATCHES = [
+  {
+    version:"v2.3",
+    date:"2026-04-29",
+    title:"PVP Arena",
+    tags:["feature"],
+    changes:[
+      "⚔️ PVP Arena is live — pit your Season 2 miners against other players for DC stakes",
+      "Only Season 2 miners can participate (no Weremole or ThiefCat)",
+      "Same rarity rule — both miners must be the same rarity to battle",
+      "50/50 win chance — pure skill and luck, no pay-to-win stat advantage",
+      "Winner takes 90% of the pot — 10% fee feeds the dungeon prize pool",
+      "S2 Resilient buff applies in PVP: Common miners take -25% HP damage on loss",
+      "Challenges expire after 24h with automatic refund if no opponent",
+      "Cancel your open challenge anytime before someone accepts it",
+    ],
+  },
   {
     version:"v2.2",
     date:"2026-04-26",
@@ -1902,6 +1918,14 @@ export default function DigMinerApp(){
   const[merchantBounce,setMerchantBounce]=useState(false);
   const[mapReveal,setMapReveal]=useState(null);
   const[dungeonTick,setDungeonTick]=useState(0);
+  const[pvpChallenges,setPvpChallenges]=useState([]);
+  const[pvpHistory,setPvpHistory]=useState([]);
+  const[pvpLoading,setPvpLoading]=useState("");
+  const[pvpStake,setPvpStake]=useState("");
+  const[pvpMiner,setPvpMiner]=useState("");
+  const[pvpRarityFilter,setPvpRarityFilter]=useState("");
+  const[pvpResult,setPvpResult]=useState(null);
+  const[pvpAcceptMiner,setPvpAcceptMiner]=useState({});
   const[seedPoolAmt,setSeedPoolAmt]=useState("");
   const[seedPoolLoading,setSeedPoolLoading]=useState(false);
   const[lang,setLang]=useState(()=>localStorage.getItem("digminer_lang")||"en");
@@ -2004,6 +2028,10 @@ export default function DigMinerApp(){
   useEffect(()=>{
     if(tab==="stake") loadStakes();
   },[tab,loadStakes]);
+
+  useEffect(()=>{
+    if(tab==="pvp") loadPvp(wallet);
+  },[tab,wallet]);
 
   const doStakeDeposit=async()=>{
     const amount=parseInt(stakeAmount);
@@ -2118,6 +2146,63 @@ export default function DigMinerApp(){
       setDungeonMaps(data.maps||{map_easy:0,map_medium:0,map_hard:0});
       setDungeonRuns(data.recentRuns||[]);
     }catch(_){}
+  };
+
+  const loadPvp=async(address)=>{
+    try{
+      const token=localStorage.getItem("digminer_token");
+      const headers=token?{Authorization:`Bearer ${token}`}:{};
+      const [openRes,histRes]=await Promise.all([
+        fetch("/api/pvp/open"),
+        address?fetch(`/api/pvp/history/${address}`,{headers}):Promise.resolve(null),
+      ]);
+      if(openRes.ok){const d=await openRes.json();setPvpChallenges(d.challenges||[]);}
+      if(histRes&&histRes.ok){const d=await histRes.json();setPvpHistory(d.history||[]);}
+    }catch(_){}
+  };
+
+  const pvpCreateChallenge=async()=>{
+    if(!pvpMiner||!pvpStake) return;
+    const stake=parseInt(pvpStake);
+    if(isNaN(stake)||stake<100) return notify("Minimum stake is 100 DC.",false);
+    if(stake>digcoin) return notify("Insufficient balance.",false);
+    setPvpLoading("create");
+    try{
+      const res=await authFetch("/api/pvp/challenge",{method:"POST",body:JSON.stringify({wallet,minerId:parseInt(pvpMiner),stakeDc:stake})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify("Challenge created! Waiting for opponent...");
+      setPvpStake("");setPvpMiner("");
+      await Promise.all([loadPvp(wallet),fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}).then(d=>{if(d.digcoin_balance!==undefined)setDigcoin(d.digcoin_balance);})]);
+    }catch(_){notify("Error creating challenge.",false);}
+    finally{setPvpLoading("");}
+  };
+
+  const pvpAcceptChallenge=async(challengeId,rarityId)=>{
+    const mid=pvpAcceptMiner[challengeId];
+    if(!mid) return notify("Select your miner first.",false);
+    setPvpLoading("accept_"+challengeId);
+    try{
+      const res=await authFetch(`/api/pvp/accept/${challengeId}`,{method:"POST",body:JSON.stringify({wallet,minerId:parseInt(mid)})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      setPvpResult(d);
+      await Promise.all([loadPvp(wallet),fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}).then(d=>{if(d.digcoin_balance!==undefined)setDigcoin(d.digcoin_balance);})]);
+    }catch(_){notify("Error accepting challenge.",false);}
+    finally{setPvpLoading("");}
+  };
+
+  const pvpCancelChallenge=async(challengeId,stakeDc)=>{
+    if(!window.confirm(`Cancel challenge and get ${stakeDc} DC refunded?`)) return;
+    setPvpLoading("cancel_"+challengeId);
+    try{
+      const res=await authFetch(`/api/pvp/cancel/${challengeId}`,{method:"POST",body:JSON.stringify({wallet})});
+      const d=await res.json();
+      if(d.error) return notify(d.error,false);
+      notify(`Challenge cancelled — ${d.refunded} DC refunded.`);
+      await Promise.all([loadPvp(wallet),fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}).then(d=>{if(d.digcoin_balance!==undefined)setDigcoin(d.digcoin_balance);})]);
+    }catch(_){notify("Error cancelling challenge.",false);}
+    finally{setPvpLoading("");}
   };
 
   const loadPlayer=useCallback(async(address)=>{
@@ -2714,8 +2799,8 @@ export default function DigMinerApp(){
   const minerInLandSet=useMemo(()=>{const s=new Set();for(const land of lands)for(const a of land.assignedMiners||[])s.add(a.minerId);return s;},[lands]);
   const filtered=filter==="All"?miners:filter==="In Land"?miners.filter(m=>minerInLandSet.has(m.id)):filter==="Season 2"?miners.filter(m=>m.season===2):filter==="Weremole"?miners.filter(m=>m.season===3):miners.filter(m=>m.rarityName===filter);
   const fc={All:miners.length,"In Land":miners.filter(m=>minerInLandSet.has(m.id)).length,"Season 2":miners.filter(m=>m.season===2).length,"Weremole":miners.filter(m=>m.season===3).length};RARITIES.forEach(r=>{fc[r.name]=miners.filter(m=>m.rarityName===r.name).length;});
-  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,tx.tabShop,tx.tabMarket,tx.tabStake,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
-  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon",[tx.tabMarket]:"market",[tx.tabStake]:"stake"};
+  const TABS=[tx.tabAccount,tx.tabNft,tx.tabDungeon,"⚔️ PVP",tx.tabShop,tx.tabMarket,tx.tabStake,tx.tabCalc,tx.tabHow,...(isAdmin?[tx.tabAdmin]:[])];
+  const tabMap={[tx.tabAccount]:"account",[tx.tabNft]:"nft",[tx.tabShop]:"shop",[tx.tabCalc]:"calc",[tx.tabHow]:"how",[tx.tabAdmin]:"admin",[tx.tabDungeon]:"dungeon",[tx.tabMarket]:"market",[tx.tabStake]:"stake","⚔️ PVP":"pvp"};
   const[menuOpen,setMenuOpen]=useState(false);
 
   if(window.location.pathname==='/patchnotes') return <PatchNotes/>;
@@ -3963,6 +4048,202 @@ export default function DigMinerApp(){
             </div>);
           })()}
         </div>}
+
+        {/* PVP */}
+        {tab==="pvp"&&(()=>{
+          const idleS2=miners.filter(m=>m.season===2&&m.isAlive&&!m.needsRepair&&!m.isMining);
+          const myOpen=pvpChallenges.filter(c=>c.challenger_wallet===wallet?.toLowerCase());
+          const filtered=pvpRarityFilter===""?pvpChallenges:pvpChallenges.filter(c=>c.rarity_id===parseInt(pvpRarityFilter));
+          const rarityColors={"Common":"#9E9E9E","UnCommon":"#4CAF50","Rare":"#2196F3","Super Rare":"#E91E63","Legendary":"#FF9800","Mythic":"#9C27B0"};
+          return(
+          <div style={{animation:"fadeIn .3s ease",display:"flex",flexDirection:"column",gap:20}}>
+
+            {/* PVP Result Modal */}
+            {pvpResult&&(
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setPvpResult(null)}>
+                <div style={{background:"linear-gradient(135deg,#1a1200,#0d0900)",border:`3px solid ${pvpResult.youWon?"#4CAF50":"#EF5350"}`,borderRadius:16,padding:"32px 28px",maxWidth:360,width:"100%",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+                  <div style={{fontSize:52,marginBottom:8}}>{pvpResult.youWon?"🏆":"💀"}</div>
+                  <div style={{fontSize:22,fontWeight:900,color:pvpResult.youWon?"#4CAF50":"#EF5350",marginBottom:4}}>
+                    {pvpResult.youWon?"YOU WON!":"YOU LOST"}
+                  </div>
+                  {pvpResult.youWon
+                    ? <div style={{fontSize:16,color:"#FFD600",fontWeight:800,marginBottom:12}}>+{pvpResult.winnerPrize.toFixed(0)} DC</div>
+                    : <div style={{fontSize:14,color:"#aaa",marginBottom:12}}>Better luck next time</div>
+                  }
+                  <div style={{fontSize:11,color:"#888",marginBottom:4}}>HP remaining: {pvpResult.yourNewHp}</div>
+                  {pvpResult.yourNeedsRepair&&<div style={{fontSize:11,color:"#EF5350",marginBottom:4}}>⚠️ Your miner needs repair!</div>}
+                  <div style={{fontSize:10,color:"#555",marginBottom:20}}>{pvpResult.poolFee.toFixed(0)} DC fee added to dungeon pool</div>
+                  <button onClick={()=>setPvpResult(null)} style={{padding:"10px 32px",background:"linear-gradient(to bottom,#3d2b08,#1e1200)",border:"2px solid #8B6914",borderRadius:6,color:"#FFD600",fontWeight:800,cursor:"pointer"}}>Close</button>
+                </div>
+              </div>
+            )}
+
+            {/* Header */}
+            <div style={{background:"linear-gradient(135deg,#1a0800,#2a1200)",borderRadius:12,padding:"20px 24px",border:"2px solid #8B4513"}}>
+              <div style={{fontSize:22,fontWeight:900,color:"#FFD600",marginBottom:4}}>⚔️ PVP Arena</div>
+              <div style={{fontSize:12,color:"#c8a870"}}>Pit your Season 2 miners against other players. Winner takes 90% of the pot — 10% feeds the dungeon pool.</div>
+              <div style={{display:"flex",gap:16,marginTop:12,flexWrap:"wrap"}}>
+                <div style={{background:"rgba(0,0,0,.3)",borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
+                  <div style={{fontSize:18,fontWeight:900,color:"#FFD600"}}>{pvpChallenges.length}</div>
+                  <div style={{fontSize:10,color:"#888"}}>Open Challenges</div>
+                </div>
+                <div style={{background:"rgba(0,0,0,.3)",borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
+                  <div style={{fontSize:18,fontWeight:900,color:"#4CAF50"}}>{pvpHistory.filter(h=>h.winner_wallet===wallet?.toLowerCase()).length}</div>
+                  <div style={{fontSize:10,color:"#888"}}>My Wins</div>
+                </div>
+                <div style={{background:"rgba(0,0,0,.3)",borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
+                  <div style={{fontSize:18,fontWeight:900,color:"#EF5350"}}>{pvpHistory.filter(h=>h.status==="completed"&&h.winner_wallet!==wallet?.toLowerCase()&&(h.challenger_wallet===wallet?.toLowerCase()||h.defender_wallet===wallet?.toLowerCase())).length}</div>
+                  <div style={{fontSize:10,color:"#888"}}>My Losses</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Create Challenge */}
+            <div style={{background:"linear-gradient(135deg,#120800,#1e1000)",borderRadius:12,padding:"20px 24px",border:"1px solid #8B451344"}}>
+              <div style={{fontSize:15,fontWeight:800,color:"#FFD600",marginBottom:14}}>⚔️ Create Challenge</div>
+              {idleS2.length===0
+                ? <div style={{color:"#888",fontSize:12}}>No idle Season 2 miners available. Miners must be alive, repaired, and not currently mining.</div>
+                : <>
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
+                    <div style={{flex:1,minWidth:160}}>
+                      <div style={{fontSize:11,color:"#c8a870",marginBottom:4}}>Select Miner</div>
+                      <select value={pvpMiner} onChange={e=>setPvpMiner(e.target.value)} style={{width:"100%",padding:"8px 10px",background:"#1a1000",border:"1px solid #8B6914",borderRadius:6,color:"#FFD600",fontSize:11}}>
+                        <option value="">— choose miner —</option>
+                        {idleS2.map(m=>(
+                          <option key={m.id} value={m.id}>{m.rarityName} #{m.id} · {m.dailyDigcoin} DC/day · HP {m.hp}/{m.maxHp||100}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{width:130}}>
+                      <div style={{fontSize:11,color:"#c8a870",marginBottom:4}}>Stake (DC)</div>
+                      <input type="number" min="100" value={pvpStake} onChange={e=>setPvpStake(e.target.value)} placeholder="min 100" style={{width:"100%",padding:"8px 10px",background:"#1a1000",border:"1px solid #8B6914",borderRadius:6,color:"#FFD600",fontSize:11,boxSizing:"border-box"}}/>
+                    </div>
+                    <button disabled={!!pvpLoading||!pvpMiner||!pvpStake} onClick={pvpCreateChallenge}
+                      style={{padding:"8px 20px",background:"linear-gradient(to bottom,#3d2b08,#1e1200)",border:"2px solid #FF9800",borderRadius:6,color:"#FFD600",fontWeight:800,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>
+                      {pvpLoading==="create"?"Creating...":"⚔️ Challenge"}
+                    </button>
+                  </div>
+                  {pvpStake&&parseInt(pvpStake)>=100&&<div style={{fontSize:11,color:"#888",marginTop:8}}>
+                    Pot: {parseInt(pvpStake)*2} DC · You win: {(parseInt(pvpStake)*2*0.9).toFixed(0)} DC · Pool fee: {(parseInt(pvpStake)*2*0.1).toFixed(0)} DC
+                  </div>}
+                </>
+              }
+            </div>
+
+            {/* My Open Challenges */}
+            {myOpen.length>0&&(
+              <div style={{background:"linear-gradient(135deg,#0a1a0a,#0d1a0d)",borderRadius:12,padding:"20px 24px",border:"1px solid #4CAF5044"}}>
+                <div style={{fontSize:14,fontWeight:800,color:"#4CAF50",marginBottom:12}}>🟢 My Open Challenges</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {myOpen.map(c=>{
+                    const expiresIn=Math.max(0,new Date(c.expires_at).getTime()-Date.now());
+                    const hLeft=Math.floor(expiresIn/3600000);
+                    const mLeft=Math.floor((expiresIn%3600000)/60000);
+                    return(
+                      <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(0,0,0,.3)",borderRadius:8,padding:"10px 14px",flexWrap:"wrap",gap:8}}>
+                        <div>
+                          <span style={{color:rarityColors[c.rarity_name]||"#ccc",fontWeight:800,fontSize:12}}>{c.rarity_name}</span>
+                          <span style={{color:"#FFD600",fontWeight:800,fontSize:12,marginLeft:10}}>{c.stake_dc} DC</span>
+                          <span style={{color:"#888",fontSize:10,marginLeft:10}}>expires in {hLeft}h {mLeft}m</span>
+                        </div>
+                        <button disabled={pvpLoading==="cancel_"+c.id} onClick={()=>pvpCancelChallenge(c.id,c.stake_dc)}
+                          style={{padding:"5px 14px",background:"rgba(239,83,80,.15)",border:"1px solid #EF5350",borderRadius:6,color:"#EF5350",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          {pvpLoading==="cancel_"+c.id?"Cancelling...":"Cancel & Refund"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Open Arena */}
+            <div style={{background:"linear-gradient(135deg,#0d0d1a,#0a0a1a)",borderRadius:12,padding:"20px 24px",border:"1px solid #3f51b544"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+                <div style={{fontSize:14,fontWeight:800,color:"#7C83FF"}}>🏟️ Open Arena</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[{label:"All",val:""},...S2_RARITIES.map(r=>({label:r.name,val:String(r.id)}))].map(f=>(
+                    <button key={f.val} onClick={()=>setPvpRarityFilter(f.val)}
+                      style={{padding:"4px 10px",borderRadius:12,border:`1px solid ${pvpRarityFilter===f.val?"#7C83FF":"#333"}`,background:pvpRarityFilter===f.val?"#7C83FF22":"transparent",color:pvpRarityFilter===f.val?"#7C83FF":"#888",fontSize:10,cursor:"pointer"}}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filtered.filter(c=>c.challenger_wallet!==wallet?.toLowerCase()).length===0
+                ? <div style={{color:"#555",fontSize:12,textAlign:"center",padding:"20px 0"}}>No open challenges {pvpRarityFilter?"for this rarity":""} right now. Be the first!</div>
+                : <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {filtered.filter(c=>c.challenger_wallet!==wallet?.toLowerCase()).map(c=>{
+                    const miner=c.challenger_miner;
+                    const myMatching=idleS2.filter(m=>m.rarityId===c.rarity_id);
+                    return(
+                      <div key={c.id} style={{background:"rgba(0,0,0,.4)",borderRadius:10,padding:"12px 16px",border:"1px solid #3f51b533"}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                          <div>
+                            <span style={{color:rarityColors[c.rarity_name]||"#ccc",fontWeight:800,fontSize:13}}>{c.rarity_name}</span>
+                            <span style={{color:"#888",fontSize:11,marginLeft:8}}>{c.challenger_wallet.slice(0,6)}...{c.challenger_wallet.slice(-4)}</span>
+                            {miner&&<span style={{color:"#aaa",fontSize:10,marginLeft:8}}>HP {miner.hp}/{miner.max_hp||100} · {miner.daily_digcoin} DC/day</span>}
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                            <span style={{color:"#FFD600",fontWeight:900,fontSize:14}}>{c.stake_dc} DC</span>
+                            <span style={{color:"#888",fontSize:10}}>win {(c.stake_dc*2*0.9).toFixed(0)} DC</span>
+                          </div>
+                        </div>
+                        {wallet&&myMatching.length>0&&(
+                          <div style={{display:"flex",gap:8,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
+                            <select value={pvpAcceptMiner[c.id]||""} onChange={e=>setPvpAcceptMiner(p=>({...p,[c.id]:e.target.value}))}
+                              style={{flex:1,minWidth:160,padding:"6px 8px",background:"#0d0d1a",border:"1px solid #7C83FF",borderRadius:6,color:"#ccc",fontSize:11}}>
+                              <option value="">— select your {c.rarity_name} miner —</option>
+                              {myMatching.map(m=>(
+                                <option key={m.id} value={m.id}>#{m.id} · HP {m.hp}/{m.maxHp||100} · {m.dailyDigcoin} DC/day</option>
+                              ))}
+                            </select>
+                            <button disabled={!!pvpLoading||!pvpAcceptMiner[c.id]||digcoin<c.stake_dc} onClick={()=>pvpAcceptChallenge(c.id,c.rarity_id)}
+                              style={{padding:"6px 16px",background:digcoin>=c.stake_dc?"linear-gradient(to bottom,#3d2b08,#1e1200)":"rgba(255,255,255,.05)",border:`2px solid ${digcoin>=c.stake_dc?"#FF9800":"#333"}`,borderRadius:6,color:digcoin>=c.stake_dc?"#FFD600":"#555",fontWeight:800,fontSize:12,cursor:digcoin>=c.stake_dc?"pointer":"not-allowed",whiteSpace:"nowrap"}}>
+                              {pvpLoading==="accept_"+c.id?"Fighting...":digcoin<c.stake_dc?"Insufficient DC":"⚔️ Fight!"}
+                            </button>
+                          </div>
+                        )}
+                        {wallet&&myMatching.length===0&&<div style={{fontSize:10,color:"#555",marginTop:6}}>You have no idle {c.rarity_name} S2 miners to accept this challenge.</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              }
+            </div>
+
+            {/* Battle History */}
+            {pvpHistory.length>0&&(
+              <div style={{background:"linear-gradient(135deg,#1a1200,#0d0900)",borderRadius:12,padding:"20px 24px",border:"1px solid #8B451344"}}>
+                <div style={{fontSize:14,fontWeight:800,color:"#c8a870",marginBottom:12}}>📜 My Battle History</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {pvpHistory.filter(h=>h.status==="completed").slice(0,20).map(h=>{
+                    const iWon=h.winner_wallet===wallet?.toLowerCase();
+                    const prize=h.result?.winnerPrize||0;
+                    const date=new Date(h.created_at).toLocaleDateString();
+                    return(
+                      <div key={h.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:iWon?"rgba(76,175,80,.08)":"rgba(239,83,80,.08)",border:`1px solid ${iWon?"#4CAF5033":"#EF535033"}`}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:16}}>{iWon?"🏆":"💀"}</span>
+                          <div>
+                            <div style={{fontSize:12,fontWeight:700,color:iWon?"#4CAF50":"#EF5350"}}>{iWon?"Win":"Loss"} · {h.rarity_name}</div>
+                            <div style={{fontSize:10,color:"#666"}}>{date}</div>
+                          </div>
+                        </div>
+                        <div style={{textAlign:"right"}}>
+                          <div style={{fontSize:13,fontWeight:800,color:iWon?"#4CAF50":"#EF5350"}}>{iWon?"+":"-"}{iWon?prize.toFixed(0):h.stake_dc} DC</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <button onClick={()=>loadPvp(wallet)} style={{alignSelf:"center",padding:"8px 24px",background:"transparent",border:"1px solid #555",borderRadius:20,color:"#888",fontSize:11,cursor:"pointer"}}>🔄 Refresh</button>
+          </div>
+          );
+        })()}
 
         {/* SHOP */}
         {tab==="shop"&&<div style={{display:"flex",flexDirection:"column",gap:16,animation:"fadeIn .3s ease"}}>
