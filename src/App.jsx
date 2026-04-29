@@ -1923,6 +1923,7 @@ export default function DigMinerApp(){
   const[pvpLoading,setPvpLoading]=useState("");
   const[pvpStake,setPvpStake]=useState("");
   const[pvpMiner,setPvpMiner]=useState("");
+  const[pvpStakeMiner,setPvpStakeMiner]=useState(false);
   const[pvpRarityFilter,setPvpRarityFilter]=useState("");
   const[pvpResult,setPvpResult]=useState(null);
   const[pvpAcceptMiner,setPvpAcceptMiner]=useState({});
@@ -2168,11 +2169,11 @@ export default function DigMinerApp(){
     if(stake>digcoin) return notify("Insufficient balance.",false);
     setPvpLoading("create");
     try{
-      const res=await authFetch("/api/pvp/challenge",{method:"POST",body:JSON.stringify({wallet,minerId:parseInt(pvpMiner),stakeDc:stake})});
+      const res=await authFetch("/api/pvp/challenge",{method:"POST",body:JSON.stringify({wallet,minerId:parseInt(pvpMiner),stakeDc:stake,stakeMiner:pvpStakeMiner})});
       const d=await res.json();
       if(d.error) return notify(d.error,false);
-      notify("Challenge created! Waiting for opponent...");
-      setPvpStake("");setPvpMiner("");
+      notify(pvpStakeMiner?"Challenge created! Your miner is on the line.":"Challenge created! Waiting for opponent...");
+      setPvpStake("");setPvpMiner("");setPvpStakeMiner(false);
       await Promise.all([loadPvp(wallet),fetch(`/api/player/${wallet}`).then(r=>r.ok?r.json():{}).then(d=>{if(d.digcoin_balance!==undefined)setDigcoin(d.digcoin_balance);})]);
     }catch(_){notify("Error creating challenge.",false);}
     finally{setPvpLoading("");}
@@ -4067,9 +4068,13 @@ export default function DigMinerApp(){
                     {pvpResult.youWon?"YOU WON!":"YOU LOST"}
                   </div>
                   {pvpResult.youWon
-                    ? <div style={{fontSize:16,color:"#FFD600",fontWeight:800,marginBottom:12}}>+{pvpResult.winnerPrize.toFixed(0)} DC</div>
-                    : <div style={{fontSize:14,color:"#aaa",marginBottom:12}}>Better luck next time</div>
+                    ? <div style={{fontSize:16,color:"#FFD600",fontWeight:800,marginBottom:6}}>+{pvpResult.winnerPrize.toFixed(0)} DC</div>
+                    : <div style={{fontSize:14,color:"#aaa",marginBottom:6}}>Better luck next time</div>
                   }
+                  {pvpResult.minerStaked&&(pvpResult.youWon
+                    ? <div style={{fontSize:13,color:"#4CAF50",fontWeight:800,marginBottom:8}}>🏆 You won the opponent's miner! (#{pvpResult.minerWonId})</div>
+                    : <div style={{fontSize:13,color:"#EF5350",fontWeight:700,marginBottom:8}}>💀 Your miner was taken by the opponent (#{pvpResult.minerLostId})</div>
+                  )}
                   <div style={{fontSize:11,color:"#888",marginBottom:4}}>HP remaining: {pvpResult.yourNewHp}</div>
                   {pvpResult.yourNeedsRepair&&<div style={{fontSize:11,color:"#EF5350",marginBottom:4}}>⚠️ Your miner needs repair!</div>}
                   <div style={{fontSize:10,color:"#555",marginBottom:20}}>{pvpResult.poolFee.toFixed(0)} DC fee added to dungeon pool</div>
@@ -4123,8 +4128,19 @@ export default function DigMinerApp(){
                       {pvpLoading==="create"?"Creating...":"⚔️ Challenge"}
                     </button>
                   </div>
+                  {/* Miner stake toggle */}
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,padding:"10px 14px",background:"rgba(239,83,80,.07)",borderRadius:8,border:`1px solid ${pvpStakeMiner?"#EF535077":"#333"}`,cursor:"pointer"}} onClick={()=>setPvpStakeMiner(v=>!v)}>
+                    <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${pvpStakeMiner?"#EF5350":"#555"}`,background:pvpStakeMiner?"#EF5350":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      {pvpStakeMiner&&<span style={{color:"#fff",fontSize:12,fontWeight:900}}>✓</span>}
+                    </div>
+                    <div>
+                      <span style={{fontSize:12,fontWeight:700,color:pvpStakeMiner?"#EF5350":"#888"}}>⚠️ Also stake my miner</span>
+                      <span style={{fontSize:10,color:"#666",marginLeft:8}}>Winner takes the opponent's miner — opponent must stake one too</span>
+                    </div>
+                  </div>
                   {pvpStake&&parseInt(pvpStake)>=100&&<div style={{fontSize:11,color:"#888",marginTop:8}}>
                     Pot: {parseInt(pvpStake)*2} DC · You win: {(parseInt(pvpStake)*2*0.9).toFixed(0)} DC · Pool fee: {(parseInt(pvpStake)*2*0.1).toFixed(0)} DC
+                    {pvpStakeMiner&&<span style={{color:"#EF5350",marginLeft:6}}>+ opponent's miner</span>}
                   </div>}
                 </>
               }
@@ -4144,6 +4160,7 @@ export default function DigMinerApp(){
                         <div>
                           <span style={{color:rarityColors[c.rarity_name]||"#ccc",fontWeight:800,fontSize:12}}>{c.rarity_name}</span>
                           <span style={{color:"#FFD600",fontWeight:800,fontSize:12,marginLeft:10}}>{c.stake_dc} DC</span>
+                          {c.stake_miner&&<span style={{marginLeft:8,padding:"2px 7px",background:"rgba(239,83,80,.2)",border:"1px solid #EF535077",borderRadius:10,fontSize:9,color:"#EF5350",fontWeight:700}}>⚠️ MINER STAKED</span>}
                           <span style={{color:"#888",fontSize:10,marginLeft:10}}>expires in {hLeft}h {mLeft}m</span>
                         </div>
                         <button disabled={pvpLoading==="cancel_"+c.id} onClick={()=>pvpCancelChallenge(c.id,c.stake_dc)}
@@ -4183,24 +4200,28 @@ export default function DigMinerApp(){
                             <span style={{color:rarityColors[c.rarity_name]||"#ccc",fontWeight:800,fontSize:13}}>{c.rarity_name}</span>
                             <span style={{color:"#888",fontSize:11,marginLeft:8}}>{c.challenger_wallet.slice(0,6)}...{c.challenger_wallet.slice(-4)}</span>
                             {miner&&<span style={{color:"#aaa",fontSize:10,marginLeft:8}}>HP {miner.hp}/{miner.max_hp||100} · {miner.daily_digcoin} DC/day</span>}
+                            {c.stake_miner&&<span style={{marginLeft:8,padding:"2px 7px",background:"rgba(239,83,80,.2)",border:"1px solid #EF535077",borderRadius:10,fontSize:9,color:"#EF5350",fontWeight:700}}>⚠️ MINER STAKED</span>}
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                             <span style={{color:"#FFD600",fontWeight:900,fontSize:14}}>{c.stake_dc} DC</span>
-                            <span style={{color:"#888",fontSize:10}}>win {(c.stake_dc*2*0.9).toFixed(0)} DC</span>
+                            <span style={{color:"#888",fontSize:10}}>win {(c.stake_dc*2*0.9).toFixed(0)} DC{c.stake_miner?" + miner":""}</span>
                           </div>
                         </div>
+                        {c.stake_miner&&<div style={{fontSize:10,color:"#EF5350",marginTop:6,padding:"6px 10px",background:"rgba(239,83,80,.07)",borderRadius:6}}>
+                          ⚠️ Miner stake active — if you accept, your selected miner is also on the line. Winner takes DC + opponent's miner.
+                        </div>}
                         {wallet&&myMatching.length>0&&(
                           <div style={{display:"flex",gap:8,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
                             <select value={pvpAcceptMiner[c.id]||""} onChange={e=>setPvpAcceptMiner(p=>({...p,[c.id]:e.target.value}))}
-                              style={{flex:1,minWidth:160,padding:"6px 8px",background:"#0d0d1a",border:"1px solid #7C83FF",borderRadius:6,color:"#ccc",fontSize:11}}>
-                              <option value="">— select your {c.rarity_name} miner —</option>
+                              style={{flex:1,minWidth:160,padding:"6px 8px",background:"#0d0d1a",border:`1px solid ${c.stake_miner?"#EF5350":"#7C83FF"}`,borderRadius:6,color:"#ccc",fontSize:11}}>
+                              <option value="">— select your {c.rarity_name} miner{c.stake_miner?" (will be staked)":""} —</option>
                               {myMatching.map(m=>(
                                 <option key={m.id} value={m.id}>#{m.id} · HP {m.hp}/{m.maxHp||100} · {m.dailyDigcoin} DC/day</option>
                               ))}
                             </select>
                             <button disabled={!!pvpLoading||!pvpAcceptMiner[c.id]||digcoin<c.stake_dc} onClick={()=>pvpAcceptChallenge(c.id,c.rarity_id)}
-                              style={{padding:"6px 16px",background:digcoin>=c.stake_dc?"linear-gradient(to bottom,#3d2b08,#1e1200)":"rgba(255,255,255,.05)",border:`2px solid ${digcoin>=c.stake_dc?"#FF9800":"#333"}`,borderRadius:6,color:digcoin>=c.stake_dc?"#FFD600":"#555",fontWeight:800,fontSize:12,cursor:digcoin>=c.stake_dc?"pointer":"not-allowed",whiteSpace:"nowrap"}}>
-                              {pvpLoading==="accept_"+c.id?"Fighting...":digcoin<c.stake_dc?"Insufficient DC":"⚔️ Fight!"}
+                              style={{padding:"6px 16px",background:digcoin>=c.stake_dc?"linear-gradient(to bottom,#3d2b08,#1e1200)":"rgba(255,255,255,.05)",border:`2px solid ${digcoin>=c.stake_dc?(c.stake_miner?"#EF5350":"#FF9800"):"#333"}`,borderRadius:6,color:digcoin>=c.stake_dc?"#FFD600":"#555",fontWeight:800,fontSize:12,cursor:digcoin>=c.stake_dc?"pointer":"not-allowed",whiteSpace:"nowrap"}}>
+                              {pvpLoading==="accept_"+c.id?"Fighting...":digcoin<c.stake_dc?"Insufficient DC":c.stake_miner?"⚠️ Fight (miner at risk!)":"⚔️ Fight!"}
                             </button>
                           </div>
                         )}
@@ -4226,8 +4247,8 @@ export default function DigMinerApp(){
                         <div style={{display:"flex",alignItems:"center",gap:10}}>
                           <span style={{fontSize:16}}>{iWon?"🏆":"💀"}</span>
                           <div>
-                            <div style={{fontSize:12,fontWeight:700,color:iWon?"#4CAF50":"#EF5350"}}>{iWon?"Win":"Loss"} · {h.rarity_name}</div>
-                            <div style={{fontSize:10,color:"#666"}}>{date}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:iWon?"#4CAF50":"#EF5350"}}>{iWon?"Win":"Loss"} · {h.rarity_name}{h.stake_miner?" ⚠️":""}</div>
+                            <div style={{fontSize:10,color:"#666"}}>{date}{h.stake_miner&&(iWon?" · got opponent's miner":" · lost your miner")}</div>
                           </div>
                         </div>
                         <div style={{textAlign:"right"}}>
